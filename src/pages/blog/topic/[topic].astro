@@ -3,11 +3,13 @@ import { getCollection } from 'astro:content';
 
 import ArticleCard from '../../../components/ArticleCard.astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { getPostFilterTokens, sortPosts } from '../../../lib/blog';
-import { topicDefinitions } from '../../../lib/site';
+import { getPostFilterTokens, getTopicCards, sortPosts } from '../../../lib/blog';
 
 export async function getStaticPaths() {
-  return topicDefinitions.map((topic) => ({
+  const posts = sortPosts(await getCollection('blog', ({ data }) => !data.draft));
+  const activeTopics = getTopicCards(posts);
+
+  return activeTopics.map((topic) => ({
     params: { topic: topic.slug },
     props: { activeTopic: topic.slug, activeLabel: topic.label }
   }));
@@ -16,7 +18,7 @@ export async function getStaticPaths() {
 const { activeTopic, activeLabel } = Astro.props;
 const allPosts = sortPosts(await getCollection('blog', ({ data }) => !data.draft));
 const posts = allPosts.filter((post) => getPostFilterTokens(post).includes(activeTopic));
-const filters = [{ label: 'All', slug: 'all' }, ...topicDefinitions];
+const filters = [{ label: 'All', slug: 'all' }, ...getTopicCards(allPosts)];
 ---
 
 <BaseLayout title={`Blog: ${activeLabel}`} description={`Posts filtered by ${activeLabel}.`}>

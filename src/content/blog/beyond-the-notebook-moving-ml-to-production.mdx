@@ -101,6 +101,20 @@ The most common failure modes are rarely exotic. They are usually very ordinary:
 
 This is why the transition beyond the notebook should be treated as a software and platform engineering problem, not as a final polish step for data science work.
 
+## FAQ
+
+### Is a good notebook enough to call an ML project production-ready?
+
+No. A good notebook proves that an approach can work under development conditions. Production readiness requires repeatable data flows, controlled deployment, monitoring, ownership and a clear rollback path.
+
+### What usually breaks first after a successful demo?
+
+Usually not the model itself. The first problems tend to appear in data preparation, environment consistency, deployment steps, permissions and the lack of operational ownership.
+
+### When should teams start thinking about MLOps?
+
+Earlier than they usually do. The right time is not after the first deployment crisis. It is when the team starts expecting the same workflow to run more than once, in more than one environment, with more than one person involved.
+
 ## Final point
 
 The notebook should absolutely exist. It is one of the best tools we have for understanding data and iterating on models. The mistake is not using notebooks. The mistake is expecting them to carry responsibilities they were never designed to carry.

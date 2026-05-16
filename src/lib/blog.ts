@@ -38,14 +38,19 @@ export function countPostsForTopic(posts: BlogPost[], topicSlug: string) {
   return posts.filter((post) => getPostFilterTokens(post).includes(topicSlug)).length;
 }
 
-export function getTopicCards(posts: BlogPost[]) {
-  return topicDefinitions.map((topic) => ({
+export function getTopicCards(posts: BlogPost[], options?: { includeEmpty?: boolean }) {
+  const cards = topicDefinitions.map((topic) => ({
     ...topic,
     count: countPostsForTopic(posts, topic.slug)
   }));
+
+  if (options?.includeEmpty) {
+    return cards;
+  }
+
+  return cards.filter((topic) => topic.count > 0);
 }
 
 function normalizeTag(value: string) {
   return value.trim().toLowerCase();
 }
-

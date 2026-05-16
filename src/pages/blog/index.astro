@@ -3,11 +3,10 @@ import { getCollection } from 'astro:content';
 
 import ArticleCard from '../../components/ArticleCard.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getPostFilterTokens, sortPosts } from '../../lib/blog';
-import { topicDefinitions } from '../../lib/site';
+import { getPostFilterTokens, getTopicCards, sortPosts } from '../../lib/blog';
 
 const posts = sortPosts(await getCollection('blog', ({ data }) => !data.draft));
-const filters = [{ label: 'All', slug: 'all' }, ...topicDefinitions];
+const filters = [{ label: 'All', slug: 'all' }, ...getTopicCards(posts)];
 ---
 
 <BaseLayout title="Blog" description="Production-first writing on Data, AI, ML and engineering systems.">
