@@ -1,0 +1,43 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+import { formatDate } from '../lib/blog';
+import { getReadingTime } from '../lib/reading-time';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+  filterTokens?: string[];
+  layout?: 'grid' | 'stack';
+}
+
+const { post, filterTokens = [], layout = 'grid' } = Astro.props;
+const readingTime = getReadingTime(post.body);
+const coverImage = post.data.coverImage ?? '/blog-covers/default.svg';
+const coverAlt = post.data.coverAlt ?? `${post.data.title} cover`;
+---
+
+<article class:list={['post-card', layout === 'stack' && 'post-card--stack']} data-post-card data-topics={filterTokens.join(',')}>
+  {layout === 'stack' && (
+    <a class="post-card__media" href={`/blog/${post.id}/`} aria-label={`Open ${post.data.title}`}>
+      <img src={coverImage} alt={coverAlt} loading="lazy" />
+    </a>
+  )}
+
+  <div class="post-card__header">
+    <span class="kicker">{post.data.type}</span>
+    <span class="post-card__meta">{formatDate(post.data.date)} · {readingTime} min read</span>
+  </div>
+
+  <div>
+    <h3 class="post-card__title">
+      <a href={`/blog/${post.id}/`}>{post.data.title}</a>
+    </h3>
+    <p class="post-card__excerpt">{post.data.description}</p>
+  </div>
+
+  <div class="pill-row" aria-label="Tags">
+    {post.data.tags.map((tag) => (
+      <span class="pill">{tag}</span>
+    ))}
+  </div>
+</article>

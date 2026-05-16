@@ -1,0 +1,50 @@
+---
+title: "ML Observability: Minimal Viable Setup"
+description: "A lean starting point for monitoring ML systems before the observability stack becomes a project of its own."
+date: "2026-05-01"
+updated: "2026-05-01"
+tags: ["mlops", "observability", "production-ml"]
+type: "guide"
+featured: false
+draft: true
+coverImage: "/blog-covers/ml-observability.svg"
+coverAlt: "Monitoring dashboard cover for ML Observability: Minimal Viable Setup"
+---
+
+import Callout from '../../components/Callout.astro';
+
+Most teams do not need a full observability platform on day one. They do need enough signal to detect breakage before users or business stakeholders do it for them.
+
+## Track three classes of signals
+
+1. **System health**: latency, throughput, failures, retries.
+2. **Data health**: null rates, schema drift, freshness, feature distribution shifts.
+3. **Model health**: prediction distribution, confidence patterns, business outcome proxies.
+
+## Start with a compact dashboard
+
+```text
+service latency p95
+request error rate
+input schema violations
+top feature drift indicators
+prediction volume by segment
+manual review escalation count
+```
+
+That is enough to begin seeing whether the system is stable.
+
+<Callout tone="production-note" title="Production note">
+Monitoring only infrastructure metrics is not ML observability. A perfectly healthy API can still be serving useless predictions.
+</Callout>
+
+## Avoid the common trap
+
+Many teams instrument everything except the business-facing question: "Is the model still useful?" That question is harder, but it is the one that matters.
+
+Use proxies if direct labels arrive late. Even imperfect feedback is better than operational blindness.
+
+## Further reading
+
+- Why MLOps Is Mostly Software Engineering
+- Deploying ML Pipelines on Azure with GitHub Actions

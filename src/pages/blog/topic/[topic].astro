@@ -1,0 +1,53 @@
+---
+import { getCollection } from 'astro:content';
+
+import ArticleCard from '../../../components/ArticleCard.astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getPostFilterTokens, sortPosts } from '../../../lib/blog';
+import { topicDefinitions } from '../../../lib/site';
+
+export async function getStaticPaths() {
+  return topicDefinitions.map((topic) => ({
+    params: { topic: topic.slug },
+    props: { activeTopic: topic.slug, activeLabel: topic.label }
+  }));
+}
+
+const { activeTopic, activeLabel } = Astro.props;
+const allPosts = sortPosts(await getCollection('blog', ({ data }) => !data.draft));
+const posts = allPosts.filter((post) => getPostFilterTokens(post).includes(activeTopic));
+const filters = [{ label: 'All', slug: 'all' }, ...topicDefinitions];
+---
+
+<BaseLayout title={`Blog: ${activeLabel}`} description={`Posts filtered by ${activeLabel}.`}>
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">Blog</span>
+      <h1 class="section-title">Beyond demos, notebooks and hype</h1>
+      <p class="section-copy">
+        Showing posts for <strong>{activeLabel}</strong>. Longer essays and technical guides on MLOps, data engineering, AI architecture, Azure and the platform concerns that tend to show up after the model finally works.
+      </p>
+
+      <div class="filter-row" aria-label="Blog topic filters">
+        {filters.map((filter) => (
+          <a
+            class="filter-chip"
+            href={filter.slug === 'all' ? '/blog/' : `/blog/topic/${filter.slug}/`}
+            data-active={filter.slug === activeTopic}
+            aria-current={filter.slug === activeTopic ? 'page' : undefined}
+          >
+            {filter.label}
+          </a>
+        ))}
+      </div>
+
+      <div class="post-list">
+        {posts.map((post) => (
+          <ArticleCard post={post} filterTokens={getPostFilterTokens(post)} layout="stack" />
+        ))}
+      </div>
+
+      {posts.length === 0 && <p class="empty-state">No posts match the selected topic.</p>}
+    </div>
+  </section>
+</BaseLayout>

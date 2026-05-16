@@ -1,0 +1,161 @@
+---
+import { getCollection } from 'astro:content';
+
+import ArticleCard from '../components/ArticleCard.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPostFilterTokens, getTopicCards, sortPosts } from '../lib/blog';
+import { siteConfig, speakingHighlights } from '../lib/site';
+
+const posts = sortPosts(await getCollection('blog', ({ data }) => !data.draft));
+const featuredPosts = posts.filter((post) => post.data.featured).slice(0, 3);
+const topicCards = getTopicCards(posts);
+const aboutHighlights = [
+  'Azure and Databricks architectures built for production pressure.',
+  'Delivery pipelines, observability and ML systems that have to stay operable.',
+  'A writing angle focused on the engineering layer after the notebook.'
+];
+const rssHighlights = ['Full articles and guides', 'Direct feed access from day one', 'No signup flow or newsletter gate'];
+---
+
+<BaseLayout>
+  <section class="hero">
+    <div class="container hero__grid">
+      <div>
+        <span class="eyebrow">{siteConfig.name}</span>
+        <h1 class="hero__title">{siteConfig.owner}</h1>
+        <p class="hero__role">{siteConfig.role}</p>
+        <p class="hero__copy">
+          I write about production-grade AI, MLOps, data platforms, cloud-native ML systems and the engineering reality behind modern AI.
+        </p>
+
+        <div class="hero__actions">
+          <a class="button" href="/blog/">Read the blog</a>
+          <a class="button button--secondary" href="/speaking/">Speaking</a>
+          <a class="button button--secondary" href={siteConfig.links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+          <a class="button button--secondary" href={siteConfig.links.github} target="_blank" rel="noreferrer">GitHub</a>
+        </div>
+      </div>
+
+      <div class="hero-side">
+        <div class="home-panel home-panel--center surface">
+          <span class="eyebrow">Current focus</span>
+          <h2 class="home-panel__title">Production over demos</h2>
+          <p class="home-panel__copy">
+            Notes on reproducible ML, data platforms, observability and delivery systems that teams can actually operate.
+          </p>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric surface">
+            <div class="metric__label">Writing focus</div>
+            <div class="metric__value">Data, AI, ML</div>
+          </div>
+          <div class="metric surface">
+            <div class="metric__label">Bias</div>
+            <div class="metric__value">Production-first</div>
+          </div>
+          <div class="metric surface">
+            <div class="metric__label">Delivery style</div>
+            <div class="metric__value">Field notes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container">
+      <span class="eyebrow">Featured writing</span>
+      <h2 class="section-title">Long-form notes for engineers who have to ship</h2>
+      <p class="section-copy">
+        Architecture essays, delivery guides and operational lessons from the part of AI work that starts after the first promising notebook.
+      </p>
+
+      <div class="post-grid" style="margin-top: 2rem;">
+        {featuredPosts.map((post) => (
+          <ArticleCard post={post} filterTokens={getPostFilterTokens(post)} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">Topics</span>
+      <h2 class="section-title">Production-minded coverage across the stack</h2>
+      <div class="topic-grid" style="margin-top: 2rem;">
+        {topicCards.map((topic) => (
+          <a class="topic-card" href={`/blog/topic/${topic.slug}/`}>
+            <span class="topic-card__count">{topic.count} posts</span>
+            <h3 class="topic-card__title">{topic.label}</h3>
+            <p class="topic-card__description">{topic.description}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container home-speaking">
+      <div class="card surface">
+        <span class="eyebrow">Speaking</span>
+        <h2 class="section-title" style="font-size: clamp(2.2rem, 5vw, 3.2rem);">Selected talks and conference material</h2>
+        <p class="section-copy">
+          Public sessions center on MLOps, Azure, Databricks, general data topics and the platform engineering needed to run modern AI workloads in production.
+        </p>
+        <div class="button-row">
+          <a class="button" href="/speaking/">View speaking page</a>
+          <a class="button button--secondary" href={siteConfig.links.sessionize} target="_blank" rel="noreferrer">Sessionize profile</a>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        {speakingHighlights.map((talk) => (
+          <article class="detail-card">
+            <span class="kicker">{talk.event} · {talk.year}</span>
+            <h3 class="card__title">{talk.title}</h3>
+            <p>{talk.focus}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container home-utility">
+      <article class="home-feature surface">
+        <span class="eyebrow">About</span>
+        <h2 class="section-title" style="font-size: clamp(2.1rem, 5vw, 3.1rem);">Architecture, delivery and AI systems that have to hold up in production</h2>
+        <p class="section-copy">
+          Data Architect focused on Azure-native AI/ML platforms, MLOps foundations, delivery pipelines and the engineering systems that survive beyond the proof of concept.
+        </p>
+        <div class="home-feature__list">
+          {aboutHighlights.map((item) => (
+            <p>{item}</p>
+          ))}
+        </div>
+        <div class="button-row">
+          <a class="button" href="/about/">Read more</a>
+        </div>
+      </article>
+
+      <aside class="home-feature home-feature--compact surface">
+        <span class="eyebrow">RSS</span>
+        <h2 class="section-title" style="font-size: clamp(1.55rem, 3.2vw, 2.05rem);">RSS feed for full posts and guides</h2>
+        <p class="section-copy">
+          Use the feed if you want the writing directly, without signup flow, newsletter formatting or social noise.
+        </p>
+        <div class="home-feature__list">
+          {rssHighlights.map((item) => (
+            <p>{item}</p>
+          ))}
+        </div>
+        <div class="home-feature__meta mono">/rss.xml</div>
+        <div class="button-row">
+          <a class="button" href={siteConfig.links.rss}>Open RSS feed</a>
+          <a class="button button--secondary" href="/blog/">Browse posts</a>
+        </div>
+      </aside>
+    </div>
+  </section>
+</BaseLayout>

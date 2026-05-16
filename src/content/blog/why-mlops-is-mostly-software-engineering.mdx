@@ -1,0 +1,83 @@
+---
+title: "Why MLOps Is Mostly Software Engineering"
+description: "The operational side of ML succeeds or fails on engineering discipline long before any specialized tooling matters."
+date: "2026-05-12"
+updated: "2026-05-12"
+tags: ["mlops", "software-engineering", "production-ml"]
+type: "article"
+featured: true
+draft: true
+coverImage: "/blog-covers/mlops-software-engineering.svg"
+coverAlt: "Engineering systems cover for Why MLOps Is Mostly Software Engineering"
+---
+
+import Callout from '../../components/Callout.astro';
+
+MLOps is often marketed as a separate discipline with its own stack, rituals and vocabulary. Some of that is useful. Much of it is branding around familiar engineering problems.
+
+## The hard parts are not mysterious
+
+Production ML requires teams to solve recognizable delivery questions:
+
+- version control
+- testing
+- environment parity
+- CI/CD
+- dependency management
+- observability
+- access control
+- incident response
+
+Those are software engineering concerns. ML adds domain-specific constraints, but it does not replace the need for engineering rigor.
+
+## Where teams get distracted
+
+Many organizations start with tool selection instead of operating model design. They ask which orchestrator, registry or feature store to adopt before answering more important questions:
+
+- who owns training pipelines end to end
+- what gets promoted between environments
+- how failure is detected and escalated
+- which artifacts are authoritative
+
+<Callout tone="pitfall" title="Pitfall">
+Buying an MLOps platform does not remove the need to define ownership, release criteria and failure handling. It only gives those choices a UI.
+</Callout>
+
+## A useful framing
+
+Treat MLOps as three layers:
+
+1. **Software engineering** for code quality, packaging, tests and delivery.
+2. **Data engineering** for trustworthy inputs, lineage, freshness and reproducibility.
+3. **ML-specific operations** for model registry, evaluation, drift and retraining policy.
+
+The first two layers usually dominate the workload.
+
+## The minimum bar
+
+Before reaching for advanced MLOps features, get these right:
+
+```bash
+make test
+make build-train-image
+make deploy-pipeline
+make smoke-test
+```
+
+That may look mundane, but it is closer to a working production posture than a polished demo with no release mechanics.
+
+## What "production-ready" should mean
+
+A model is production-ready when a team other than its creator can:
+
+- retrain it from versioned inputs
+- deploy it with a documented process
+- observe its health after release
+- recover safely from regressions
+
+If not, the issue is rarely "lack of MLOps". It is usually a missing engineering foundation.
+
+## Further reading
+
+- Beyond the Notebook: Moving ML to Production
+- Feature Stores: When You Need One and When You Don't

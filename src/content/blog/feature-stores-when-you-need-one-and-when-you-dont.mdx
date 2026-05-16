@@ -1,0 +1,54 @@
+---
+title: "Feature Stores: When You Need One and When You Don't"
+description: "Feature stores solve real problems, but many teams reach for them before they have earned the operational complexity."
+date: "2026-05-07"
+updated: "2026-05-07"
+tags: ["data-engineering", "feature-store", "architecture"]
+type: "guide"
+featured: false
+draft: true
+coverImage: "/blog-covers/feature-stores.svg"
+coverAlt: "Feature platform cover for Feature Stores: When You Need One and When You Don't"
+---
+
+import Callout from '../../components/Callout.astro';
+
+Feature stores are useful when they remove duplication, align offline and online feature definitions, and improve reproducibility. They are not automatically a sign of maturity.
+
+## Good reasons to adopt one
+
+- multiple teams reuse the same feature logic
+- online and offline serving paths must stay aligned
+- lineage and discoverability are already becoming painful
+- governance requires stronger controls around feature definitions
+
+## Bad reasons to adopt one
+
+- "Mature ML teams have them"
+- "The platform already includes one"
+- "We might need it later"
+
+<Callout tone="trade-off" title="Trade-off">
+A feature store can reduce hidden duplication while increasing platform surface area, onboarding cost and operational ownership.
+</Callout>
+
+## The simpler alternative
+
+If you have one model, one team and mostly batch use cases, explicit feature modules plus disciplined data contracts may be enough:
+
+```python
+def build_customer_features(customer_df, orders_df):
+    return (
+        customer_df
+        .join(orders_df, on="customer_id")
+        .groupBy("customer_id")
+        .agg(...)
+    )
+```
+
+The key is not whether this lives in a branded feature store. The key is whether the logic is versioned, testable and shared consistently.
+
+## Further reading
+
+- Beyond the Notebook: Moving ML to Production
+- Why MLOps Is Mostly Software Engineering

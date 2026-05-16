@@ -1,0 +1,83 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { siteConfig, speakingHighlights } from '../lib/site';
+
+const formats = [
+  {
+    title: 'Conference sessions',
+    copy: 'Architecture talks, technical sessions and practical case studies for engineering-focused events.'
+  },
+  {
+    title: 'Hands-on workshops',
+    copy: 'Structured workshops on MLOps, Databricks, MLflow, Azure delivery pipelines and production patterns.'
+  },
+  {
+    title: 'Internal enablement',
+    copy: 'Talks adapted for engineering organizations that need a sharper view of platform and operating-model choices.'
+  }
+];
+
+const speakingPhoto = '/images/maciej-kepa-speaking.jpg';
+---
+
+<BaseLayout title="Speaking" description="Conference talks, workshop topics and public speaking profile for Data, AI and ML engineering sessions.">
+  <section class="section">
+    <div class="container speaking-hero surface">
+      <div class="speaking-hero__content">
+        <span class="eyebrow">Speaking</span>
+        <h1 class="section-title">Talks for teams building real systems, not only demos</h1>
+        <p class="section-copy">
+          Session themes revolve around MLOps, Azure, Databricks, AI, data observability and the operational reality of shipping data and ML platforms.
+        </p>
+        <p class="section-copy">
+          The emphasis stays practical: lessons from production systems, architectural trade-offs and sessions that help engineering teams move from abstract interest to workable delivery patterns.
+        </p>
+
+        <div class="button-row">
+          <a class="button" href={siteConfig.links.sessionize} target="_blank" rel="noreferrer">Sessionize profile</a>
+          <a class="button button--secondary" href={siteConfig.links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+        </div>
+      </div>
+
+      <figure class="speaking-hero__photo">
+        <img src={speakingPhoto} alt="Maciej Kępa speaking at a conference" loading="eager" />
+      </figure>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container about-section surface">
+      <div class="about-section__intro">
+        <span class="eyebrow">Selected talks</span>
+        <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.9rem);">Selected sessions and conference appearances</h2>
+        <p class="section-copy">A mix of MLOps, data observability, Databricks orchestration and vector-native AI topics grounded in real delivery work.</p>
+      </div>
+      <div class="about-section__body about-entry-list">
+        {speakingHighlights.map((talk) => (
+          <article class="about-entry">
+            <span class="kicker">{talk.event} · {talk.year}</span>
+            <h2 class="card__title">{talk.title}</h2>
+            <p>{talk.focus}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container about-section surface">
+      <div class="about-section__intro">
+        <span class="eyebrow">Formats</span>
+        <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.9rem);">Ways of working with engineering teams</h2>
+      </div>
+      <div class="about-section__body about-entry-list">
+        {formats.map((item) => (
+          <article class="about-entry">
+            <h2 class="card__title">{item.title}</h2>
+            <p>{item.copy}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,44 @@
+---
+import { getCollection } from 'astro:content';
+
+import ArticleCard from '../../components/ArticleCard.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPostFilterTokens, sortPosts } from '../../lib/blog';
+import { topicDefinitions } from '../../lib/site';
+
+const posts = sortPosts(await getCollection('blog', ({ data }) => !data.draft));
+const filters = [{ label: 'All', slug: 'all' }, ...topicDefinitions];
+---
+
+<BaseLayout title="Blog" description="Production-first writing on Data, AI, ML and engineering systems.">
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">Blog</span>
+      <h1 class="section-title">Beyond demos, notebooks and hype</h1>
+      <p class="section-copy">
+        Longer essays and technical guides on MLOps, data engineering, AI architecture, Azure and the platform concerns that tend to show up after the model finally works.
+      </p>
+
+      <div class="filter-row" aria-label="Blog topic filters">
+        {filters.map((filter) => (
+          <a
+            class="filter-chip"
+            href={filter.slug === 'all' ? '/blog/' : `/blog/topic/${filter.slug}/`}
+            data-active={filter.slug === 'all'}
+            aria-current={filter.slug === 'all' ? 'page' : undefined}
+          >
+            {filter.label}
+          </a>
+        ))}
+      </div>
+
+      <div class="post-list" id="blog-grid">
+        {posts.map((post) => (
+          <ArticleCard post={post} filterTokens={getPostFilterTokens(post)} layout="stack" />
+        ))}
+      </div>
+
+      <p class="empty-state" hidden>No posts match the selected topic.</p>
+    </div>
+  </section>
+</BaseLayout>

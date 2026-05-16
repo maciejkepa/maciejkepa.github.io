@@ -1,0 +1,72 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { formatDate } from '../lib/blog';
+
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  date: Date;
+  updated?: Date;
+  tags: string[];
+  type: 'article' | 'guide';
+  readingTime: number;
+  headings: Heading[];
+  repoUrl?: string;
+}
+
+const { title, description, date, updated, tags, type, readingTime, headings, repoUrl } = Astro.props;
+const tocHeadings = headings.filter((heading) => heading.depth >= 2 && heading.depth <= 3);
+---
+
+<BaseLayout title={title} description={description}>
+  <section class="article-hero">
+    <div class="container narrow">
+      <span class="eyebrow">{type}</span>
+      <h1 class="section-title">{title}</h1>
+      <p class="section-copy">{description}</p>
+
+      <div class="article-hero__meta">
+        <span>Published: {formatDate(date)}</span>
+        <span>Updated: {formatDate(updated ?? date)}</span>
+        <span>{readingTime} min read</span>
+        {repoUrl && (
+          <a href={repoUrl} target="_blank" rel="noreferrer">Companion repository</a>
+        )}
+      </div>
+
+      <div class="pill-row" aria-label="Article tags">
+        {tags.map((tag) => (
+          <span class="pill">{tag}</span>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container article-layout">
+      <article class="article-body prose">
+        <slot />
+      </article>
+
+      {tocHeadings.length > 0 && (
+        <aside class="toc" aria-label="Table of contents">
+          <h2>Contents</h2>
+          <ul>
+            {tocHeadings.map((heading) => (
+              <li>
+                <a href={`#${heading.slug}`}>{heading.text}</a>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+

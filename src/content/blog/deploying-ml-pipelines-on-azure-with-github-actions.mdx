@@ -1,0 +1,93 @@
+---
+title: "Deploying ML Pipelines on Azure with GitHub Actions"
+description: "A production-minded guide to packaging, validating and promoting ML workflows through GitHub Actions."
+date: "2026-05-10"
+updated: "2026-05-10"
+tags: ["azure", "mlops", "ci-cd"]
+type: "guide"
+featured: true
+draft: true
+coverImage: "/blog-covers/azure-github-actions.svg"
+coverAlt: "CI/CD workflow cover for Deploying ML Pipelines on Azure with GitHub Actions"
+---
+
+import Callout from '../../components/Callout.astro';
+
+This is a minimal structure for teams that want repeatable delivery without turning the first iteration into a platform rewrite.
+
+## Scope the pipeline before you automate it
+
+Automation should move a clearly bounded artifact. For ML delivery, that usually means one of:
+
+- a training pipeline definition
+- an inference service
+- a scheduled batch scoring workflow
+
+Trying to automate all three at once is where many "quick starts" turn into architecture drift.
+
+## A reasonable GitHub Actions shape
+
+Use separate jobs for validation, packaging and deployment.
+
+```yaml
+name: ml-delivery
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: make lint test
+
+  package:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make build
+
+  deploy-dev:
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make deploy-dev
+```
+
+## Promote configuration, not copy-paste
+
+Environment differences belong in variables, secret scopes and deployment metadata. They should not require maintaining separate near-identical workflows.
+
+<Callout tone="production-note" title="Production note">
+If promotion between environments is manual, the release process should still be codified. Invisible handoffs are where drift becomes normal.
+</Callout>
+
+## Azure-specific concerns that show up quickly
+
+- identity boundaries between GitHub and Azure
+- network access to private resources
+- promotion of secrets and configuration
+- parity between training and serving images
+
+The common mistake is treating cloud authentication as a single checkbox. In practice, identity design determines whether the pipeline stays auditable over time.
+
+## Keep the first version boring
+
+You do not need an elaborate release train to ship safely. A good first iteration has:
+
+- branch protection
+- explicit validation gates
+- versioned artifacts
+- a documented rollback path
+
+## Further reading
+
+- Why MLOps Is Mostly Software Engineering
+- ML Observability: Minimal Viable Setup

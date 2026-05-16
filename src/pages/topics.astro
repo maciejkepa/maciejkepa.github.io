@@ -1,0 +1,34 @@
+---
+import { getCollection } from 'astro:content';
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getTopicCards } from '../lib/blog';
+
+const posts = await getCollection('blog', ({ data }) => !data.draft);
+const topics = getTopicCards(posts);
+---
+
+<BaseLayout title="Topics" description="Core themes: MLOps, data engineering, Azure AI, lakehouse systems and production ML.">
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">Topics</span>
+      <h1 class="section-title">A map of the problems worth writing about</h1>
+      <p class="section-copy">
+        The site stays opinionated: fewer topics, more depth, and a consistent bias toward systems that need to be maintainable under production pressure.
+      </p>
+
+      <div class="topic-grid" style="margin-top: 2rem;">
+        {topics.map((topic) => (
+          <article class="topic-card">
+            <span class="topic-card__count">{topic.count} posts</span>
+            <h2 class="topic-card__title">{topic.label}</h2>
+            <p class="topic-card__description">{topic.description}</p>
+            <div class="button-row">
+              <a class="button button--secondary" href={`/blog/topic/${topic.slug}/`}>Browse posts</a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

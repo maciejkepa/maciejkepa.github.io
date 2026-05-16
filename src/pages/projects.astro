@@ -1,0 +1,137 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { siteConfig } from '../lib/site';
+
+const projectLenses = [
+  {
+    title: 'Reference platform blueprints',
+    copy: 'Architecture work for Azure-native data platforms, lakehouse setups, MLOps foundations and AI delivery systems that need clear ownership and operational boundaries.',
+    outputs: ['target-state architecture', 'delivery blueprint', 'runbook and guardrails']
+  },
+  {
+    title: 'Conference and workshop demos',
+    copy: 'Small but credible repos built to support talks, workshops and technical writing without collapsing into toy examples that ignore deployment reality.',
+    outputs: ['demo repo', 'walkthrough notes', 'companion article']
+  },
+  {
+    title: 'Operational tooling',
+    copy: 'Delivery helpers, orchestration patterns, CI/CD templates, observability layers and practical automation around cloud-native ML and data systems.',
+    outputs: ['pipeline template', 'automation scripts', 'monitoring baseline']
+  }
+];
+
+const stacks = [
+  {
+    label: 'Azure',
+    icon: 'https://api.iconify.design/devicon/azure.svg',
+    note: 'Cloud platform'
+  },
+  {
+    label: 'Databricks',
+    icon: 'https://cdn.simpleicons.org/databricks/EA4335',
+    note: 'Lakehouse and orchestration'
+  },
+  {
+    label: 'Python',
+    icon: 'https://cdn.simpleicons.org/python/3776AB',
+    note: 'Automation and platform code'
+  },
+  {
+    label: 'PySpark',
+    icon: 'https://cdn.simpleicons.org/apachespark/E25A1C',
+    note: 'Data processing'
+  },
+  {
+    label: 'SQL Server',
+    icon: 'https://api.iconify.design/devicon/microsoftsqlserver.svg',
+    note: 'Data modeling and query work'
+  },
+  {
+    label: 'MLflow',
+    icon: 'https://cdn.simpleicons.org/mlflow/0194E2',
+    note: 'Experiment and model lifecycle'
+  },
+  {
+    label: 'GitHub Actions',
+    icon: 'https://cdn.simpleicons.org/githubactions/2088FF',
+    note: 'CI/CD workflows'
+  },
+  {
+    label: 'Terraform',
+    icon: 'https://cdn.simpleicons.org/terraform/844FBA',
+    note: 'Infrastructure automation'
+  },
+  {
+    label: 'Docker',
+    icon: 'https://cdn.simpleicons.org/docker/2496ED',
+    note: 'Containers and portable runtime environments'
+  }
+];
+
+---
+
+<BaseLayout title="Projects" description="Selected project areas, repositories and technical demos.">
+  <section class="section">
+    <div class="container about-section surface">
+      <div class="about-section__intro">
+        <span class="eyebrow">Projects</span>
+        <h1 class="section-title">Projects that sit close to delivery, architecture and technical writing</h1>
+        <p class="section-copy">
+          Not a dumping ground for every experiment. This section is for work that supports talks, articles and production-minded platform design.
+        </p>
+      </div>
+
+      <div class="about-section__body project-lenses">
+        {projectLenses.map((area) => (
+          <article class="project-lens">
+            <span class="kicker">Focus area</span>
+            <h2 class="card__title">{area.title}</h2>
+            <p>{area.copy}</p>
+            <div class="project-lens__outputs">
+              {area.outputs.map((output) => (
+                <span>{output}</span>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container about-section surface">
+      <div class="about-section__intro">
+        <span class="eyebrow">Working stack</span>
+        <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.9rem);">Core technologies behind the work</h2>
+        <p class="section-copy">The stack is deliberately practical: cloud platform, lakehouse, orchestration, automation and writing tools that support repeatable delivery.</p>
+      </div>
+
+      <div class="about-section__body tech-grid">
+        {stacks.map((stack) => (
+          <article class="tech-tile">
+            <span class="tech-tile__icon">
+              <img src={stack.icon} alt={`${stack.label} logo`} loading="lazy" />
+            </span>
+            <div>
+              <h2 class="card__title">{stack.label}</h2>
+              <p>{stack.note}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container home-feature surface">
+      <span class="eyebrow">GitHub</span>
+      <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.8rem);">All projects live on GitHub</h2>
+      <p class="section-copy">
+        Repositories, experiments, demos and supporting code are all available on GitHub.
+      </p>
+      <div class="button-row">
+        <a class="button" href={siteConfig.links.github} target="_blank" rel="noreferrer">Open GitHub profile</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

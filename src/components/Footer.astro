@@ -1,0 +1,19 @@
+---
+import { siteConfig } from '../lib/site';
+---
+
+<footer class="site-footer">
+  <div class="container site-footer__inner">
+    <p class="site-footer__copy">
+      {siteConfig.owner} · {siteConfig.tagline}
+    </p>
+
+    <div class="link-list">
+      <a href={siteConfig.links.github} target="_blank" rel="noreferrer">GitHub</a>
+      <a href={siteConfig.links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+      <a href={siteConfig.links.sessionize} target="_blank" rel="noreferrer">Sessionize</a>
+      <a href={siteConfig.links.rss}>RSS</a>
+    </div>
+  </div>
+</footer>
+

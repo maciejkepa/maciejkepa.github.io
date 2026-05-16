@@ -1,0 +1,114 @@
+---
+title: "Beyond the Notebook: Moving ML to Production"
+description: "A practical guide to the engineering problems that appear after the model works in a notebook."
+date: "2026-05-15"
+updated: "2026-05-15"
+tags: ["mlops", "production-ml", "architecture"]
+type: "article"
+featured: true
+coverImage: "/blog-covers/beyond-the-notebook.svg"
+coverAlt: "Notebook evolving into a production machine learning system"
+---
+
+import Callout from '../../components/Callout.astro';
+
+Most machine learning stories look impressive right until the notebook ends.
+
+The notebook is where we prove that a model can work. Production is where we prove that a system can keep working. These are related goals, but they are not the same goal, and many teams get into trouble when they treat them as if they were.
+
+## Why the notebook is not the final milestone
+
+There is a reason notebooks became the default environment for machine learning work. They are fast, flexible and very good at exploration. You can inspect the data, test ideas, compare experiments and keep momentum without much ceremony.
+
+The problem is that a notebook is optimized for discovery, not for repeatable operation. It usually relies on hidden state, manual order of execution, local dependencies and assumptions that live only in the author's head. That is acceptable during exploration. It becomes risky the moment we want another person, another environment or another release cycle to rely on the same work.
+
+<Callout tone="production-note" title="Production note">
+The model is usually not the fragile part. The fragile part is everything around it: data preparation, packaging, deployment logic, permissions, monitoring and ownership.
+</Callout>
+
+## What really starts after the first successful demo
+
+Once the notebook gives a promising result, the question changes. We are no longer asking whether the model can learn. We are asking whether the whole solution can be operated in a predictable way.
+
+That is where the real engineering work begins:
+
+1. We need a repeatable path from source data to training data.
+2. We need a reliable method for packaging code, dependencies and runtime assumptions.
+3. We need a serving interface that can be versioned, observed and rolled back.
+4. We need a clear ownership model for failures, retraining and release decisions.
+5. We need a way to evaluate the system after deployment, not just before it.
+
+Without these elements, a working notebook is still only a local success.
+
+## The confusion usually comes from the word "working"
+
+When someone says "the model works", they often mean one of two different things.
+
+The first meaning is experimental: the model achieved acceptable results in development conditions.
+
+The second meaning is operational: the solution can run under real constraints with clear inputs, versioning, monitoring and support.
+
+These two meanings are easy to mix up, especially when the team is moving quickly. That confusion is one of the main reasons why many ML initiatives look close to production for a long time, but never really become production systems.
+
+## A more useful readiness check
+
+Instead of asking whether the model is finished, it is better to ask whether the system is ready for repeated use.
+
+```yaml
+production_readiness:
+  source_to_feature_path: reproducible
+  training_process: documented
+  inference_interface: versioned
+  environment_build: repeatable
+  monitoring:
+    latency: enabled
+    failures: enabled
+    data_quality: enabled
+  ownership:
+    incident_response: clear
+    rollback_path: clear
+```
+
+This kind of checklist is less exciting than a benchmark chart, but it is much closer to the real delivery problem.
+
+<Callout tone="trade-off" title="Trade-off">
+The earlier you standardize the path from experimentation to deployment, the earlier you pay the engineering cost. The later you do it, the more notebook assumptions become part of the architecture by accident.
+</Callout>
+
+## The last mile is mostly systems work
+
+This is the part that often gets underestimated. The final gap between a notebook and a usable service is rarely just one deployment step. It is a chain of decisions about interfaces, environments, automation, observability and collaboration between roles.
+
+The questions are usually familiar:
+
+- where does feature logic live
+- how do we keep training and inference consistent
+- what has to be versioned
+- how do we detect silent degradation
+- who is responsible when the system starts behaving differently next month
+
+These are not glamorous questions, but they are the ones that determine whether the solution survives outside a demo.
+
+## What teams most often get wrong
+
+The most common failure modes are rarely exotic. They are usually very ordinary:
+
+- feature logic differs between training and serving
+- deployment steps depend on undocumented manual actions
+- model quality is evaluated once and then assumed to stay stable
+- data freshness degrades without anyone noticing
+- one person becomes the only real operator of the pipeline
+
+This is why the transition beyond the notebook should be treated as a software and platform engineering problem, not as a final polish step for data science work.
+
+## Final point
+
+The notebook should absolutely exist. It is one of the best tools we have for understanding data and iterating on models. The mistake is not using notebooks. The mistake is expecting them to carry responsibilities they were never designed to carry.
+
+If a team wants machine learning to be reliable, maintainable and useful in production, the real project begins exactly where the successful notebook ends.
+
+## Further reading
+
+- The confusion about MLOps
+- Building an effective MLOps platform in the Azure cloud
+- Machine learning on IoT Edge

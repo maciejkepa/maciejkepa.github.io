@@ -1,0 +1,56 @@
+---
+title: "LLM Systems Need More Than a Vector Database"
+description: "Vector search is useful infrastructure, but it is not a complete architecture for retrieval-based AI applications."
+date: "2026-05-04"
+updated: "2026-05-04"
+tags: ["llm-engineering", "retrieval", "architecture"]
+type: "article"
+featured: false
+draft: true
+coverImage: "/blog-covers/llm-vector-db.svg"
+coverAlt: "Retrieval architecture cover for LLM Systems Need More Than a Vector Database"
+---
+
+import Callout from '../../components/Callout.astro';
+
+A vector database is often presented as the missing link between enterprise data and useful LLM applications. It is important infrastructure, but it is not the whole system.
+
+## What the vector layer actually gives you
+
+- semantic retrieval
+- approximate nearest-neighbor search
+- a practical way to work with embeddings at scale
+
+That is valuable. It still leaves major questions unanswered:
+
+- what gets indexed
+- how freshness works
+- how access control is enforced
+- how retrieval quality is evaluated
+- how answers are grounded and cited
+
+## Retrieval is a pipeline, not a product
+
+If the chunking strategy is poor, metadata is weak or updates are inconsistent, a strong vector engine will faithfully retrieve weak context.
+
+<Callout tone="pitfall" title="Pitfall">
+Teams sometimes treat low-latency similarity search as evidence that their LLM system is ready. In practice, retrieval quality, evaluation and governance decide whether the application is trustworthy.
+</Callout>
+
+## The more complete architecture
+
+Think in layers:
+
+1. source systems and document contracts
+2. ingestion and normalization
+3. chunking, embedding and indexing
+4. retrieval strategy and ranking
+5. prompt assembly
+6. evaluation and feedback loops
+
+The vector database sits in layer three and part of layer four. That is significant, but still partial.
+
+## Further reading
+
+- Beyond the Notebook: Moving ML to Production
+- ML Observability: Minimal Viable Setup

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title">
+  <title>Azure GitHub Actions cover</title>
+  <rect width="1200" height="720" fill="#081017" />
+  <rect x="42" y="42" width="1116" height="636" rx="28" fill="#0d151d" stroke="#233646" />
+  <text x="96" y="140" fill="#77e3ff" font-family="IBM Plex Mono, monospace" font-size="30" letter-spacing="6">AZURE / CI-CD / MLOPS</text>
+  <text x="96" y="260" fill="#edf3f7" font-family="Georgia, serif" font-size="78">Deploying ML Pipelines</text>
+  <text x="96" y="338" fill="#edf3f7" font-family="Georgia, serif" font-size="78">with GitHub Actions</text>
+  <g transform="translate(760 170)" fill="none" stroke="#77e3ff" stroke-width="10">
+    <rect x="0" y="80" width="120" height="72" rx="16" />
+    <rect x="150" y="0" width="120" height="72" rx="16" />
+    <rect x="150" y="160" width="120" height="72" rx="16" />
+    <rect x="300" y="80" width="120" height="72" rx="16" />
+    <path d="M120 116h30M270 36v44M270 196v-44M270 116h30" opacity=".8" />
+  </g>
+  <text x="96" y="542" fill="#98a7b5" font-family="IBM Plex Sans, sans-serif" font-size="30">Validation · packaging · promotion · deployment identity · rollback path</text>
+</svg>
+

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title">
+  <title>Default blog cover</title>
+  <rect width="1200" height="720" fill="#091016" />
+  <rect x="38" y="38" width="1124" height="644" rx="28" fill="#0d151d" stroke="#243847" />
+  <g opacity=".22" stroke="#77e3ff">
+    <path d="M90 180H1110" />
+    <path d="M90 320H1110" />
+    <path d="M90 460H1110" />
+    <path d="M270 100V620" />
+    <path d="M540 100V620" />
+    <path d="M810 100V620" />
+  </g>
+  <text x="100" y="152" fill="#77e3ff" font-family="IBM Plex Mono, monospace" font-size="34" letter-spacing="6">BEYOND THE NOTEBOOK</text>
+  <text x="100" y="304" fill="#edf3f7" font-family="Georgia, serif" font-size="92">Production-first</text>
+  <text x="100" y="404" fill="#edf3f7" font-family="Georgia, serif" font-size="92">engineering notes</text>
+  <text x="100" y="532" fill="#98a7b5" font-family="IBM Plex Sans, sans-serif" font-size="30">Data platforms · MLOps · AI architecture · delivery systems</text>
+</svg>
+

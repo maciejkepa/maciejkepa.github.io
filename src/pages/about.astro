@@ -1,0 +1,116 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { principles, siteConfig } from '../lib/site';
+
+const operatingSpace = [
+  'Azure-native data platforms and delivery systems',
+  'Databricks, lakehouse patterns and analytics-ready architecture',
+  'MLOps foundations for repeatable delivery and model operations',
+  'Data engineering connected to production ML and AI systems'
+];
+
+const focusAreas = [
+  {
+    title: 'Data Platforms',
+    copy: 'Designing Azure- and Databricks-based platforms that make analytics and AI delivery operational, not improvised.'
+  },
+  {
+    title: 'MLOps Systems',
+    copy: 'Building model lifecycle foundations, delivery workflows, observability and reliability around production ML.'
+  },
+  {
+    title: 'AI in Production',
+    copy: 'Treating model quality and platform quality as the same engineering problem, especially in edge, IoT and data-centric workloads.'
+  }
+];
+
+const beyondWork = [
+  'Animal lover with a soft spot for real-world chaos over perfect lab conditions.',
+  'Gaming enthusiast, especially where systems, strategy and immersion matter.',
+  'DIY hobbyist who likes building, fixing and understanding things end to end.'
+];
+
+const portrait = '/images/maciej-kepa-about.jpg';
+---
+
+<BaseLayout title="About" description="Short bio and working principles for Maciej Kępa.">
+  <section class="section">
+    <div class="container about-hero surface">
+      <div class="about-hero__content">
+        <span class="eyebrow">About</span>
+        <h1 class="section-title">Designing data platforms that make AI operational</h1>
+        <p class="section-copy">
+          Senior Data Engineer and Data Architect at <a href={siteConfig.links.company} target="_blank" rel="noreferrer">Datumo</a>, focused on building production-grade Data and AI solutions on Microsoft Azure.
+        </p>
+        <p class="section-copy">
+          My work centers on making AI useful in real environments: platform architecture, repeatable delivery, MLOps foundations, observability and the engineering boundaries between data systems and machine learning systems.
+        </p>
+        <div class="pill-row" aria-label="Operating space">
+          {operatingSpace.map((item) => (
+            <span class="pill">{item}</span>
+          ))}
+        </div>
+        <p class="section-copy">
+          I care about systems that are scalable, observable, maintainable and actually ready for production, not only persuasive in a workshop or notebook demo.
+        </p>
+        <div class="button-row">
+          <a class="button" href={siteConfig.links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+          <a class="button button--secondary" href={siteConfig.links.sessionize} target="_blank" rel="noreferrer">Sessionize</a>
+        </div>
+      </div>
+
+      <figure class="about-hero__photo">
+        <img src={portrait} alt="Portrait of Maciej Kępa" loading="eager" />
+      </figure>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container about-section surface">
+      <div class="about-section__intro">
+        <span class="eyebrow">What I build</span>
+        <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.9rem);">Three recurring problem spaces</h2>
+        <p class="section-copy">The common thread is operational reality: architecture, delivery and platform quality need to hold together under production constraints.</p>
+      </div>
+      <div class="about-section__body about-entry-list">
+        {focusAreas.map((area) => (
+          <article class="about-entry">
+            <h3 class="card__title">{area.title}</h3>
+            <p>{area.copy}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container about-section surface">
+      <div class="about-section__intro">
+        <span class="eyebrow">Principles</span>
+        <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.9rem);">How I tend to reason about systems</h2>
+      </div>
+      <div class="about-section__body about-principles">
+        {principles.map((principle, index) => (
+          <div class="about-principle">
+            <span class="about-principle__index">0{index + 1}</span>
+            <p>{principle}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container about-section surface">
+      <div class="about-section__intro">
+        <span class="eyebrow">Beyond work</span>
+        <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.9rem);">Interests that map well to engineering</h2>
+      </div>
+      <div class="about-section__body about-notes">
+        {beyondWork.map((item) => (
+          <p>{item}</p>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
