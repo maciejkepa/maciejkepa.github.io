@@ -4,11 +4,14 @@ import { getCollection } from 'astro:content';
 import ArticleCard from '../components/ArticleCard.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getPostFilterTokens, getTopicCards, sortPosts } from '../lib/blog';
-import { siteConfig, speakingHighlights } from '../lib/site';
+import { siteConfig, speakingSessions } from '../lib/site';
 
 const posts = sortPosts(await getCollection('blog', ({ data }) => !data.draft));
 const featuredPosts = posts.filter((post) => post.data.featured).slice(0, 3);
 const topicCards = getTopicCards(posts);
+const featuredSpeakingSessions = [...speakingSessions]
+  .filter((session) => typeof session.featuredRank === 'number')
+  .sort((a, b) => b.sortDate.localeCompare(a.sortDate));
 const aboutHighlights = [
   'Azure and Databricks architectures built for production pressure.',
   'Delivery pipelines, observability and ML systems that have to stay operable.',
@@ -96,13 +99,13 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
   </section>
 
   <section class="section">
-    <div class="container home-speaking">
-      <div class="card surface">
-        <span class="eyebrow">Speaking</span>
-        <h2 class="section-title" style="font-size: clamp(2.2rem, 5vw, 3.2rem);">Selected talks and conference material</h2>
-        <p class="section-copy">
-          Public sessions center on MLOps, Azure, Databricks, general data topics and the platform engineering needed to run modern AI workloads in production.
-        </p>
+      <div class="container home-speaking">
+        <div class="card surface">
+          <span class="eyebrow">Speaking</span>
+          <h2 class="section-title" style="font-size: clamp(2.2rem, 5vw, 3.2rem);">Selected sessions and conference appearances</h2>
+          <p class="section-copy">
+          A curated slice of the talks that best represent the profile: production AI, MLOps, observability and architecture across modern data platforms.
+          </p>
         <div class="button-row">
           <a class="button" href="/speaking/">View speaking page</a>
           <a class="button button--secondary" href={siteConfig.links.sessionize} target="_blank" rel="noreferrer">Sessionize profile</a>
@@ -110,10 +113,14 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
       </div>
 
       <div class="detail-grid">
-        {speakingHighlights.map((talk) => (
+        {featuredSpeakingSessions.map((talk) => (
           <article class="detail-card">
-            <span class="kicker">{talk.event} · {talk.year}</span>
-            <h3 class="card__title">{talk.title}</h3>
+            <span class="kicker session-meta">
+              <a href={talk.eventUrl} target="_blank" rel="noreferrer">{talk.event} {talk.year}</a>
+            </span>
+            <h3 class="card__title">
+              <a href={talk.sessionUrl} target="_blank" rel="noreferrer">{talk.title}</a>
+            </h3>
             <p>{talk.focus}</p>
           </article>
         ))}

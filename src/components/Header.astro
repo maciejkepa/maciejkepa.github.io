@@ -12,12 +12,25 @@ const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.s
       <span class="brand__subtitle">{siteConfig.name}</span>
     </a>
 
-    <nav class="nav" aria-label="Main navigation">
-      {siteConfig.nav.map((item) => (
-        <a href={item.href} data-active={isActive(item.href)}>
-          {item.label}
-        </a>
-      ))}
-    </nav>
+    <div class="site-header__controls">
+      <nav class="nav" aria-label="Main navigation">
+        {siteConfig.nav.map((item) => (
+          <a href={item.href} data-active={isActive(item.href)}>
+            {item.label}
+          </a>
+        ))}
+      </nav>
+
+      <button
+        class="theme-toggle"
+        type="button"
+        aria-label="Toggle color theme"
+        aria-pressed="false"
+        data-theme-toggle
+      >
+        <span class="theme-toggle__label">Theme</span>
+        <span class="theme-toggle__value" data-theme-label>Light</span>
+      </button>
+    </div>
   </div>
 </header>

@@ -69,10 +69,65 @@ const schemaGraph = {
     ...structuredDataItems
   ]
 };
+const themeBootstrap = `
+(() => {
+  const storageKey = 'maciejkepa-theme';
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  const darkThemeColor = '#171511';
+  const lightThemeColor = '#f1ede4';
+  const stored = localStorage.getItem(storageKey);
+  const theme = stored === 'light' || stored === 'dark' ? stored : 'light';
+  document.documentElement.dataset.theme = theme;
+  if (themeMeta) {
+    themeMeta.setAttribute('content', theme === 'light' ? lightThemeColor : darkThemeColor);
+  }
+})();
+`;
+const themeController = `
+(() => {
+  const storageKey = 'maciejkepa-theme';
+  const root = document.documentElement;
+  const toggle = document.querySelector('[data-theme-toggle]');
+  const label = document.querySelector('[data-theme-label]');
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  const darkThemeColor = '#171511';
+  const lightThemeColor = '#f1ede4';
+
+  if (!toggle || !label) {
+    return;
+  }
+
+  const syncUi = (theme) => {
+    root.dataset.theme = theme;
+    toggle.setAttribute('aria-pressed', String(theme === 'light'));
+    label.textContent = theme === 'light' ? 'Light' : 'Dark';
+    if (themeMeta) {
+      themeMeta.setAttribute('content', theme === 'light' ? lightThemeColor : darkThemeColor);
+    }
+  };
+
+  const getResolvedTheme = () => {
+    const stored = localStorage.getItem(storageKey);
+    if (stored === 'light' || stored === 'dark') {
+      return stored;
+    }
+
+    return 'light';
+  };
+
+  syncUi(getResolvedTheme());
+
+  toggle.addEventListener('click', () => {
+    const nextTheme = root.dataset.theme === 'light' ? 'dark' : 'light';
+    localStorage.setItem(storageKey, nextTheme);
+    syncUi(nextTheme);
+  });
+})();
+`;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -81,6 +136,7 @@ const schemaGraph = {
     <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#f1ede4" />
     {keywords.length > 0 && <meta name="keywords" content={keywords.join(', ')} />}
     <meta name="author" content={author} />
     <meta property="og:type" content={ogType} />
@@ -99,6 +155,7 @@ const schemaGraph = {
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
     {imageAlt && <meta name="twitter:image:alt" content={imageAlt} />}
+    <script is:inline set:html={themeBootstrap} />
     <script type="application/ld+json" set:html={JSON.stringify(schemaGraph)} />
   </head>
   <body>
@@ -109,5 +166,6 @@ const schemaGraph = {
       </main>
       <Footer />
     </div>
+    <script is:inline set:html={themeController} />
   </body>
 </html>

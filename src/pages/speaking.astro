@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { siteConfig, speakingHighlights } from '../lib/site';
+import { siteConfig, speakingSessions } from '../lib/site';
 
 const formats = [
   {
@@ -18,6 +18,7 @@ const formats = [
 ];
 
 const speakingPhoto = '/images/maciej-kepa-speaking.jpg';
+const orderedSpeakingSessions = [...speakingSessions].sort((a, b) => b.sortDate.localeCompare(a.sortDate));
 ---
 
 <BaseLayout title="Speaking" description="Conference talks, workshop topics and public speaking profile for Data, AI and ML engineering sessions.">
@@ -48,15 +49,19 @@ const speakingPhoto = '/images/maciej-kepa-speaking.jpg';
   <section class="section section--tight">
     <div class="container about-section surface">
       <div class="about-section__intro">
-        <span class="eyebrow">Selected talks</span>
-        <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.9rem);">Selected sessions and conference appearances</h2>
+        <span class="eyebrow">Sessions</span>
+        <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.9rem);">Sessions and conference appearances</h2>
         <p class="section-copy">A mix of MLOps, data observability, Databricks orchestration and vector-native AI topics grounded in real delivery work.</p>
       </div>
       <div class="about-section__body about-entry-list">
-        {speakingHighlights.map((talk) => (
+        {orderedSpeakingSessions.map((talk) => (
           <article class="about-entry">
-            <span class="kicker">{talk.event} · {talk.year}</span>
-            <h2 class="card__title">{talk.title}</h2>
+            <span class="kicker session-meta">
+              <a href={talk.eventUrl} target="_blank" rel="noreferrer">{talk.event} {talk.year}</a>
+            </span>
+            <h2 class="card__title">
+              <a href={talk.sessionUrl} target="_blank" rel="noreferrer">{talk.title}</a>
+            </h2>
             <p>{talk.focus}</p>
           </article>
         ))}
