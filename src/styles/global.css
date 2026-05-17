@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap");
 
 :root {
   color-scheme: dark;
@@ -339,7 +339,7 @@ html[data-theme="light"] .theme-toggle__value {
 
 .section-title {
   margin: 0;
-  font-family: "Newsreader", Georgia, serif;
+  font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
   font-size: clamp(2rem, 4vw, 3.6rem);
   line-height: 0.98;
   letter-spacing: -0.05em;
@@ -365,7 +365,7 @@ html[data-theme="light"] .theme-toggle__value {
 
 .hero__title {
   margin: 0.35rem 0 1rem;
-  font-family: "Newsreader", Georgia, serif;
+  font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
   font-size: clamp(3.4rem, 9vw, 7rem);
   line-height: 0.9;
   letter-spacing: -0.07em;
@@ -410,7 +410,7 @@ html[data-theme="light"] .theme-toggle__value {
 
 .home-panel__title {
   margin: 0.8rem 0 0;
-  font-family: "Newsreader", Georgia, serif;
+  font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
   font-size: clamp(1.55rem, 3vw, 2.2rem);
   line-height: 0.98;
   letter-spacing: -0.04em;
@@ -761,7 +761,7 @@ html[data-theme="light"] .filter-chip[data-active="true"] {
 .topic-card__title,
 .card__title {
   margin: 0.65rem 0 0.45rem;
-  font-family: "Newsreader", Georgia, serif;
+  font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
   font-size: 1.18rem;
   line-height: 1.08;
   letter-spacing: -0.03em;
@@ -1084,7 +1084,7 @@ html[data-theme="light"] .callout li {
 .prose h2,
 .prose h3,
 .prose h4 {
-  font-family: "Newsreader", Georgia, serif;
+  font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
   line-height: 1.05;
   letter-spacing: -0.04em;
 }
