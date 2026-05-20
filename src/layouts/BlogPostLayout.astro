@@ -20,9 +20,13 @@ interface Props {
   repoUrl?: string;
   coverImage?: string;
   coverAlt?: string;
+  faqs?: Array<{
+    question: string;
+    answer: string;
+  }>;
 }
 
-const { title, description, date, updated, tags, type, readingTime, headings, repoUrl, coverImage, coverAlt } = Astro.props;
+const { title, description, date, updated, tags, type, readingTime, headings, repoUrl, coverImage, coverAlt, faqs = [] } = Astro.props;
 const tocHeadings = headings.filter((heading) => heading.depth >= 2 && heading.depth <= 3);
 const articleSchema = {
   '@type': 'BlogPosting',
@@ -43,6 +47,20 @@ const articleSchema = {
   timeRequired: `PT${readingTime}M`,
   image: coverImage ? [new URL(coverImage, Astro.site).href] : undefined
 };
+const faqSchema = faqs.length > 0
+  ? {
+      '@type': 'FAQPage',
+      '@id': `${Astro.url.href}#faq`,
+      mainEntity: faqs.map((faq) => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: faq.answer
+        }
+      }))
+    }
+  : undefined;
 ---
 
 <BaseLayout
@@ -54,7 +72,7 @@ const articleSchema = {
   keywords={tags}
   publishedTime={date.toISOString()}
   modifiedTime={(updated ?? date).toISOString()}
-  structuredData={articleSchema}
+  structuredData={faqSchema ? [articleSchema, faqSchema] : articleSchema}
 >
   <section class="article-hero">
     <div class="container narrow">

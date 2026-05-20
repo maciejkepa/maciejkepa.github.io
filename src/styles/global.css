@@ -593,11 +593,16 @@ html[data-theme="light"] .metric__value {
   display: grid;
   gap: 1rem;
   align-items: start;
-  padding: 1.65rem 0;
+  padding: 1.85rem 0;
   border-radius: 0;
   border-width: 0 0 1px;
   background: transparent;
   box-shadow: none;
+}
+
+.post-card--stack .post-card__media {
+  margin-top: 0;
+  margin-left: 0.85rem;
 }
 
 .post-card__media {

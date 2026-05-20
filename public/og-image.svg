@@ -20,9 +20,8 @@
     <path d="M950 0V630" />
   </g>
   <rect x="80" y="84" width="1040" height="462" rx="28" fill="#0c1116" fill-opacity=".84" stroke="#24303c" />
-  <text x="120" y="170" fill="#77e3ff" font-family="IBM Plex Mono, monospace" font-size="28" letter-spacing="8">BEYOND THE NOTEBOOK</text>
+  <text x="120" y="170" fill="#a75f18" font-family="IBM Plex Mono, monospace" font-size="28" letter-spacing="8">BEYOND THE NOTEBOOK</text>
   <text x="120" y="300" fill="#edf3f7" font-family="Georgia, serif" font-size="98">Maciej Kępa</text>
   <text x="120" y="370" fill="#98a7b5" font-family="IBM Plex Sans, sans-serif" font-size="34">Practical notes on Data, AI, ML and production-grade engineering.</text>
   <text x="120" y="456" fill="#9af4c9" font-family="IBM Plex Sans, sans-serif" font-size="28">maciejkepa.dev/blog</text>
 </svg>
-

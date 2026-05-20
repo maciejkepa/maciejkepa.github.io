@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
-  <title>MK monogram favicon</title>
-  <rect width="64" height="64" rx="14" fill="#07090b" />
-  <path d="M16 46V18h6.5l9.5 14.3L41.5 18H48v28h-6V29.7l-9.3 13.8h-1.3L22 29.7V46Z" fill="#edf3f7" />
-  <path d="M49 17h-8.6L31.5 30.1l3.8 5.5L49 17Z" fill="#77e3ff" fill-opacity=".9" />
+  <title>Maciej Kepa favicon</title>
+  <rect width="64" height="64" rx="16" fill="#f4efe6" />
+  <rect x="2.5" y="2.5" width="59" height="59" rx="13.5" fill="none" stroke="#5c6672" stroke-opacity=".28" />
+  <path d="M14 47V17h8.2l9.8 14.2L41.8 17H50v30h-7.1V28.5l-9.7 13.8h-2.3l-9.8-13.8V47Z" fill="#1b2026" />
+  <path d="M44.7 13.8h7.5L36.9 35.2l-3.6-5.1Z" fill="#a75f18" />
 </svg>
-

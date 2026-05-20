@@ -15,7 +15,15 @@ const blog = defineCollection({
     draft: z.boolean().default(false),
     coverImage: z.string().optional(),
     coverAlt: z.string().optional(),
-    repoUrl: z.string().url().optional()
+    repoUrl: z.string().url().optional(),
+    faqs: z
+      .array(
+        z.object({
+          question: z.string(),
+          answer: z.string()
+        })
+      )
+      .optional()
   })
 });
 

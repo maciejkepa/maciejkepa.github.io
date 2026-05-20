@@ -1,13 +1,20 @@
 ---
-title: "Beyond the Notebook: Moving ML to Production"
-description: "A practical guide to the engineering problems that appear after the model works in a notebook."
+title: "Beyond the Notebook: what has to exist before ML can run in Production"
+description: "A practical guide to the systems, delivery and MLOps concerns that start after a model works in a notebook."
 date: "2026-05-15"
 updated: "2026-05-15"
 tags: ["mlops", "production-ml", "architecture"]
 type: "article"
 featured: true
-coverImage: "/blog-covers/beyond-the-notebook.svg"
-coverAlt: "Notebook evolving into a production machine learning system"
+coverImage: "/blog-covers/beyond-the-notebook.png"
+coverAlt: "Hand-drawn notebook sketch transitioning into a production ML system"
+faqs:
+  - question: "Is a good notebook enough to call an ML project production-ready?"
+    answer: "No. A good notebook proves that an approach can work under development conditions. Production readiness requires repeatable data flows, controlled deployment, monitoring, ownership and a clear rollback path."
+  - question: "What usually breaks first after a successful demo?"
+    answer: "Usually not the model itself. The first problems tend to appear in data preparation, environment consistency, deployment steps, permissions and the lack of operational ownership."
+  - question: "When should teams start thinking about MLOps?"
+    answer: "Earlier than they usually do. The right time is when the team starts expecting the same workflow to run more than once, in more than one environment, with more than one person involved."
 ---
 
 import Callout from '../../components/Callout.astro';
@@ -15,6 +22,10 @@ import Callout from '../../components/Callout.astro';
 Most machine learning stories look impressive right until the notebook ends.
 
 The notebook is where we prove that a model can work. Production is where we prove that a system can keep working. These are related goals, but they are not the same goal, and many teams get into trouble when they treat them as if they were.
+
+This is also the point where MLOps stops sounding abstract and starts becoming a practical delivery problem.
+
+![Notebook sketch transitioning into a production ML system](/blog-covers/beyond-the-notebook.png)
 
 ## Why the notebook is not the final milestone
 
@@ -39,6 +50,8 @@ That is where the real engineering work begins:
 5. We need a way to evaluate the system after deployment, not just before it.
 
 Without these elements, a working notebook is still only a local success.
+
+If you want a cleaner definition of that operational layer, see [What MLOps Actually Is and Why Teams Keep Misdefining It](/blog/what-mlops-actually-is-and-why-teams-keep-misdefining-it/).
 
 ## The confusion usually comes from the word "working"
 
@@ -123,6 +136,6 @@ If a team wants machine learning to be reliable, maintainable and useful in prod
 
 ## Further reading
 
-- The confusion about MLOps
-- Building an effective MLOps platform in the Azure cloud
-- Machine learning on IoT Edge
+- [What MLOps Actually Is and Why Teams Keep Misdefining It](/blog/what-mlops-actually-is-and-why-teams-keep-misdefining-it/)
+- [MLOps topic archive](/blog/topic/mlops/)
+- [The confusion about MLOps](https://www.datumo.io/blog/the-confusion-about-mlops)
