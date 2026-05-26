@@ -1,0 +1,230 @@
+---
+title: "Why MLOps is mostly an Engineering problem"
+description: "If you ask whether MLOps is mostly software engineering, the practical answer is broader: delivery, data reliability, architecture and operational ownership usually matter more than the model code itself."
+date: "2026-05-26"
+updated: "2026-05-26"
+tags: ["mlops", "software-engineering", "production-ml", "architecture"]
+type: "article"
+featured: true
+draft: false
+coverImage: "/blog-covers/mlops-engineering-not-tooling.png"
+coverAlt: "Hand-drawn systems sketch showing MLOps as connected engineering work across code, data, deployment and monitoring"
+faqs:
+  - question: "Is MLOps mostly about choosing the right platform?"
+    answer: "No. Tooling matters, but most delivery failures appear earlier: unclear ownership, weak release workflows, unstable data paths, poor environment discipline and missing operational feedback loops."
+  - question: "Is MLOps only a software engineering problem?"
+    answer: "Not in a narrow sense. Software engineering is a large part of the foundation, but production ML also depends on data engineering, architecture and operating model decisions."
+  - question: "Is the ML code itself the biggest part of MLOps work?"
+    answer: "Usually not. The model or ML-specific code is often a small fraction of the real production system. The larger effort tends to sit in data pipelines, environments, deployment workflows, monitoring, ownership and system integration."
+  - question: "What usually blocks MLOps maturity first?"
+    answer: "Usually not the lack of a specialized product. The first blockers are more ordinary: manual deployment paths, unreproducible training, inconsistent features, unclear ownership and weak observability."
+---
+
+import Callout from '../../components/Callout.astro';
+
+Many teams approach MLOps as if it were a tooling category.
+
+They start by comparing platforms, registries, orchestrators and cloud services. The assumption is that once the right stack is in place, the machine learning delivery problem becomes manageable.
+
+I think that order is backwards.
+
+If you ask whether MLOps is mostly software engineering, my answer is: partly, but the more useful framing is that MLOps is mostly an engineering problem. The hard part is rarely the model code itself. The hard part is everything required to make that code reproducible, deployable, observable and maintainable in production.
+
+The harder truth is that most MLOps trouble starts before tool selection becomes the decisive factor.
+
+It starts when teams try to operationalize machine learning on top of weak engineering foundations: manual releases, inconsistent environments, fragile data assumptions, unclear ownership and architecture that only works while the original author is still nearby.
+
+Another way to put it is this: the model code itself is often only a small slice of the real work. Sometimes it is five percent, sometimes ten, sometimes more, but very rarely is it the whole story people imagine when they say "we already have the model".
+
+If you want the stricter definitional view of the term itself, start with [What MLOps Actually Is and Why Teams Keep Misdefining It](/blog/what-mlops-actually-is-and-why-teams-keep-misdefining-it/). This article is about something narrower and more opinionated: where the real delivery burden usually sits.
+
+![Hand-drawn systems sketch showing MLOps as connected engineering work across code, data, deployment and monitoring](/blog-covers/mlops-engineering-not-tooling.png)
+
+## Why MLOps usually fails before tooling matters
+
+Once a model shows promise, the next failure is usually not "we chose the wrong product".
+
+The real issues look much more ordinary. No one can reproduce the training run with confidence. Feature logic drifts between training and inference. Deployments depend on undocumented manual actions. Data freshness degrades without being visible. Retraining responsibility is unclear. Incident handling exists only in theory.
+
+None of these failures are solved simply by adding a registry, an orchestrator or a managed platform.
+
+They are engineering problems first.
+
+That is why I tend to distrust discussions about MLOps that begin with the vendor landscape. The vendor landscape matters later. The first question is whether the system around the model is disciplined enough to be operated at all.
+
+## What people call MLOps is often delayed engineering work
+
+In a lot of organizations, MLOps becomes the label attached to work that should have been treated as engineering from the start.
+
+It includes versioning the right artifacts, defining promotion paths between environments, standardizing packaging and runtime assumptions, making data inputs traceable and deciding who owns failures after release.
+
+None of this is especially exotic. It is just the part of the project that becomes visible once the notebook is no longer enough.
+
+## Why the model code is usually the minority share
+
+This is the point I think many teams underestimate most.
+
+The ML-specific code, the part that directly defines training logic or inference behavior, is often a surprisingly small part of the total production system.
+
+Around it sits everything else: data ingestion and preparation, feature logic and consistency, packaging and runtime environments, CI/CD and release workflows, infrastructure and permissions, observability and alerting, rollback and incident response, plus ownership, documentation and operational process.
+
+That is why I am skeptical whenever a project is described as "basically done" because the model is already good.
+
+In practice, the model can be only five percent of what has to work for the system to be trustworthy in production.
+
+This is also why papers like [Hidden Technical Debt in Machine Learning Systems](https://papers.nips.cc/paper_files/paper/2015/hash/86df7dcfd896fcaf2674f757a2463eba-Abstract.html) still hold up so well. They point to the same pattern: the visible model logic is often not the part that creates the largest long-term maintenance burden.
+
+## Software engineering is the biggest layer, but not the whole problem
+
+There is a reason people often compare MLOps to DevOps or software engineering. A large part of the work really does come from familiar engineering discipline:
+
+- version control
+- packaging
+- automated testing
+- CI/CD
+- environment consistency
+- artifact versioning
+- monitoring
+- rollback paths
+
+Without those foundations, production ML turns into a fragile sequence of heroic manual steps.
+
+So yes, software engineering is a big part of MLOps. In many teams it is the biggest part.
+
+But I would still not reduce the whole problem to that.
+
+## Data engineering carries the same operational weight
+
+A model can be packaged perfectly and still fail as a production system because the data side is unstable.
+
+This is where the simplistic line starts to break.
+
+Production ML also depends on reliable source-to-feature pipelines, consistent transformation logic, data contracts and schema awareness, lineage across datasets, reproducibility of inputs, and freshness and completeness checks.
+
+If these layers are weak, no amount of deployment polish saves the system for long.
+
+<Callout tone="production-note" title="Production note">
+In production ML, data quality is not only an upstream concern. It is part of runtime reliability.
+</Callout>
+
+## Architecture matters because ML systems are not one artifact
+
+Traditional application delivery often centers on one dominant artifact: the application itself.
+
+ML delivery is messier.
+
+The operational surface usually includes data pipelines, feature logic, training code, evaluation logic, model artifacts, serving interfaces, monitoring and feedback loops.
+
+That is an architectural problem as much as it is a coding problem.
+
+Teams need clear answers to questions like where feature logic lives, what gets versioned together, what is promoted between environments, which layer is authoritative during incidents and where model ownership meets platform ownership.
+
+Those are not tool configuration details. They are system design decisions.
+
+## Process is where many teams quietly lose operational control
+
+Another common mistake is treating process as overhead and engineering as the "real work".
+
+In production ML, process is often the mechanism that turns engineering intent into repeatable operation.
+
+If release criteria are unclear, if model acceptance is informal, if no one owns retraining triggers, or if post-deployment review never happens, then the system is not really operationalized.
+
+The process layer usually includes definition of a release candidate, promotion rules between environments, ownership of failures and regressions, retraining and rollback criteria, and decision points for changing data, code or model behavior.
+
+That is still part of the engineering system. It is not separate from it.
+
+## The strongest smell is buying tools to avoid design decisions
+
+This is the pattern I see most often.
+
+A team feels the pain of operationalizing ML, but instead of tightening the workflow, they jump straight to tooling. A platform comes before an operating model. An orchestrator comes before a reliable pipeline contract. A registry comes before clear release rules. A feature store appears before stable feature ownership.
+
+The hope is understandable. Tooling feels concrete. It gives motion, demos and procurement milestones.
+
+But when the underlying decisions are still weak, the tool mostly hides the ambiguity instead of removing it.
+
+<Callout tone="pitfall" title="Pitfall">
+Buying an MLOps platform does not remove the need to define ownership, release criteria and failure handling. It only makes those gaps easier to ignore for a while.
+</Callout>
+
+## “DevOps for ML” is useful shorthand, but incomplete
+
+When people say MLOps is DevOps for machine learning, I usually understand what they mean.
+
+It is a useful correction to the idea that ML can bypass engineering discipline.
+
+But the analogy becomes incomplete the moment we remember that ML systems do not only fail because code is wrong.
+
+They also fail because input data drifts, labels become less representative, evaluation logic was too optimistic, business context changes faster than the pipeline, or the model remains statistically valid but operationally irrelevant.
+
+So the DevOps comparison is directionally right, but it does not cover the whole burden.
+
+## A practical test for MLOps maturity
+
+Forget the maturity model slides for a moment.
+
+A more useful test is this:
+
+Can a team other than the original author retrain, deploy, observe and recover the system using documented and repeatable workflows?
+
+If the answer is no, then the issue is rarely a missing MLOps product.
+
+It is usually one of four things: the workflow is not yet engineered, the data path is not yet controlled, the system boundaries are not yet clear, or the operating model is not yet real.
+
+## What to optimize before buying more tooling
+
+Before buying one more platform capability, I would usually optimize for these foundations:
+
+- traceable experiments
+- reproducible environments
+- versioned data and model artifacts
+- explicit deployment workflows
+- observable runtime behavior
+- clear operational ownership
+
+Only after that does tooling start to compound in the right direction.
+
+<Callout tone="trade-off" title="Trade-off">
+Advanced tooling can accelerate maturity, but it can also hide immaturity for a surprisingly long time.
+</Callout>
+
+## FAQ
+
+### Is MLOps mostly about choosing the right platform?
+
+No. Tooling matters, but most delivery failures appear earlier: unclear ownership, weak release workflows, unstable data paths, poor environment discipline and missing operational feedback loops.
+
+### Is MLOps only a software engineering problem?
+
+Not in a narrow sense. Software engineering is a large part of the foundation, but production ML also depends on data engineering, architecture and operating model decisions.
+
+### Is the ML code itself the biggest part of MLOps work?
+
+Usually not. The model or ML-specific code is often a small fraction of the real production system. The larger effort tends to sit in data pipelines, environments, deployment workflows, monitoring, ownership and system integration.
+
+### What usually blocks MLOps maturity first?
+
+Usually not the lack of a specialized product. The first blockers are more ordinary: manual deployment paths, unreproducible training, inconsistent features, unclear ownership and weak observability.
+
+## Final point
+
+The industry often talks about MLOps as if it were something you add after the interesting work is done.
+
+In practice, it is the thing that determines whether the work was ever complete.
+
+If the surrounding system is not engineered well enough, then the model may still be impressive, but the solution is not yet ready for real use.
+
+That is why I do think MLOps is mostly an engineering problem.
+
+But I mean engineering in the broader sense: code, data, architecture and operations working together under real delivery conditions.
+
+If those layers are weak, tooling cannot rescue the system.
+
+If those layers are strong, tooling becomes an accelerator rather than a crutch.
+
+## Further reading
+
+- [What MLOps Actually Is and Why Teams Keep Misdefining It](/blog/what-mlops-actually-is-and-why-teams-keep-misdefining-it/)
+- [Beyond the Notebook: What Has to Exist Before ML Can Run in Production](/blog/beyond-the-notebook-moving-ml-to-production/)
+- [Hidden Technical Debt in Machine Learning Systems](https://papers.nips.cc/paper_files/paper/2015/hash/86df7dcfd896fcaf2674f757a2463eba-Abstract.html)
+- [MLOps topic archive](/blog/topic/mlops/)
