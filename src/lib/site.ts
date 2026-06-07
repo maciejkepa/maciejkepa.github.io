@@ -45,6 +45,11 @@ export const topicDefinitions = [
     description: 'Applied Azure patterns for ML, data platforms, security and delivery workflows.'
   },
   {
+    label: 'Observability',
+    slug: 'observability',
+    description: 'Monitoring, feedback loops, data quality signals and the runtime visibility needed to keep ML systems trustworthy.'
+  },
+  {
     label: 'Tutorials',
     slug: 'tutorials',
     description: 'Step-by-step implementation notes focused on shipping, not slideware.'
