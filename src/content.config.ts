@@ -11,6 +11,14 @@ const blog = defineCollection({
     updated: z.coerce.date().optional(),
     tags: z.array(z.string()),
     type: z.enum(['article', 'guide']).default('article'),
+    valueType: z.enum([
+      'Conceptual guide',
+      'Architectural guide',
+      'Production checklist',
+      'Postmortem',
+      'Tutorial',
+      'Reference implementation'
+    ]).default('Conceptual guide'),
     featured: z.boolean().default(false),
     draft: z.boolean().default(false),
     coverImage: z.string().optional(),

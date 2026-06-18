@@ -8,12 +8,15 @@ interface Props {
   post: CollectionEntry<'blog'>;
   filterTokens?: string[];
   layout?: 'grid' | 'stack';
+  showTags?: boolean;
 }
 
-const { post, filterTokens = [], layout = 'grid' } = Astro.props;
+const { post, filterTokens = [], layout = 'grid', showTags = true } = Astro.props;
 const readingTime = getReadingTime(post.body);
 const coverImage = post.data.coverImage ?? '/blog-covers/default.svg';
 const coverAlt = post.data.coverAlt ?? `${post.data.title} cover`;
+const visibleTags = post.data.tags.slice(0, 2);
+const valueType = post.data.valueType;
 ---
 
 <article class:list={['post-card', layout === 'stack' && 'post-card--stack']} data-post-card data-topics={filterTokens.join(',')}>
@@ -24,7 +27,7 @@ const coverAlt = post.data.coverAlt ?? `${post.data.title} cover`;
   )}
 
   <div class="post-card__header">
-    <span class="kicker">{post.data.type}</span>
+    <span class="kicker">{valueType}</span>
     <span class="post-card__meta">{formatDate(post.data.date)} · {readingTime} min read</span>
   </div>
 
@@ -35,9 +38,11 @@ const coverAlt = post.data.coverAlt ?? `${post.data.title} cover`;
     <p class="post-card__excerpt">{post.data.description}</p>
   </div>
 
-  <div class="pill-row" aria-label="Tags">
-    {post.data.tags.map((tag) => (
-      <span class="pill">{tag}</span>
-    ))}
-  </div>
+  {showTags && (
+    <div class="pill-row" aria-label="Tags">
+      {visibleTags.map((tag) => (
+        <span class="pill">{tag}</span>
+      ))}
+    </div>
+  )}
 </article>

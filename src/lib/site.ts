@@ -45,6 +45,11 @@ export const topicDefinitions = [
     description: 'Applied Azure patterns for ML, data platforms, security and delivery workflows.'
   },
   {
+    label: 'Databricks',
+    slug: 'databricks',
+    description: 'Operational Databricks patterns for apps, AI Search, data products and production-facing ML or GenAI systems.'
+  },
+  {
     label: 'Observability',
     slug: 'observability',
     description: 'Monitoring, feedback loops, data quality signals and the runtime visibility needed to keep ML systems trustworthy.'

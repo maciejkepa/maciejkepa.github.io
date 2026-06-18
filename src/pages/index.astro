@@ -4,19 +4,42 @@ import { getCollection } from 'astro:content';
 import ArticleCard from '../components/ArticleCard.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getPostFilterTokens, getTopicCards, sortPosts } from '../lib/blog';
+import { getReadingTime } from '../lib/reading-time';
 import { siteConfig, speakingSessions } from '../lib/site';
 
 const posts = sortPosts(await getCollection('blog', ({ data }) => !data.draft));
-const featuredPosts = posts.filter((post) => post.data.featured).slice(0, 3);
 const topicCards = getTopicCards(posts);
 const featuredSpeakingSessions = [...speakingSessions]
   .filter((session) => typeof session.featuredRank === 'number')
-  .sort((a, b) => b.sortDate.localeCompare(a.sortDate));
-const aboutHighlights = [
-  'Azure and Databricks architectures built for production pressure.',
-  'Delivery pipelines, observability and ML systems that have to stay operable.',
-  'A writing angle focused on the engineering layer after the notebook.'
-];
+  .sort((a, b) => b.sortDate.localeCompare(a.sortDate))
+  .slice(0, 2);
+const primaryPost =
+  posts.find((post) => post.data.featured) ??
+  posts[0];
+const supportingPosts = posts
+  .filter((post) => post.id !== primaryPost?.id)
+  .slice(0, 2);
+const topicPaths = [
+  {
+    title: 'Production MLOps',
+    topic: topicCards.find((topic) => topic.slug === 'mlops'),
+    promise: 'From model packaging to deployment, ownership and operational readiness.',
+    cta: 'Explore MLOps'
+  },
+  {
+    title: 'AI Platform Architecture',
+    topic: topicCards.find((topic) => topic.slug === 'ai-architecture'),
+    promise: 'Reference architectures, trade-offs and platform decisions for production AI.',
+    cta: 'Explore architecture'
+  },
+  {
+    title: 'ML Observability',
+    topic: topicCards.find((topic) => topic.slug === 'observability'),
+    promise: 'Monitoring signals, feedback loops and operational baselines.',
+    cta: 'Explore observability'
+  }
+].filter((path): path is typeof path & { topic: NonNullable<typeof path.topic> } => path.topic !== undefined);
+const portrait = '/images/maciej-kepa-about.jpg';
 const rssHighlights = ['Full articles and guides', 'Direct feed access from day one', 'No signup flow or newsletter gate'];
 ---
 
@@ -26,9 +49,9 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
       <div>
         <span class="eyebrow">{siteConfig.name}</span>
         <h1 class="hero__title">{siteConfig.owner}</h1>
-        <p class="hero__role">{siteConfig.role}</p>
+        <p class="hero__role">Data & AI Architect</p>
         <p class="hero__copy">
-          I write about production-grade AI, MLOps, data platforms, cloud-native ML systems and the engineering reality behind modern AI.
+          I write about building data and AI systems that survive production — MLOps, observability, platform engineering and architecture.
         </p>
 
         <div class="hero__actions">
@@ -39,27 +62,37 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
         </div>
       </div>
 
-      <div class="hero-side">
+      <div class="hero-side hero-side--graphic">
         <div class="home-panel home-panel--center surface">
           <span class="eyebrow">Current focus</span>
           <h2 class="home-panel__title">Production over demos</h2>
           <p class="home-panel__copy">
-            Notes on reproducible ML, data platforms, observability and delivery systems that teams can actually operate.
+            Practical notes on operating AI systems under real production constraints.
           </p>
         </div>
 
         <div class="metric-row">
           <div class="metric surface">
-            <div class="metric__label">Writing focus</div>
-            <div class="metric__value">Data, AI, ML</div>
+            <div class="metric__label">Platforms</div>
+            <div class="metric__value">
+              <span>Azure</span>
+              <span>Databricks</span>
+            </div>
           </div>
           <div class="metric surface">
-            <div class="metric__label">Bias</div>
-            <div class="metric__value">Production-first</div>
+            <div class="metric__label">Topics</div>
+            <div class="metric__value">
+              <span>AI</span>
+              <span>Data</span>
+              <span>MLOps</span>
+            </div>
           </div>
           <div class="metric surface">
-            <div class="metric__label">Delivery style</div>
-            <div class="metric__value">Field notes</div>
+            <div class="metric__label">Public work</div>
+            <div class="metric__value">
+              <span>Articles</span>
+              <span>Conference talks</span>
+            </div>
           </div>
         </div>
       </div>
@@ -74,41 +107,70 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
         Architecture essays, delivery guides and operational lessons from the part of AI work that starts after the first promising notebook.
       </p>
 
-      <div class="post-grid" style="margin-top: 2rem;">
-        {featuredPosts.map((post) => (
-          <ArticleCard post={post} filterTokens={getPostFilterTokens(post)} />
-        ))}
-      </div>
+      {primaryPost ? (
+        <div class="featured-writing-layout">
+          <article class="featured-post">
+            <a class="featured-post__media" href={`/blog/${primaryPost.id}/`} aria-label={`Read ${primaryPost.data.title}`}>
+              <img
+                src={primaryPost.data.coverImage ?? '/blog-covers/default.svg'}
+                alt={primaryPost.data.coverAlt ?? `${primaryPost.data.title} cover`}
+                loading="lazy"
+              />
+            </a>
+            <div class="featured-post__body">
+              <div class="post-card__header">
+                <span class="kicker">{primaryPost.data.valueType}</span>
+                <span class="post-card__meta">{getReadingTime(primaryPost.body)} min read</span>
+              </div>
+              <h3 class="featured-post__title">
+                <a href={`/blog/${primaryPost.id}/`}>{primaryPost.data.title}</a>
+              </h3>
+              <p>{primaryPost.data.description}</p>
+              <div class="button-row">
+                <a class="button" href={`/blog/${primaryPost.id}/`}>Read article</a>
+              </div>
+            </div>
+          </article>
+
+          <div class="featured-writing-layout__side">
+            {supportingPosts.map((post) => (
+              <ArticleCard post={post} filterTokens={getPostFilterTokens(post)} showTags={false} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p class="empty-state">No published articles available yet.</p>
+      )}
     </div>
   </section>
 
   <section class="section">
     <div class="container">
       <span class="eyebrow">Topics</span>
-      <h2 class="section-title">Production-minded coverage across the stack</h2>
+      <h2 class="section-title">Choose a production AI reading path</h2>
       <div class="topic-grid" style="margin-top: 2rem;">
-        {topicCards.map((topic) => (
-          <a class="topic-card" href={`/blog/topic/${topic.slug}/`}>
-            <span class="topic-card__count">{topic.count} posts</span>
-            <h3 class="topic-card__title">{topic.label}</h3>
-            <p class="topic-card__description">{topic.description}</p>
+        {topicPaths.map((path) => (
+          <a class="topic-card topic-card--path" href={`/blog/topic/${path.topic.slug}/`}>
+            <span class="topic-card__count">{path.topic.count} {path.topic.count === 1 ? 'post' : 'posts'}</span>
+            <h3 class="topic-card__title">{path.title}</h3>
+            <p class="topic-card__description">{path.promise}</p>
+            <span class="topic-card__link">{path.cta} →</span>
           </a>
         ))}
       </div>
     </div>
   </section>
 
-  <section class="section">
+  <section class="section section--tight">
       <div class="container home-speaking">
         <div class="card surface">
           <span class="eyebrow">Speaking</span>
-          <h2 class="section-title" style="font-size: clamp(2.2rem, 5vw, 3.2rem);">Selected sessions and conference appearances</h2>
+          <h2 class="section-title" style="font-size: clamp(2.2rem, 5vw, 3.2rem);">Selected talks</h2>
           <p class="section-copy">
-          A curated slice of the talks that best represent my profile: production AI, MLOps, observability and architecture across modern data platforms.
+          Conference sessions on production AI, MLOps, observability and data platform architecture.
           </p>
         <div class="button-row">
-          <a class="button" href="/speaking/">View speaking page</a>
-          <a class="button button--secondary" href={siteConfig.links.sessionize} target="_blank" rel="noreferrer">Sessionize profile</a>
+          <a class="button" href="/speaking/">View all speaking appearances</a>
         </div>
       </div>
 
@@ -131,18 +193,19 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
   <section class="section">
     <div class="container home-utility">
       <article class="home-feature surface">
-        <span class="eyebrow">About me</span>
-        <h2 class="section-title" style="font-size: clamp(2.1rem, 5vw, 3.1rem);">Architecture, delivery and AI systems that have to hold up in production</h2>
-        <p class="section-copy">
-          Data Architect focused on Azure-native AI/ML platforms, MLOps foundations, delivery pipelines and the engineering systems that survive beyond the proof of concept.
-        </p>
-        <div class="home-feature__list">
-          {aboutHighlights.map((item) => (
-            <p>{item}</p>
-          ))}
-        </div>
-        <div class="button-row">
-          <a class="button" href="/about/">Read more</a>
+        <figure class="about-inline-photo">
+          <img src={portrait} alt="Maciej Kępa" loading="lazy" />
+        </figure>
+        <div class="about-inline-content">
+          <span class="eyebrow">About me</span>
+          <h2 class="section-title about-inline-title">Architecture, delivery and AI systems that have to hold up in production</h2>
+          <p class="section-copy">
+            I am a Data & AI Architect working on production data platforms, MLOps and cloud-native AI systems. My work focuses on the engineering decisions that make these systems operable, observable and maintainable.
+          </p>
+          <div class="button-row">
+            <a class="button" href="/about/">Read more</a>
+            <a class="button button--secondary" href="/projects/">View projects</a>
+          </div>
         </div>
       </article>
 
