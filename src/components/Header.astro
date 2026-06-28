@@ -1,8 +1,19 @@
 ---
+import { getCollection } from 'astro:content';
+
 import { siteConfig } from '../lib/site';
+import { formatDate, sortPosts } from '../lib/blog';
 
 const pathname = Astro.url.pathname;
 const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+const posts = sortPosts(await getCollection('blog', ({ data }) => !data.draft));
+const searchItems = posts.map((post) => ({
+    title: post.data.title,
+    href: `/blog/${post.id}/`,
+    category: post.data.valueType,
+    description: post.data.description,
+    keywords: [...post.data.tags, post.data.type, formatDate(post.data.date)]
+  }));
 ---
 
 <header class="site-header">
@@ -21,16 +32,245 @@ const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.s
         ))}
       </nav>
 
+      <div class="site-search" data-site-search>
+        <form class="site-search__form" role="search" data-search-form>
+          <label class="sr-only" for="site-search-input">Search</label>
+          <svg class="site-search__icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m21 21-4.35-4.35" />
+            <circle cx="11" cy="11" r="6.5" />
+          </svg>
+          <input
+            id="site-search-input"
+            type="search"
+            name="q"
+            placeholder="Search"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Search articles"
+            aria-expanded="false"
+            aria-controls="site-search-results"
+            data-search-input
+          />
+          <button class="site-search__clear" type="button" aria-label="Clear search" data-search-clear hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m18 6-12 12" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </form>
+        <div class="site-search__panel" data-search-panel hidden>
+          <div class="site-search__results" id="site-search-results" data-search-results></div>
+        </div>
+      </div>
+
       <button
         class="theme-toggle"
         type="button"
         aria-label="Toggle color theme"
-        aria-pressed="false"
+        title="Toggle color theme"
         data-theme-toggle
       >
-        <span class="theme-toggle__label">Theme</span>
-        <span class="theme-toggle__value" data-theme-label>Light</span>
+        <svg class="theme-toggle__icon theme-toggle__icon--sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2.2" />
+          <path d="M12 19.8V22" />
+          <path d="m4.93 4.93 1.56 1.56" />
+          <path d="m17.51 17.51 1.56 1.56" />
+          <path d="M2 12h2.2" />
+          <path d="M19.8 12H22" />
+          <path d="m4.93 19.07 1.56-1.56" />
+          <path d="m17.51 6.49 1.56-1.56" />
+        </svg>
+        <svg class="theme-toggle__icon theme-toggle__icon--moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20.2 14.35A7.7 7.7 0 0 1 9.65 3.8 8.6 8.6 0 1 0 20.2 14.35Z" />
+        </svg>
       </button>
     </div>
   </div>
+  <script is:inline type="application/json" id="site-search-index" set:html={JSON.stringify(searchItems)} />
 </header>
+
+<script>
+  interface SearchItem {
+    title: string;
+    href: string;
+    category: string;
+    description: string;
+    keywords: string[];
+  }
+
+  interface IndexedSearchItem extends SearchItem {
+    haystack: string;
+  }
+
+  interface ScoredSearchItem extends IndexedSearchItem {
+    score: number;
+  }
+
+  const searchRoot = document.querySelector('[data-site-search]');
+  const searchIndexElement = document.querySelector('#site-search-index');
+
+  if (searchRoot instanceof HTMLElement && searchIndexElement?.textContent) {
+    const form = searchRoot.querySelector('[data-search-form]');
+    const input = searchRoot.querySelector('[data-search-input]');
+    const clearButton = searchRoot.querySelector('[data-search-clear]');
+    const panel = searchRoot.querySelector('[data-search-panel]');
+    const results = searchRoot.querySelector('[data-search-results]');
+    const rawItems = JSON.parse(searchIndexElement.textContent) as SearchItem[];
+    const normalize = (value: string) =>
+      value
+        .toLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '');
+    const escapeHtml = (value: string) =>
+      value.replace(/[&<>"']/g, (character) => {
+        const entities: Record<string, string> = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        };
+
+        return entities[character];
+      });
+    const searchItems: IndexedSearchItem[] = rawItems.map((item) => ({
+      ...item,
+      haystack: normalize([
+        item.title,
+        item.category,
+        item.description,
+        ...item.keywords
+      ].join(' '))
+    }));
+    let activeResults: ScoredSearchItem[] = [];
+
+    const openPanel = () => {
+      if (panel instanceof HTMLElement && input instanceof HTMLInputElement) {
+        panel.hidden = false;
+        input.setAttribute('aria-expanded', 'true');
+      }
+    };
+
+    const closePanel = () => {
+      if (panel instanceof HTMLElement && input instanceof HTMLInputElement) {
+        panel.hidden = true;
+        input.setAttribute('aria-expanded', 'false');
+      }
+    };
+
+    const renderMessage = (message: string) => {
+      if (results instanceof HTMLElement) {
+        results.innerHTML = `<p class="site-search__hint">${escapeHtml(message)}</p>`;
+      }
+    };
+
+    const renderResults = () => {
+      if (!(input instanceof HTMLInputElement) || !(results instanceof HTMLElement)) {
+        return;
+      }
+
+      const query = normalize(input.value.trim());
+      const terms = query.split(/\s+/).filter(Boolean);
+
+      if (clearButton instanceof HTMLButtonElement) {
+        clearButton.hidden = input.value.length === 0;
+      }
+
+      if (terms.length === 0) {
+        activeResults = [];
+        renderMessage('Search articles.');
+        return;
+      }
+
+      if (query.length < 2) {
+        activeResults = [];
+        renderMessage('Type at least 2 characters.');
+        return;
+      }
+
+      activeResults = searchItems
+        .reduce<ScoredSearchItem[]>((matches, item) => {
+          if (!terms.every((term) => item.haystack.includes(term))) {
+            return matches;
+          }
+
+          const title = normalize(item.title);
+          const category = normalize(item.category);
+          let score = 1;
+
+          if (title.includes(query)) {
+            score += 8;
+          }
+
+          if (terms.some((term) => title.startsWith(term))) {
+            score += 4;
+          }
+
+          if (terms.some((term) => category.includes(term))) {
+            score += 2;
+          }
+
+          matches.push({ ...item, score });
+          return matches;
+        }, [])
+        .sort((a, b) => b.score - a.score || a.title.localeCompare(b.title))
+        .slice(0, 6);
+
+      if (activeResults.length === 0) {
+        renderMessage('No results found.');
+        return;
+      }
+
+      results.innerHTML = activeResults
+        .map((item) => `
+          <a class="site-search__result" href="${escapeHtml(item.href)}">
+            <span class="site-search__result-meta">${escapeHtml(item.category)}</span>
+            <strong>${escapeHtml(item.title)}</strong>
+            <span>${escapeHtml(item.description)}</span>
+          </a>
+        `)
+        .join('');
+    };
+
+    if (
+      form instanceof HTMLFormElement &&
+      input instanceof HTMLInputElement &&
+      clearButton instanceof HTMLButtonElement
+    ) {
+      input.addEventListener('focus', () => {
+        openPanel();
+        renderResults();
+      });
+      input.addEventListener('input', () => {
+        openPanel();
+        renderResults();
+      });
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          input.value = '';
+          renderResults();
+          closePanel();
+          input.blur();
+        }
+      });
+      clearButton.addEventListener('click', () => {
+        input.value = '';
+        input.focus();
+        renderResults();
+      });
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        if (activeResults[0]) {
+          window.location.href = activeResults[0].href;
+        }
+      });
+      document.addEventListener('click', (event) => {
+        if (event.target instanceof Node && !searchRoot.contains(event.target)) {
+          closePanel();
+        }
+      });
+    }
+  }
+</script>

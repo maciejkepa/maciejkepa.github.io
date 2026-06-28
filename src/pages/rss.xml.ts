@@ -1,16 +1,17 @@
 import rss from '@astrojs/rss';
+import type { APIContext } from 'astro';
 import { getCollection } from 'astro:content';
 
 import { siteConfig } from '../lib/site';
 import { sortPosts } from '../lib/blog';
 
-export async function GET(context) {
+export async function GET(context: APIContext) {
   const posts = sortPosts(await getCollection('blog', ({ data }) => !data.draft));
 
   return rss({
     title: `${siteConfig.owner} | ${siteConfig.name}`,
     description: siteConfig.tagline,
-    site: context.site,
+    site: context.site ?? siteConfig.url,
     items: posts.map((post) => ({
       title: post.data.title,
       description: post.data.description,

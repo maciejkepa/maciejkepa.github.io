@@ -93,19 +93,18 @@ const themeController = `
   const storageKey = 'maciejkepa-theme';
   const root = document.documentElement;
   const toggle = document.querySelector('[data-theme-toggle]');
-  const label = document.querySelector('[data-theme-label]');
   const themeMeta = document.querySelector('meta[name="theme-color"]');
   const darkThemeColor = '#171511';
   const lightThemeColor = '#f1ede4';
 
-  if (!toggle || !label) {
+  if (!toggle) {
     return;
   }
 
   const syncUi = (theme) => {
     root.dataset.theme = theme;
-    toggle.setAttribute('aria-pressed', String(theme === 'light'));
-    label.textContent = theme === 'light' ? 'Light' : 'Dark';
+    toggle.setAttribute('aria-label', theme === 'light' ? 'Light theme. Switch to dark theme.' : 'Dark theme. Switch to light theme.');
+    toggle.setAttribute('title', theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme');
     if (themeMeta) {
       themeMeta.setAttribute('content', theme === 'light' ? lightThemeColor : darkThemeColor);
     }
@@ -165,7 +164,7 @@ const themeController = `
     <meta name="twitter:image" content={ogImage} />
     {imageAlt && <meta name="twitter:image:alt" content={imageAlt} />}
     <script is:inline set:html={themeBootstrap} />
-    <script type="application/ld+json" set:html={JSON.stringify(schemaGraph)} />
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(schemaGraph)} />
   </head>
   <body>
     <div class="site-shell">
