@@ -8,3 +8,5 @@ dist
 *.log
 *.tsbuildinfo
 *:Zone.Identifier
+
+public/social/*
