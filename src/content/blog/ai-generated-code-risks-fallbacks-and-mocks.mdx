@@ -1,0 +1,266 @@
+---
+title: "AI-generated code risks: when fallbacks and mocks hide production failures"
+description: "AI-generated code risks are often not obvious syntax errors. The harder problem is code that catches real failures, retries them badly, returns mock data and still reports success."
+date: "2026-07-20"
+updated: "2026-07-20"
+tags: ["ai-architecture", "production-ml", "observability"]
+type: "article"
+valueType: "Architectural guide"
+featured: true
+draft: false
+coverImage: "/blog-covers/ai-generated-code-risks-fallbacks-and-mocks.png"
+coverAlt: "Hand-drawn sketch of a green success response hiding retry loops, failed backend services and mock data"
+faqs:
+  - question: "What are the main production risks of AI-generated code?"
+    answer: "The main AI-generated code risks are not only incorrect logic or insecure dependencies. Generated code can also hide failure paths with broad exception handling, unbounded retries, undeclared fallback data and success responses that do not reflect the real state of a downstream system."
+  - question: "Are fallbacks always bad in production systems?"
+    answer: "No. A fallback can be a good resilience mechanism when it is intentional, safe for the user and visible in the response and telemetry. It becomes dangerous when it silently replaces failed live data with mock, stale or default data while presenting the result as a normal success."
+  - question: "Should an API return HTTP 200 if a dependency failed?"
+    answer: "Only if the API contract was still fulfilled, for example when an explicitly documented cached or degraded result is acceptable. If an essential dependency failed and the endpoint cannot truthfully provide the requested result, returning HTTP 200 creates a false success and hides the incident from clients and monitoring."
+  - question: "How should teams review AI-generated code before UAT?"
+    answer: "Review every catch block, retry loop, default value and fallback path as production behavior. Test downstream failure, timeout, retry exhaustion and invalid responses, then verify that the API, logs, traces and UI all expose the same outcome."
+---
+
+import Callout from '../../components/Callout.astro';
+
+One of the more serious AI-generated code risks is not that the code crashes.
+
+It is that the code refuses to crash when it should.
+
+I recently ran into a UAT case that made this painfully clear. The UI looked fine. A function eventually returned `200 OK`. The response even looked plausible enough that somebody could have called the flow successful and moved on.
+
+Underneath, the backend operation was failing repeatedly. It retried for several minutes, hit the same failure path over and over, and finally returned a fallback payload that had no business being presented as a real result.
+
+The bug was not one failed request. The bug was that the system had been designed to make failure disappear from view.
+
+That distinction matters more now that AI coding assistants can generate a lot of working-looking code very quickly. They are good at making an incomplete path continue. They can add a broad `catch`, a default object, a retry loop or a mocked response in seconds. Each individual decision can look helpful in isolation. Together, they can turn a real production incident into false confidence.
+
+![Hand-drawn sketch of a green success response hiding retry loops, failed backend services and mock data](/blog-covers/ai-generated-code-risks-fallbacks-and-mocks.png)
+
+## What are the production risks of AI-generated code?
+
+The obvious risks of AI-generated code are easy to list: insecure dependencies, incorrect edge cases, outdated APIs or code that does not fit the surrounding system.
+
+The more subtle risks show up in operational behavior.
+
+Generated code often optimizes for a local instruction such as "do not fail when the service is unavailable" or "return a useful response." Without a clear system contract, that can produce code which catches an exception, retries it without a meaningful limit and returns a default value when the dependency is still unavailable.
+
+The application looks resilient. It is not.
+
+It has simply stopped telling the truth about its own state.
+
+This is why the problem belongs next to architecture and observability, not only code review. A response, a log line, a trace and the UI must all agree on what happened. If one layer says success while another layer is repeatedly failing, the system has created two competing realities.
+
+<Callout tone="production-note" title="Production note">
+Failure that is hidden from clients, telemetry and operators is not graceful degradation. It is an observability gap with a user-facing contract problem.
+</Callout>
+
+## The most dangerous AI-generated code anti-patterns
+
+The dangerous patterns are usually ordinary. That is part of why they slip through.
+
+The first is a broad exception handler with a friendly default:
+
+```python
+async def get_current_report(account_id: str) -> dict:
+    try:
+        report = await reporting_client.get_current_report(account_id)
+        return {"report": report}
+    except Exception:
+        return {"report": demo_report}
+```
+
+This code does not recover the report. It replaces an unknown failure with data that looks real. If `demo_report` reaches UAT or production, the caller has no reliable way to know that the requested operation failed.
+
+The second is a retry loop that treats every error as temporary. A timeout, an invalid request, a permission problem and a broken response contract do not all deserve the same retry behavior. Retrying a permanent error only adds latency and load before returning the same incorrect result.
+
+```python
+async def get_report(account_id: str) -> dict:
+    for _ in range(10):
+        try:
+            return await reporting_client.get_current_report(account_id)
+        except Exception:
+            await asyncio.sleep(1)
+
+    return {"success": True, "report": demo_report}
+```
+
+The retry policy needs an explicit failure taxonomy. The client below retries only network failures and timeouts, immediately surfaces permanent failures, and stops after a small retry budget:
+
+```python
+RETRYABLE_ERRORS = (TimeoutError, ConnectionError)
+PERMANENT_ERRORS = (PermissionError, InvalidRequestError, ResponseContractError)
+
+
+async def get_report(account_id: str) -> dict:
+    max_attempts = 3
+
+    for attempt in range(max_attempts):
+        try:
+            return await reporting_client.get_current_report(account_id)
+        except PERMANENT_ERRORS:
+            raise
+        except RETRYABLE_ERRORS as error:
+            if attempt == max_attempts - 1:
+                raise UpstreamServiceUnavailable("Reporting service is unavailable") from error
+
+            # Back off before a bounded retry. Jitter prevents synchronized retries.
+            delay = (2**attempt) + random.uniform(0, 0.5)
+            await asyncio.sleep(delay)
+```
+
+The third is a success envelope that looks more reliable than the system behind it:
+
+```python
+return {
+    "success": True,
+    "data": {"source": "fallback"},
+}
+```
+
+If the fallback is a real, documented cached result and the client can safely use it, the contract may be valid. If it is mock data, an empty object or an unvalidated default, the envelope is lying.
+
+The final pattern sits in the UI. A frontend can mark an operation complete because it received a syntactically valid response, while the backend has already swallowed the only signal that would have explained the failure. A green toast is not a system state.
+
+## A fallback is not a recovery strategy
+
+Fallbacks are not inherently bad. In fact, a well-designed fallback can be the right thing to do.
+
+Dropping a non-essential recommendation panel during overload is graceful degradation. Returning a clearly marked cached profile when the live enrichment service is unavailable can be graceful degradation. Serving a reduced, but correct, result can protect users and the rest of the system.
+
+What makes a fallback safe is not the existence of a `catch` block. It is whether the fallback still fulfills the contract and whether every consumer can see that degradation happened.
+
+A safe fallback has a real data source, a defined freshness boundary, a known owner and a visible signal in both telemetry and the API contract. It does not quietly replace live data with a fixture that was only meant to make a demo work.
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/explicit-degradation-vs-silent-fallback.png"
+    alt="Hand-drawn comparison of an explicit degraded API response and a silent fallback that hides a failing backend"
+    loading="lazy"
+  />
+  <figcaption>
+    A fallback is useful when the system exposes the degraded outcome. It becomes dangerous when retries and mock data hide the failed dependency behind a normal success response.
+  </figcaption>
+</figure>
+
+The distinction is simple:
+
+| Behavior | What the caller sees | Operational result |
+| --- | --- | --- |
+| Explicit degradation | A documented reduced or cached result, including its source and freshness | The incident remains visible and actionable |
+| Dependency failure | A meaningful error response with a correlation ID | Clients and operators can react to the same failure |
+| Silent fallback | A normal-looking success with mock, stale or default data | The incident becomes harder to detect and debug |
+
+## Why HTTP 200 can be a false success
+
+`200 OK` is not a cosmetic convention. HTTP status codes describe the result of the request and the semantics of the response. If an API says the request succeeded, clients, proxies, monitoring and user interfaces will usually treat it as successful too.
+
+That does not mean every downstream dependency failure automatically requires a `5xx` response. The correct status depends on the API boundary and on what the caller was promised. An endpoint that explicitly provides cached data may still fulfill its contract. A batch endpoint may legitimately describe per-item outcomes in its payload.
+
+But the important question is not whether a `200` is technically possible. It is whether the response is truthful.
+
+If a live calculation depends on another service, that service fails, and the endpoint responds with mock output as if the calculation completed, then the contract was not fulfilled. The transport succeeded. The requested work did not.
+
+In those cases, return an error the caller can act on. For a temporary dependency failure, that will often be a `503` or another deliberate server-side failure response. Include an error code and a correlation ID. Do not force every client to reverse-engineer hidden failures from a happy-path JSON schema.
+
+## Retries are not error handling
+
+Retries can be useful, but they are not a generic solution to uncertainty.
+
+They make sense for a narrow class of transient, idempotent operations: a short network interruption, a rate limit with a defined retry window, or a dependency that is temporarily overloaded. They do not repair invalid input, missing permissions, schema incompatibility or a dependency that is deterministically returning bad data.
+
+This is where silent production failures often become expensive. A retry loop may turn one immediate error into three minutes of latency, hundreds of additional calls and an even less obvious final response. The extra load can also make the dependency less likely to recover.
+
+The [Google SRE guidance on cascading failures](https://sre.google/sre-book/addressing-cascading-failures/) makes the point well: retries can amplify an already failing system. A production retry policy needs bounded attempts, randomized exponential backoff, a decision about which failures are actually retryable and a budget that prevents one dependency problem from turning into a traffic multiplier.
+
+The Microsoft Learn [guidance for handling transient faults](https://learn.microsoft.com/azure/well-architected/design-guides/handle-transient-faults#implementing-retries) reaches the same practical conclusion: retry budgets, finite attempts, jitter and circuit breaking are part of protecting a struggling dependency, not optional polish after the happy path works.
+
+For a client-facing path, I would also ask a more basic question: what will the user see after retries are exhausted? If the answer is "whatever default object we have around," then the design is not ready.
+
+## How to design explicit, observable degradation
+
+Start by deciding whether the system can still provide a useful, correct result when one dependency is unavailable.
+
+If the answer is no, fail explicitly. Return a meaningful error, include a stable error code and put the correlation ID in the response and logs. That is not less reliable than returning a fake success. It is much easier to operate.
+
+If the answer is yes, make the degraded state part of the contract:
+
+```python
+return {
+    "data": {"forecast": 42},
+    "result_state": "degraded",
+    "data_source": "cache",
+    "as_of": "2026-07-20T10:15:00Z",
+    "correlation_id": "req_01J...",
+}
+```
+
+The exact field names are not the point. The point is that the caller can distinguish a normal live result from an acceptable reduced result without guessing. The same event should be visible in traces, metrics and logs, with a metric such as `fallback_used` or `degraded_response_total` that has an owner and an alert threshold.
+
+For ML and AI systems, this matters even more. A fallback response can look plausible while being semantically wrong for the user or downstream decision. A stale feature value, an old retrieval result or a mocked confidence score can be worse than an explicit unavailable response because it silently changes the behavior of the whole workflow.
+
+If you are building the observability baseline around those systems, [Minimal viable ML observability: what to monitor first](/blog/minimal-viable-ml-observability-what-to-monitor-first/) is the companion piece. It covers the signals that should tell you when the service, data or outputs have stopped being trustworthy.
+
+## How to test AI-generated code before it reaches UAT
+
+Treat every fallback branch generated by an AI coding assistant as production behavior, not as harmless scaffolding.
+
+Unit tests should prove that a mock is only available in the test boundary. Integration tests should simulate dependency timeouts, invalid payloads, permission failures and retry exhaustion. Contract tests should check that an error response is distinguishable from a successful result, and that the UI does not convert a degraded result into a generic success message.
+
+The most useful UAT test is often not a polished happy path. It is a controlled dependency failure. Make the downstream call fail, then inspect four things together: the HTTP response, the UI state, the trace and the logs. If those four layers tell different stories, you have found a production issue before users do.
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/testing-boundaries-for-mocks-uat-and-production.png"
+    alt="Hand-drawn technical diagram showing mock data confined to tests, controlled failure injection in UAT, and production telemetry without mock fallbacks"
+    loading="lazy"
+  />
+  <figcaption>
+    Mocks are useful test fixtures, not runtime recovery data. UAT should exercise failed dependencies and verify that the API, UI, traces and logs describe the same outcome before a release reaches production.
+  </figcaption>
+</figure>
+
+For teams working through the broader delivery boundary, [Beyond the Notebook: what has to exist before ML can run in production](/blog/beyond-the-notebook-moving-ml-to-production/) is a useful reminder that operational readiness includes interfaces, environments, monitoring and ownership, not only the model or service code.
+
+## A review checklist for AI-generated production code
+
+Before merging AI-generated code that touches an external dependency, the review should be able to answer these questions:
+
+| Review question | Evidence worth asking for |
+| --- | --- |
+| Can this `catch` block return data that was not produced by the requested operation? | A contract test covering the exception path |
+| Is every retry limited and limited to a transient, idempotent operation? | Policy in code plus a test for retry exhaustion |
+| Can mock or fixture data be reached outside tests or explicit local development? | Build-time or runtime guard and an integration test |
+| Does the response represent the actual outcome? | API contract test and UI state test |
+| Can an operator find the failure from one correlation ID? | Trace, structured log and error response example |
+| Is degraded behavior measured and owned? | A metric, alert threshold and named operational owner |
+
+This is not a case for banning AI-assisted development. The useful standard is higher: generated code must meet the same production contract as code written line by line by a human.
+
+## FAQ
+
+### What are the main production risks of AI-generated code?
+
+The main AI-generated code risks are not only incorrect logic or insecure dependencies. Generated code can hide failure paths with broad exception handling, unbounded retries, undeclared fallback data and success responses that do not reflect the real state of a downstream system.
+
+### Are fallbacks always bad in production systems?
+
+No. A fallback can be a good resilience mechanism when it is intentional, safe for the user and visible in the response and telemetry. It becomes dangerous when it silently replaces failed live data with mock, stale or default data while presenting the result as a normal success.
+
+### Should an API return HTTP 200 if a dependency failed?
+
+Only if the API contract was still fulfilled, for example when an explicitly documented cached or degraded result is acceptable. If an essential dependency failed and the endpoint cannot truthfully provide the requested result, returning `200 OK` creates a false success and hides the incident from clients and monitoring.
+
+### How should teams review AI-generated code before UAT?
+
+Review every catch block, retry loop, default value and fallback path as production behavior. Test downstream failure, timeout, retry exhaustion and invalid responses, then verify that the API, logs, traces and UI all expose the same outcome.
+
+## Further reading
+
+- [HTTP Semantics, RFC 9110](https://datatracker.ietf.org/doc/html/rfc9110)
+- [Addressing cascading failures](https://sre.google/sre-book/addressing-cascading-failures/)
+- [Recommendations for handling transient faults](https://learn.microsoft.com/azure/well-architected/design-guides/handle-transient-faults#implementing-retries)
+- [Timeouts, retries and backoff with jitter](https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/)
+- [Why MLOps is mostly an Engineering problem](/blog/why-mlops-is-mostly-an-engineering-problem/)
+- [Minimal viable ML observability: what to monitor first](/blog/minimal-viable-ml-observability-what-to-monitor-first/)
+- [Beyond the Notebook: what has to exist before ML can run in production](/blog/beyond-the-notebook-moving-ml-to-production/)
