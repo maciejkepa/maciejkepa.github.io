@@ -132,14 +132,14 @@ What makes a fallback safe is not the existence of a `catch` block. It is whethe
 
 A safe fallback has a real data source, a defined freshness boundary, a known owner and a visible signal in both telemetry and the API contract. It does not quietly replace live data with a fixture that was only meant to make a demo work.
 
-<figure class="article-figure">
+<figure class="article-figure article-figure--comparison">
   <img
     src="/blog-inline/explicit-degradation-vs-silent-fallback.png"
     alt="Hand-drawn comparison of an explicit degraded API response and a silent fallback that hides a failing backend"
     loading="lazy"
   />
   <figcaption>
-    A fallback is useful when the system exposes the degraded outcome. It becomes dangerous when retries and mock data hide the failed dependency behind a normal success response.
+    A fallback is useful when the system exposes the degraded outcome; it becomes dangerous when retries and mock data hide the failed dependency behind a normal success response.
   </figcaption>
 </figure>
 
