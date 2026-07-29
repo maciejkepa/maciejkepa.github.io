@@ -35,6 +35,11 @@ export const topicDefinitions = [
     description: 'Pipelines, lakehouse architecture, orchestration and the less glamorous layers that keep data products alive.'
   },
   {
+    label: 'Data Architecture',
+    slug: 'data-architecture',
+    description: 'Data contracts, modelled data products, quality boundaries and the design decisions that make a platform trustworthy.'
+  },
+  {
     label: 'AI Architecture',
     slug: 'ai-architecture',
     description: 'Reference architectures, trade-offs and platform decisions behind production AI systems.'

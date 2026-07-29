@@ -1,0 +1,272 @@
+---
+title: "Medallion architecture for engineers: building trusted data products"
+description: "Medallion architecture for engineers: design raw data, trusted views and published data products with clear contracts, replay paths and ownership."
+date: "2026-07-28"
+updated: "2026-07-28"
+tags: ["data-engineering", "databricks", "ai-architecture", "data-architecture"]
+type: "article"
+valueType: "Architectural guide"
+featured: true
+draft: false
+coverImage: "/blog-covers/medallion-architecture-for-engineers.png"
+coverAlt: "Hand-drawn technical sketch of source events moving through raw system-of-record data, trusted data, quarantine and published data products"
+faqs:
+  - question: "What is medallion architecture?"
+    answer: "Medallion architecture is a logical data design pattern that progressively improves data quality and structure. In practice, engineers should implement it as explicit contracts between raw source records, trusted reusable data and published data products."
+  - question: "Is medallion architecture always bronze, silver and gold?"
+    answer: "No. Bronze, silver and gold are useful shorthand, but the important distinction is responsibility. A practical vocabulary is raw system of record, trusted data and published data products. The layers can be logical boundaries rather than three separate physical storage locations."
+  - question: "What is the difference between silver and gold in medallion architecture?"
+    answer: "Silver, or trusted data, preserves the lowest reliable and useful grain while applying validation, standardization and reusable enrichment. Gold, or a published data product, is deliberately shaped for a named audience or workload, with an explicit consumption contract, ownership and freshness expectation."
+  - question: "Can silver contain joins and aggregated data?"
+    answer: "Yes. Silver can contain intermediate tables, reference dimensions, conformed entities and fact-level tables. It should keep the lowest useful grain. Aggregation is appropriate only when the source is already aggregated or when it creates a canonical reusable representation rather than a convenient one-off report."
+  - question: "Do all pipelines need bronze, silver and gold layers?"
+    answer: "No. The pattern is a design guide, not a requirement to create three tables for every source. Use as many durable boundaries as are needed for replay, trust, reuse, ownership and consumption. Avoid collapsing those concerns merely to make a diagram look simpler."
+  - question: "How should data quality work in a medallion architecture?"
+    answer: "Data quality should be explicit at each contract boundary. Capture source fidelity in raw data, enforce technical and business rules in trusted data, and monitor freshness and service-level expectations for published data products. Invalid records need visible quarantine and replay paths instead of silent loss."
+---
+
+import Callout from '../../components/Callout.astro';
+
+Most explanations of **medallion architecture** stop after the colors.
+
+Bronze is raw. Silver is cleaned. Gold is ready for reporting. The diagram is simple enough to fit on a slide, which is probably why it has spread so widely.
+
+The engineering problem starts when a team has to decide what those words mean in a real system. Does every source need three physical tables? Can trusted data contain joins? Where do late records go? What exactly makes a dataset safe for another team, a dashboard, or a model to consume? And why does a supposedly gold layer keep turning into a dumping ground for every aggregation somebody might need later?
+
+The useful definition is this: **medallion architecture is a way to make the contracts between source data, trusted data and published data products explicit.** The layers are not folders. They are responsibility boundaries.
+
+![Hand-drawn technical sketch of source events moving through raw system-of-record data, trusted data, quarantine and published data products](/blog-covers/medallion-architecture-for-engineers.png)
+
+Azure Databricks describes the pattern as the progressive improvement of data quality and structure across logical layers. [Microsoft Cloud Adoption Framework guidance](https://learn.microsoft.com/azure/cloud-adoption-framework/data/operational-standards-data-processing-standards-unify-data-platform#2-set-data-transformation-standards) is more useful when designing a platform: **system of record**, **trusted view** and **business data products**.
+
+That is the language I would use with an engineering team. It tells us what a layer is for before we start deciding where it lives.
+
+## What engineers should take from medallion architecture
+
+Medallion architecture is a data design pattern, not a requirement to create three schemas, three workspaces or three tables for every dataset. [Databricks explicitly describes it as a recommended pattern rather than a requirement](https://learn.microsoft.com/azure/databricks/lakehouse/medallion).
+
+The value is in separating concerns that otherwise become difficult to operate together:
+
+- preserving what actually arrived from a source
+- creating a reusable representation that other systems can trust
+- publishing data for a specific consumer, decision or workload
+
+Those concerns need different change rules, quality expectations, owners and consumers. If they all live in the same table because the first pipeline was small, the system loses the ability to explain what it knows, what it corrected, and what a downstream user is allowed to rely on.
+
+This also matters for AI and ML. A model trained on a dataset with unclear grain, undocumented transformations or silently dropped records is not made reliable by putting MLflow around it. If you want the broader production context, read [Beyond the Notebook: what has to exist before ML can run in production](/blog/beyond-the-notebook-moving-ml-to-production/).
+
+## Stop naming folders after metals
+
+Bronze, silver and gold are useful shared vocabulary. They become less useful when teams start treating them as universal object types.
+
+I prefer to map them to responsibilities:
+
+| Common name | Engineering name | The contract it should uphold |
+| --- | --- | --- |
+| Bronze | Raw / system of record | Preserve source fidelity, lineage and a replayable history |
+| Silver | Trusted / enriched data | Provide validated, reusable and clearly modelled data at the lowest useful grain |
+| Gold | Curated / published data product | Serve a named audience or workload with explicit semantics, ownership and freshness |
+
+The names in your catalog do not need to be `bronze_orders`, `silver_orders` and `gold_orders`. A more useful layout is usually domain-first:
+
+```text
+commerce.raw_orders_cdc
+commerce.trusted.int_orders
+commerce.trusted.dim_customer
+commerce.trusted.fact_orders
+commerce.published.daily_revenue
+```
+
+The first name says what the data is. The second says what promise the system is making about it.
+
+<Callout tone="production-note" title="Production note">
+A layer boundary is useful only when a downstream consumer can tell what changed at that boundary: source fidelity, trust, grain, ownership or fitness for a specific use.
+</Callout>
+
+## Raw data is a system of record, not an analytics layer
+
+Raw data exists so the platform can prove what arrived and rebuild what comes after it. That is a different job from making data pleasant to query.
+
+For an order-event feed, raw data should normally preserve the source payload plus the metadata required to reason about it later: source system, ingestion timestamp, source offset or sequence, batch identifier, file name or topic partition, and the version of the ingestion contract. Transform as little as possible. Parsing a file into a durable table or adding provenance metadata is fine. Correcting business values or silently filtering malformed records is not.
+
+The point is not purity. The point is that a later schema change, duplicate event or wrong transformation can be investigated and replayed from a known state. Raw data can be append-only without being convenient for analysts. It should be.
+
+That is why raw should not become a backdoor analytics layer. Once dashboards, notebooks and applications depend on raw tables, every source-system quirk becomes somebody else's production dependency.
+
+## Trusted data preserves the lowest useful grain
+
+The silver layer is often described as "cleaned data", which is accurate but incomplete. The more important property is grain.
+
+**Trusted data should preserve the lowest reliable and useful grain that the source and business meaning allow.** If the source gives individual order events, the useful trusted representation should normally still describe individual orders or order changes. If the source itself provides monthly regional totals, no downstream design can recover individual transactions, and that aggregate grain is the honest starting point.
+
+This is not the same as saying that trusted data can never contain an aggregation. An aggregation belongs in trusted data when it creates a canonical representation that many consumers need and can rely on. More often, an aggregation is a consumption choice and belongs in a published product.
+
+The distinction is purpose. `daily_revenue_by_region` may be a good data product because it answers a named reporting question. A table called `orders_summary_v3` because somebody might need it later is not a contract. It is future maintenance without an owner.
+
+## Silver is not one table type
+
+Trusted data is not one table named `orders_cleaned`. It often contains different technical roles, all working toward a durable, reusable representation.
+
+For a CDC-based commerce feed, the path might look like this:
+
+```text
+raw_orders_cdc
+  -> int_orders
+  -> fact_orders
+       + dim_customer
+  -> daily_revenue
+  -> training_snapshot
+```
+
+`int_orders` can resolve technical concerns: parsing, type casting, source metadata, malformed payloads and basic schema checks. `dim_customer` can be a shared reference representation. `fact_orders` can join the two while preserving the grain of one order. All three can be trusted-layer assets because they serve a clear and reusable engineering purpose.
+
+`daily_revenue` changes the grain to day and region. `training_snapshot` shapes the same trusted facts for a named ML use. Those are deliberate materializations, not automatic destinations for every transformation.
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/medallion-trusted-data-roles.png"
+    alt="Hand-drawn data architecture showing raw order CDC, trusted intermediate and dimension tables, a fact-level order table, and deliberate reporting and machine learning products"
+    loading="lazy"
+  />
+  <figcaption>
+    Trusted data can contain intermediate tables, shared dimensions and fact-level entities. The important boundary is the preserved grain and contract, not a rule that every silver asset must look alike.
+  </figcaption>
+</figure>
+
+There is also no reason to persist every intermediate step. If an operation has no independent consumer, replay need or diagnostic value, a temporary view inside a pipeline may be better than another managed table. Persist a dataset because it has a purpose, not because the pipeline can.
+
+## Gold is a published data product, not an aggregation bucket
+
+Gold is a poor name if it makes teams think every table must be an aggregate. A curated product can be a dimensional reporting model, a detailed customer-360 dataset, a feature snapshot, an operational API backing table or a precomputed KPI view.
+
+What makes it a published data product is not `GROUP BY`. It is the fact that the platform makes a promise to somebody.
+
+That promise should include at least:
+
+- the intended audience and supported workload
+- the grain and business meaning of each record
+- ownership and change approval
+- a freshness expectation
+- quality and access expectations
+- the recommended way to consume it
+
+For example, `daily_revenue` can be a published reporting product with a 07:00 UTC freshness target and a finance owner. `training_snapshot` can be a product for an ML team with a point-in-time contract, a feature owner and a reproducibility policy. The second one may not be aggregated at all.
+
+This is where the medallion pattern connects to decisions such as [whether a feature store is actually needed](/blog/feature-stores-when-you-need-one-and-when-you-dont/). A well-governed trusted feature table is often enough. A feature store becomes useful when reuse, online serving, point-in-time correctness and ownership pressure justify another platform boundary.
+
+## The real design unit is a data contract
+
+The table is not the design unit. The contract is.
+
+**Medallion architecture data contracts** make each durable layer explicit about its grain, allowed changes, quality policy, owner and intended consumer. Without those answers, layer names are only labels on storage.
+
+Each durable dataset should answer a small set of questions before it gets a permanent name:
+
+| Contract question | Raw system of record | Trusted data | Published data product |
+| --- | --- | --- | --- |
+| What grain is retained? | Source record or source aggregate | Lowest useful and reliable grain | Grain chosen for a named use |
+| What changes are allowed? | Append and capture metadata | Validate, deduplicate, standardize and enrich | Deliberate modelling for consumption |
+| What happens to invalid data? | Capture without losing source evidence | Warn, quarantine, drop or fail explicitly | Prevent broken semantics from reaching consumers |
+| Who consumes it? | Replay, audit and engineering workflows | Reusable data and downstream transformations | A named analyst, application, model or team |
+
+This is also why the "might be useful later" argument should not create a dataset. It has no stated consumer, grain, owner or service level. It is not a product and it is not a contract.
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/medallion-layer-contracts.png"
+    alt="Hand-drawn comparison of raw system-of-record, trusted data and published data-product contracts, alongside a crossed-out vague intent"
+    loading="lazy"
+  />
+  <figcaption>
+    Colors are shorthand. The useful distinction is what each dataset promises about grain, allowed change, quality and consumers.
+  </figcaption>
+</figure>
+
+## Quarantine, replay and schema change are part of the architecture
+
+The clean path through a medallion diagram is rarely the part that causes incidents. The difficult cases are schema drift, broken payloads, duplicate events, late data, partial backfills and a quality rule that turns out to be too strict.
+
+Those paths should be designed before the first failure.
+
+An invalid record should not quietly disappear between raw and trusted. The pipeline needs a visible policy: retain it with a warning, route it to quarantine, drop it under an explicit rule, or fail the update. Databricks pipeline expectations support those distinct behaviours and emit quality metrics for each rule. [Lakeflow pipeline best practices](https://learn.microsoft.com/azure/databricks/ldp/best-practices#enforce-data-quality-with-expectations) also recommends a quarantine pattern when records need investigation and reprocessing.
+
+The operational question is simple: can an engineer explain where a bad record went, why it was rejected, and how to replay it after a fix? If not, the architecture has a happy path but not a recovery path.
+
+Freshness, failed-record rates, schema-change events and replay volume should be observable signals, not values somebody inspects after a stakeholder asks why a dashboard changed. [Minimal viable ML observability](/blog/minimal-viable-ml-observability-what-to-monitor-first/) covers the same principle from the model side: start with signals that tell you whether the system is still safe to trust.
+
+## Pipeline boundaries should match operational boundaries
+
+Logical layers do not automatically tell you how many pipelines to run. But they are a strong clue.
+
+In most production systems, ingestion and transformation deserve separate operational boundaries. The ingestion path should keep landing source data even when a downstream join, quality rule or aggregate is failing. The trusted and published paths can then be scheduled, monitored and repaired independently.
+
+Databricks makes the same recommendation for Lakeflow pipelines: separate bronze ingestion from silver and gold transformation whenever possible, so a transformation failure does not stop new source data from landing. [Organizing Lakeflow pipelines with medallion architecture](https://learn.microsoft.com/azure/databricks/ldp/best-practices#organize-pipelines-with-the-medallion-architecture)
+
+This is where the pattern becomes an engineering concern rather than a storage convention. Pipeline boundaries affect permissions, blast radius, deployment cadence, compute cost, ownership and incident response. They should be designed with the same care as service boundaries.
+
+For Databricks projects, the pipeline definitions, tests, environment configuration and deployment contract should move together. The same principle is behind [Databricks MLOps delivery patterns with GitHub Actions](/blog/databricks-mlops-delivery-patterns-with-github-actions/): a successful deploy is not enough if the runtime contract, validation and promotion rules remain implicit.
+
+## When three layers are too much, and when they are not enough
+
+Three layers are too much when the team has invented them only to satisfy a diagram. A small, stable source feeding one low-risk report may need a raw landing area and one intentionally curated output. Creating several permanent intermediates without a replay, reuse or diagnostic need only adds cost and confusion.
+
+Three layers are not enough when a single trusted representation cannot safely serve every purpose. A regulated reporting product, a low-latency application view and a training dataset may require separate published contracts. External sharing may require a sanitised product with its own owner and policy. Microsoft guidance makes this distinction explicit by treating external datasets as separate products rather than a casual export from an internal gold table. [Data processing standards for AI and analytics](https://learn.microsoft.com/azure/cloud-adoption-framework/data/operational-standards-data-processing-standards-unify-data-platform#2-set-data-transformation-standards)
+
+The goal is not to defend the number three. The goal is to make every durable boundary earn its place.
+
+## A practical checklist for engineers
+
+**Short answer:** medallion architecture best practices are to keep a replayable source of record, preserve a trusted representation at the lowest useful grain, publish products for named consumers, make quality failures observable and give every durable dataset an owner.
+
+Before calling a pipeline medallion architecture, check that it can answer these questions:
+
+1. Can we replay the trusted and published layers from a known raw source of record?
+2. Is the trusted layer explicit about its grain, deduplication rule, late-data policy and schema contract?
+3. Does every persisted intermediate table have a reuse, recovery or diagnostic purpose?
+4. Are aggregation and materialisation tied to a named consumer rather than a possible future need?
+5. Can consumers discover the owner, freshness expectation and intended use of each published product?
+6. Do invalid records, schema changes and quality failures have observable paths and recovery procedures?
+7. Can ingestion continue when a downstream transformation fails?
+
+If the answer to several of these is no, adding another `gold_*` table will not fix the architecture.
+
+## Final point
+
+The medallion pattern is valuable because it gives teams a shared way to talk about data quality. It becomes useful in production only when the names map to real operational promises.
+
+Raw data should tell the truth about the source. Trusted data should preserve the lowest useful grain while making quality and reuse explicit. Published data products should exist because somebody needs them and because the platform is willing to own that promise.
+
+That is more durable than a color-coded folder structure.
+
+## Further reading
+
+- [What is the medallion lakehouse architecture?](https://learn.microsoft.com/azure/databricks/lakehouse/medallion)
+- [Data processing standards for AI and analytics](https://learn.microsoft.com/azure/cloud-adoption-framework/data/operational-standards-data-processing-standards-unify-data-platform)
+- [Best practices for Lakeflow pipelines](https://learn.microsoft.com/azure/databricks/ldp/best-practices)
+- [Understand medallion lakehouse architecture for Fabric with OneLake](https://learn.microsoft.com/fabric/onelake/onelake-medallion-lakehouse-architecture)
+
+## FAQ
+
+### What is medallion architecture?
+
+Medallion architecture is a logical data design pattern that progressively improves data quality and structure. In practice, engineers should implement it as explicit contracts between raw source records, trusted reusable data and published data products.
+
+### Is medallion architecture always bronze, silver and gold?
+
+No. Bronze, silver and gold are useful shorthand, but responsibility is more important than the color. A practical vocabulary is raw system of record, trusted data and published data products. Those boundaries can be logical rather than three separate physical storage locations.
+
+### What is the difference between silver and gold in medallion architecture?
+
+Trusted data preserves the lowest reliable and useful grain while applying validation, standardisation and reusable enrichment. A published data product is deliberately shaped for a named audience or workload, with explicit ownership, semantics and freshness expectations.
+
+### Can silver contain joins and aggregated data?
+
+Yes. Trusted data can contain intermediate tables, reference dimensions, conformed entities and fact-level tables. Aggregation is appropriate when the source is already aggregated or when it creates a canonical reusable representation, not simply a convenient report.
+
+### Do all pipelines need bronze, silver and gold layers?
+
+No. Use as many durable boundaries as the system needs for replay, trust, reuse, ownership and consumption. The pattern should clarify responsibilities, not force three physical tables into every pipeline.
+
+### How should data quality work in a medallion architecture?
+
+Data quality should be explicit at each contract boundary. Capture source fidelity in raw data, enforce technical and business rules in trusted data, and monitor freshness and service-level expectations for published data products. Invalid records need visible quarantine and replay paths instead of silent loss.
