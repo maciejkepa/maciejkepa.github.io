@@ -60,7 +60,14 @@ const portrait = '/images/maciej-kepa-about.jpg';
       </div>
 
       <figure class="about-hero__photo">
-        <img src={portrait} alt="Portrait of Maciej Kępa" loading="eager" />
+        <picture>
+          <source
+            type="image/webp"
+            srcset="/images/maciej-kepa-about-480.webp 480w, /images/maciej-kepa-about-960.webp 960w"
+            sizes="(min-width: 64rem) 32vw, 100vw"
+          />
+          <img src={portrait} alt="Portrait of Maciej Kępa" width="4000" height="6000" loading="eager" fetchpriority="high" decoding="async" />
+        </picture>
       </figure>
     </div>
   </section>

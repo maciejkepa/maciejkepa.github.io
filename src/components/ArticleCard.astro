@@ -2,6 +2,7 @@
 import type { CollectionEntry } from 'astro:content';
 
 import { formatDate } from '../lib/blog';
+import { getResponsiveCoverSources } from '../lib/images';
 import { getReadingTime } from '../lib/reading-time';
 
 interface Props {
@@ -15,6 +16,7 @@ const { post, filterTokens = [], layout = 'grid', showTags = true } = Astro.prop
 const readingTime = getReadingTime(post.body);
 const coverImage = post.data.coverImage ?? '/blog-covers/default.svg';
 const coverAlt = post.data.coverAlt ?? `${post.data.title} cover`;
+const responsiveCoverSources = getResponsiveCoverSources(coverImage);
 const visibleTags = post.data.tags.slice(0, 2);
 const valueType = post.data.valueType;
 ---
@@ -22,7 +24,12 @@ const valueType = post.data.valueType;
 <article class:list={['post-card', layout === 'stack' && 'post-card--stack']} data-post-card data-topics={filterTokens.join(',')}>
   {layout === 'stack' && (
     <a class="post-card__media" href={`/blog/${post.id}/`} aria-label={`Open ${post.data.title}`}>
-      <img src={coverImage} alt={coverAlt} loading="lazy" />
+      <picture>
+        {responsiveCoverSources && (
+          <source type="image/webp" srcset={responsiveCoverSources.srcSet} sizes="(min-width: 48rem) 21rem, 100vw" />
+        )}
+        <img src={coverImage} alt={coverAlt} loading="lazy" decoding="async" />
+      </picture>
     </a>
   )}
 

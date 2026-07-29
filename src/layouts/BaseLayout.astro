@@ -31,6 +31,7 @@ const {
 } = Astro.props;
 const pageTitle = title ? `${title} | ${siteConfig.owner}` : `${siteConfig.owner} | ${siteConfig.name}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const googleFontsUrl = 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap';
 const defaultSocialImage = '/og-image.png';
 const socialImagePath = image && !image.endsWith('.svg') ? image : defaultSocialImage;
 const ogImage = new URL(socialImagePath, Astro.site);
@@ -135,6 +136,16 @@ const themeController = `
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href={googleFontsUrl} data-font-stylesheet />
+    <script is:inline>
+      const fontStylesheet = document.querySelector('link[data-font-stylesheet]');
+      fontStylesheet?.addEventListener('load', () => {
+        fontStylesheet.setAttribute('rel', 'stylesheet');
+      }, { once: true });
+    </script>
+    <noscript><link rel="stylesheet" href={googleFontsUrl} /></noscript>
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />

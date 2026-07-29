@@ -47,8 +47,6 @@ const searchItems = posts.map((post) => ({
             autocomplete="off"
             spellcheck="false"
             aria-label="Search articles"
-            aria-expanded="false"
-            aria-controls="site-search-results"
             data-search-input
           />
           <button class="site-search__clear" type="button" aria-label="Clear search" data-search-clear hidden>
@@ -148,14 +146,12 @@ const searchItems = posts.map((post) => ({
     const openPanel = () => {
       if (panel instanceof HTMLElement && input instanceof HTMLInputElement) {
         panel.hidden = false;
-        input.setAttribute('aria-expanded', 'true');
       }
     };
 
     const closePanel = () => {
       if (panel instanceof HTMLElement && input instanceof HTMLInputElement) {
         panel.hidden = true;
-        input.setAttribute('aria-expanded', 'false');
       }
     };
 
