@@ -1,8 +1,9 @@
 ---
 title: "ML delivery patterns with MLflow: Azure ML, Databricks and what survives production"
-description: "A practical guide to MLflow-centered ML delivery patterns: when Azure Machine Learning is the better operating model, when Databricks fits better, and what actually survives production teams and real environments."
+seoTitle: "MLflow Delivery Patterns: Azure ML vs Databricks in Production"
+description: "Compare MLflow delivery patterns for Azure ML and Databricks: model lifecycle, serving, validation, environment promotion and production operations."
 date: "2026-07-03"
-updated: "2026-07-03"
+updated: "2026-07-30"
 tags: ["mlops", "azure", "databricks", "mlflow", "production-ml"]
 type: "article"
 valueType: "Architectural guide"
@@ -37,7 +38,16 @@ In practice I see three realistic patterns:
 - `MLflow + Databricks` as a lakehouse-centric delivery stack
 - an `external control plane` pattern with tools such as Weights & Biases around the core delivery flow
 
-![Hand-drawn architectural sketch comparing MLflow-centered delivery patterns across Azure ML and Databricks](/blog-covers/ml-delivery-patterns-with-mlflow-azure-ml-and-databricks.png)
+<figure class="article-figure article-cover-figure">
+  <img
+    src="/blog-covers/ml-delivery-patterns-with-mlflow-azure-ml-and-databricks-1600.webp"
+    alt="Hand-drawn architectural sketch comparing MLflow-centered delivery patterns across Azure ML and Databricks"
+    width="1586"
+    height="992"
+    loading="eager"
+    decoding="async"
+  />
+</figure>
 
 If you want the broader context for why this matters after the first model demo, start with [Beyond the Notebook: what has to exist before ML can run in production](/blog/beyond-the-notebook-moving-ml-to-production/) and [What MLOps actually is and why teams keep misdefining it](/blog/what-mlops-actually-is-and-why-teams-keep-misdefining-it/).
 
@@ -202,6 +212,10 @@ Another useful shortcut is this:
 - choose `Azure ML` when serving control is the harder problem
 - choose `Databricks` when data gravity and platform cohesion are the harder problem
 - choose an `external control plane` only when a separate collaboration or experiment layer clearly reduces coordination pain
+
+<Callout tone="production-note" title="Field note">
+The simplest practical test is where the painful handoff happens. If the hard part is packaging a model behind managed online and batch endpoints with explicit platform ownership, Azure ML is often cleaner. If the hard part is keeping feature logic, Delta data, validation jobs and batch inference close to governed lakehouse assets, Databricks usually fits the operating model better.
+</Callout>
 
 ## Where MLflow still needs help from the rest of the platform
 

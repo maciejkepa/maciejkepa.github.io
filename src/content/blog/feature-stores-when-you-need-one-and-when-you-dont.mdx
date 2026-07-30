@@ -1,8 +1,9 @@
 ---
 title: "Feature stores: what they are, when you need one, and which use cases justify them"
-description: "A practical guide for architects and ML teams: what a feature store is, when you need one, which feature store use cases are compelling, and which simpler alternatives are often enough."
+seoTitle: "What Is a Feature Store? Architecture, Use Cases and Alternatives"
+description: "Learn what a feature store does, when ML teams need one, and when versioned feature tables or warehouse-first pipelines are enough."
 date: "2026-06-27"
-updated: "2026-06-27"
+updated: "2026-07-30"
 tags: ["mlops", "data-engineering", "architecture", "production-ml"]
 type: "article"
 valueType: "Architectural guide"
@@ -37,7 +38,16 @@ My short answer to **do I need a feature store** is this: you need one when feat
 
 That framing is also the best starting point for evaluating real **feature store use cases** and realistic **feature store alternatives**. The decision is rarely about taste. It is about architecture pressure.
 
-![Hand-drawn architecture sketch comparing direct feature pipelines with a shared feature store used by multiple models and serving systems](/blog-covers/feature-stores-when-you-need-one-and-when-you-dont.png)
+<figure class="article-figure article-cover-figure">
+  <img
+    src="/blog-covers/feature-stores-when-you-need-one-and-when-you-dont-1600.webp"
+    alt="Hand-drawn architecture sketch comparing direct feature pipelines with a shared feature store used by multiple models and serving systems"
+    width="1537"
+    height="1023"
+    loading="eager"
+    decoding="async"
+  />
+</figure>
 
 If you want the broader production context around why these decisions matter after the first successful model, start with [Beyond the Notebook: what has to exist before ML can run in production](/blog/beyond-the-notebook-moving-ml-to-production/).
 
@@ -220,6 +230,10 @@ Can the team name features that are already duplicated across models? Can it sho
 If the answer to most of those is still no, the right move is usually to strengthen the current pipeline rather than insert another platform component.
 
 If the answer is repeatedly yes, then the team should stop treating a feature store as optional theory and start evaluating it as architecture.
+
+<Callout tone="production-note" title="Field note">
+The strongest feature store case I see in real platform work is not a team wanting a cleaner diagram. It is several models depending on similar customer, product or event-derived features, each with slightly different refresh logic and ownership. At that point, the store is valuable because it creates a shared operating contract. If one team owns one batch model and can already explain every feature table, the same tool is usually premature.
+</Callout>
 
 <Callout tone="production-note" title="Production note">
 A feature store should remove repeated coordination pain. If it only adds a new surface area for the same team to maintain, the timing is probably wrong.

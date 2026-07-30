@@ -1,8 +1,9 @@
 ---
 title: "Databricks MLOps delivery patterns with GitHub Actions"
-description: "A practical guide to production ML delivery on Databricks: where GitHub Actions fits, why Declarative Automation Bundles should usually be the deployment contract, and what to standardize before the first real production rollout."
+seoTitle: "Databricks MLOps with GitHub Actions and Bundles"
+description: "A production CI/CD pattern for Databricks MLOps using GitHub Actions, Declarative Automation Bundles, validation gates and environment promotion."
 date: "2026-07-09"
-updated: "2026-07-09"
+updated: "2026-07-30"
 tags: ["mlops", "databricks", "production-ml", "github-actions"]
 type: "guide"
 valueType: "Tutorial"
@@ -38,7 +39,16 @@ For a team that already uses GitHub, a strong default is this:
 - `Databricks Jobs, pipelines, models and serving` remain the runtime system
 - `ML validation and promotion gates` are explicit, not implied by a successful deploy
 
-![Hand-drawn sketch of a GitHub Actions pipeline controlling Databricks MLOps delivery across bundle validation, staging, model validation and production](/blog-covers/databricks-mlops-delivery-patterns-with-github-actions.png)
+<figure class="article-figure article-cover-figure">
+  <img
+    src="/blog-covers/databricks-mlops-delivery-patterns-with-github-actions-1600.webp"
+    alt="Hand-drawn sketch of a GitHub Actions pipeline controlling Databricks MLOps delivery across bundle validation, staging, model validation and production"
+    width="1600"
+    height="900"
+    loading="eager"
+    decoding="async"
+  />
+</figure>
 
 If you want the broader architectural context for how Databricks fits among other production ML operating models, read [ML delivery patterns with MLflow: Azure ML, Databricks and what survives production](/blog/ml-delivery-patterns-with-mlflow-azure-ml-and-databricks/). This article is narrower. It is about how to make **production ML on Databricks** behave like a real delivery system.
 
@@ -338,6 +348,10 @@ jobs:
 The `production` GitHub Environment should have required reviewers or an equivalent policy gate. The workflow only reaches it after staging validation succeeds, while the environment protects the final production deployment.
 
 The key point is not the syntax. It is the sequencing. The ML validation job is part of the release flow, not an optional extra.
+
+<Callout tone="production-note" title="Field note">
+The failure mode I would design against first is a deploy that succeeds while the release is still unsafe. A bundle can validate, a job can be created and a workflow can run, while staging data is unrepresentative, the model gate is too weak or the production identity cannot access the same dependencies. That is why Databricks MLOps needs validation and promotion gates, not only deployment automation.
+</Callout>
 
 ## What I would standardize before calling it Databricks MLOps
 

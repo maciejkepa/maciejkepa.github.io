@@ -19,16 +19,73 @@ const { activeTopic, activeLabel } = Astro.props;
 const allPosts = sortPosts(await getCollection('blog', ({ data }) => !data.draft));
 const posts = allPosts.filter((post) => getPostFilterTokens(post).includes(activeTopic));
 const filters = [{ label: 'All', slug: 'all' }, ...getTopicCards(allPosts)];
+const topicHubCopy: Record<string, { title: string; description: string; intro: string[] }> = {
+  mlops: {
+    title: 'Production MLOps guides and operating models',
+    description: 'MLOps writing on delivery patterns, model operations, observability, governance and the engineering foundations behind production ML systems.',
+    intro: [
+      'This topic collects production-first MLOps writing: delivery patterns, model release decisions, ownership boundaries and the operating practices that make ML systems maintainable.',
+      'The focus is practical rather than tool-first. Start here when the question is how to move from experiments to repeatable, observable and governed production workflows.'
+    ]
+  },
+  databricks: {
+    title: 'Databricks MLOps, data engineering and AI platform patterns',
+    description: 'Databricks guides for production ML delivery, GitHub Actions, MLflow, feature stores, lakehouse architecture and operational AI systems.',
+    intro: [
+      'This topic groups Databricks articles around production delivery: MLOps workflows, GitHub Actions, MLflow, feature engineering and lakehouse-side platform decisions.',
+      'Use it as a reading path for teams that already have data gravity in Databricks and need stronger deployment, validation and operating boundaries.'
+    ]
+  },
+  observability: {
+    title: 'ML observability guides for production systems',
+    description: 'ML observability articles on monitoring model behavior, data quality, prediction drift, feedback loops and operational signals.',
+    intro: [
+      'This topic focuses on ML observability: the signals that tell a team whether a model service, its inputs and its outputs are still trustworthy in production.',
+      'The articles prioritize actionable monitoring and ownership over dashboards that look complete but do not change how incidents are handled.'
+    ]
+  }
+};
+const topicCopy = topicHubCopy[activeTopic] ?? {
+  title: `${activeLabel} articles and guides`,
+  description: `Articles and guides about ${activeLabel} in production data and AI systems.`,
+  intro: [
+    `This topic collects articles and guides about ${activeLabel}, with a practical focus on production data, AI and ML engineering systems.`
+  ]
+};
+const breadcrumbSchema = {
+  '@type': 'BreadcrumbList',
+  '@id': `${Astro.url.href}#breadcrumb`,
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: new URL('/', Astro.site).href
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Blog',
+      item: new URL('/blog/', Astro.site).href
+    },
+    {
+      '@type': 'ListItem',
+      position: 3,
+      name: activeLabel,
+      item: Astro.url.href
+    }
+  ]
+};
 ---
 
-<BaseLayout title={`Blog: ${activeLabel}`} description={`Posts filtered by ${activeLabel}.`}>
+<BaseLayout title={activeLabel} seoTitle={`${topicCopy.title} | Maciej Kępa`} description={topicCopy.description} structuredData={breadcrumbSchema}>
   <section class="section">
     <div class="container">
       <span class="eyebrow">Blog</span>
-      <h1 class="section-title">Beyond demos, notebooks and hype</h1>
-      <p class="section-copy">
-        Showing posts for <strong>{activeLabel}</strong>. Longer essays and technical guides on MLOps, data engineering, AI architecture, Azure and the platform concerns that tend to show up after the model finally works.
-      </p>
+      <h1 class="section-title">{topicCopy.title}</h1>
+      {topicCopy.intro.map((paragraph) => (
+        <p class="section-copy">{paragraph}</p>
+      ))}
 
       <div class="filter-row" aria-label="Blog topic filters">
         {filters.map((filter) => (

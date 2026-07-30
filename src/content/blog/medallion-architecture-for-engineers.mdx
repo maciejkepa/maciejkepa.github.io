@@ -35,7 +35,16 @@ The engineering problem starts when a team has to decide what those words mean i
 
 The useful definition is this: **medallion architecture is a way to make the contracts between source data, trusted data and published data products explicit.** The layers are not folders. They are responsibility boundaries.
 
-![Hand-drawn technical sketch of source events moving through raw system-of-record data, trusted data, quarantine and published data products](/blog-covers/medallion-architecture-for-engineers.png)
+<figure class="article-figure article-cover-figure">
+  <img
+    src="/blog-covers/medallion-architecture-for-engineers-1600.webp"
+    alt="Hand-drawn technical sketch of source events moving through raw system-of-record data, trusted data, quarantine and published data products"
+    width="1600"
+    height="900"
+    loading="eager"
+    decoding="async"
+  />
+</figure>
 
 Azure Databricks describes the pattern as the progressive improvement of data quality and structure across logical layers. [Microsoft Cloud Adoption Framework guidance](https://learn.microsoft.com/azure/cloud-adoption-framework/data/operational-standards-data-processing-standards-unify-data-platform#2-set-data-transformation-standards) is more useful when designing a platform: **system of record**, **trusted view** and **business data products**.
 

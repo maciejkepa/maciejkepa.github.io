@@ -6,6 +6,7 @@ import '../styles/global.css';
 
 interface Props {
   title?: string;
+  seoTitle?: string;
   description?: string;
   ogType?: 'website' | 'article';
   image?: string;
@@ -19,6 +20,7 @@ interface Props {
 
 const {
   title,
+  seoTitle,
   description = siteConfig.description,
   ogType = 'website',
   image,
@@ -29,7 +31,7 @@ const {
   modifiedTime,
   structuredData
 } = Astro.props;
-const pageTitle = title ? `${title} | ${siteConfig.owner}` : `${siteConfig.owner} | ${siteConfig.name}`;
+const pageTitle = seoTitle ?? (title ? `${title} | ${siteConfig.owner}` : `${siteConfig.owner} | ${siteConfig.name}`);
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const googleFontsUrl = 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap';
 const defaultSocialImage = '/og-image.png';
@@ -70,6 +72,14 @@ const schemaGraph = {
         siteConfig.links.github,
         siteConfig.links.linkedin,
         siteConfig.links.sessionize
+      ],
+      knowsAbout: [
+        'Azure',
+        'Databricks',
+        'MLOps',
+        'Data Engineering',
+        'ML Observability',
+        'AI Architecture'
       ]
     },
     ...structuredDataItems
