@@ -70,7 +70,7 @@ I prefer to map them to responsibilities:
 The names in your catalog do not need to be `bronze_orders`, `silver_orders` and `gold_orders`. A more useful layout is usually domain-first:
 
 ```text
-commerce.raw_orders_cdc
+commerce.raw.orders_cdc
 commerce.trusted.int_orders
 commerce.trusted.dim_customer
 commerce.trusted.fact_orders
@@ -89,7 +89,7 @@ Raw data exists so the platform can prove what arrived and rebuild what comes af
 
 For an order-event feed, raw data should normally preserve the source payload plus the metadata required to reason about it later: source system, ingestion timestamp, source offset or sequence, batch identifier, file name or topic partition, and the version of the ingestion contract. Transform as little as possible. Parsing a file into a durable table or adding provenance metadata is fine. Correcting business values or silently filtering malformed records is not.
 
-The point is not purity. The point is that a later schema change, duplicate event or wrong transformation can be investigated and replayed from a known state. Raw data can be append-only without being convenient for analysts. It should be.
+The point is not purity. The point is that a later schema change, duplicate event or wrong transformation can be investigated and replayed from a known state. Raw data is often append-only for event feeds, while snapshot or full-load sources may arrive as versioned full extracts. In either case, it does not need to be convenient for analysts.
 
 That is why raw should not become a backdoor analytics layer. Once dashboards, notebooks and applications depend on raw tables, every source-system quirk becomes somebody else's production dependency.
 
