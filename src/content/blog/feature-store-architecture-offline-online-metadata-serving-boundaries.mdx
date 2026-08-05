@@ -1,7 +1,7 @@
 ---
 title: "Feature store architecture: offline, online, metadata and serving boundaries"
 seoTitle: "Feature Store Architecture: Offline, Online, Metadata, Serving"
-description: "A practical guide to feature store architecture: offline training, online lookup, metadata contracts and serving boundaries for production ML."
+description: "Design feature store architecture across offline feature stores, online lookup, metadata contracts and feature serving for production ML."
 date: "2026-08-05"
 updated: "2026-08-05"
 tags: ["mlops", "data-engineering", "architecture", "production-ml"]
@@ -30,7 +30,15 @@ Feature store architecture gets vague when it is drawn as one large box.
 
 That box hides the decisions that matter in production: where historical truth lives, what gets copied into a low-latency store, where feature definitions are governed, who owns freshness, and what the model serving endpoint is allowed to resolve at request time.
 
-I covered the broader decision in [Feature stores: what they are, when you need one, and which use cases justify them](/blog/feature-stores-when-you-need-one-and-when-you-dont/). This article starts after that decision. Assume the team has real feature reuse, online-offline consistency pressure, or point-in-time correctness requirements. At that point, the hard work is drawing boundaries the team can operate.
+Before the boundaries, it helps to name the whole thing.
+
+A feature store is a production layer for machine learning features: the input signals a model uses during training and inference. For a churn model, that might be customer tenure, failed payments in the last 30 days, product usage frequency, support ticket count or recent login activity. For a fraud model, it might be transaction velocity, device history, account age, location mismatch or previous chargebacks.
+
+Storing those values once is the easy part. Production work starts when the same feature definition has to survive training sets, batch scoring, real-time inference, backfills, ownership, freshness and model releases.
+
+Once the team has real feature reuse, training-serving consistency pressure, online scoring pressure, or point-in-time correctness requirements, the hard work is drawing boundaries the team can operate.
+
+If you are still deciding whether a feature store is needed at all, start with [Feature stores: what they are, when you need one, and which use cases justify them](/blog/feature-stores-when-you-need-one-and-when-you-dont/).
 
 The useful architecture has four parts:
 
@@ -52,7 +60,7 @@ If those boundaries are weak, the feature store becomes another data platform su
   />
 </figure>
 
-## Start with boundaries before tools
+## Start with feature store boundaries before tools
 
 A feature store product gives you useful primitives. Your team still has to decide the operating model.
 
@@ -296,7 +304,7 @@ Without those answers, the application team blames model serving, the ML team bl
   </figcaption>
 </figure>
 
-If you use Databricks MLOps Stacks, this belongs in the standards around the generated project. I wrote about that in [Databricks MLOps Stacks: what to standardize before production](/blog/databricks-mlops-stacks-what-to-standardize-before-production/). The feature store boundary should be part of the same production contract as data validation, model evaluation, deployment targets and observability.
+If you use Databricks Bundles or MLOps Stacks, this belongs in the standards around the generated project. The feature store boundary should be part of the same production contract as data validation, model evaluation, deployment targets and observability. That is the same operating model behind [Databricks MLOps delivery patterns with GitHub Actions](/blog/databricks-mlops-delivery-patterns-with-github-actions/).
 
 ## A practical architecture checklist
 
@@ -371,6 +379,6 @@ When those boundaries are explicit, a feature store can reduce production risk. 
 - [Feature Serving endpoints on Microsoft Learn](https://learn.microsoft.com/azure/databricks/machine-learning/feature-store/feature-function-serving)
 - [Model Serving with automatic feature lookup on Microsoft Learn](https://learn.microsoft.com/azure/databricks/machine-learning/feature-store/automatic-feature-lookup)
 - [Feature stores: what they are, when you need one, and which use cases justify them](/blog/feature-stores-when-you-need-one-and-when-you-dont/)
-- [Databricks MLOps Stacks: what to standardize before production](/blog/databricks-mlops-stacks-what-to-standardize-before-production/)
+- [Databricks MLOps delivery patterns with GitHub Actions](/blog/databricks-mlops-delivery-patterns-with-github-actions/)
 - [Minimal viable ML observability: what to monitor first](/blog/minimal-viable-ml-observability-what-to-monitor-first/)
 - [MLOps topic archive](/blog/topic/mlops/)
