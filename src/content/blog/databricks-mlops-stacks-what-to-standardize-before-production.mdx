@@ -1,0 +1,467 @@
+---
+title: "Databricks MLOps Stacks: what to standardize before production"
+seoTitle: "Databricks MLOps Stacks Template: Production Checklist"
+description: "How to use Databricks MLOps Stacks as a Bundle template: what to customize before production across data, model gates, ownership and observability."
+date: "2026-08-04"
+updated: "2026-08-05"
+tags: ["mlops", "databricks", "production-ml", "architecture"]
+type: "article"
+valueType: "Architectural guide"
+featured: false
+draft: true
+coverImage: "/blog-covers/databricks-mlops-stack-before-production.png"
+coverAlt: "Hand-drawn architecture sketch of a Databricks MLOps stack showing code, bundles, CI/CD, data, model lifecycle, governance, observability and production promotion"
+faqs:
+  - question: "What are Databricks MLOps Stacks?"
+    answer: "Databricks MLOps Stacks are an official advanced Databricks Bundle template for creating production-oriented MLOps projects. You initialize them with databricks bundle init mlops-stacks, then customize the generated project structure, ML code, resources and CI/CD setup for your own production standards."
+  - question: "Are MLOps Stacks the same thing as Databricks Asset Bundles?"
+    answer: "No. Declarative Automation Bundles are the packaging and deployment mechanism for Databricks projects. MLOps Stacks are a higher-level template built on Bundles that generates a recommended MLOps project structure, including ML code components, Databricks resources and optional CI/CD components."
+  - question: "Should teams use the MLOps Stacks template as-is?"
+    answer: "Teams should treat MLOps Stacks as a starting point. The generated template gives structure and delivery conventions, but production teams still need to define data contracts, model evaluation rules, environment boundaries, ownership, permissions, observability and release criteria."
+  - question: "What should be standardized before production with MLOps Stacks?"
+    answer: "Before production, teams should standardize which generated components they use, how bundle targets map to environments, how training and inference jobs are owned, how data and features are governed, how MLflow model promotion works, which validation gates block release, and which signals are monitored after deployment."
+---
+
+import Callout from '../../components/Callout.astro';
+
+Databricks MLOps Stacks are easy to misunderstand.
+
+The name sounds like a complete MLOps platform. In practice, [MLOps Stacks](https://learn.microsoft.com/azure/databricks/machine-learning/mlops/mlops-stacks) are an official Databricks project template built on [Declarative Automation Bundles](https://learn.microsoft.com/azure/databricks/dev-tools/bundles/). You create one with:
+
+```bash
+databricks bundle init mlops-stacks
+```
+
+That command gives you starter files for a production-oriented ML project: code structure, bundle resources, environment targets and optional CI/CD components. Databricks describes the stack as a way to express the model development process as code.
+
+The template gives the team a strong starting shape. It does not know your data contracts, model release rules, workspace boundaries, ownership model, validation thresholds, feature refresh expectations or incident process. Those standards decide whether the project is production-ready.
+
+<figure class="article-figure article-cover-figure">
+  <img
+    src="/blog-covers/databricks-mlops-stack-before-production-1600.webp"
+    alt="Hand-drawn architecture sketch of a Databricks MLOps stack showing code, bundles, CI/CD, data, model lifecycle, governance, observability and production promotion"
+    width="1600"
+    height="900"
+    loading="eager"
+    decoding="async"
+  />
+</figure>
+
+I covered GitHub Actions and bundle deployment in [Databricks MLOps delivery patterns with GitHub Actions](/blog/databricks-mlops-delivery-patterns-with-github-actions/).
+
+Here, the focus is the template itself. If you are evaluating a Databricks MLOps template, ask a practical question: what do MLOps Stacks standardize, where should teams customize them, and which engineering decisions must be made before the generated project can become a production ML system?
+
+## What the MLOps Stacks template gives you
+
+The official [MLOps Stacks Bundle guide](https://learn.microsoft.com/azure/databricks/dev-tools/bundles/mlops-stacks) is explicit: `mlops-stacks` is an advanced full stack template for Databricks Bundle projects.
+
+During initialization, the first major choice is the project shape:
+
+- `CICD_and_Project` sets up both ML code and CI/CD components.
+- `Project_Only` sets up ML code components for data scientists.
+- `CICD_Only` sets up CI/CD components for ML engineers.
+
+That split matters because MLOps Stacks do more than create folders. They encode a collaboration model. Data scientists can work on training and inference logic, while ML engineers or platform engineers prepare the deployment and automation path.
+
+The generated project typically gives you a structure for:
+
+- ML training code
+- batch inference code
+- model validation
+- Databricks resources
+- bundle targets
+- documentation for data scientists and MLOps engineers
+- CI/CD starter configuration when selected
+
+The value is a shared project skeleton for teams that otherwise start every ML project from a notebook, a copied job and a few undocumented environment variables.
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/databricks-mlops-stacks-template-anatomy.webp"
+    alt="Hand-drawn diagram showing databricks bundle init mlops-stacks generating an MLOps project with ML code, resources, targets, docs and CI/CD connected to Databricks training, validation, inference, MLflow and Unity Catalog resources"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    MLOps Stacks are best understood as a generated Bundle project: a standard repo shape that connects ML code, resources and targets to Databricks workloads.
+  </figcaption>
+</figure>
+
+## What it does not give you
+
+The production contract still belongs to the team.
+
+The team has to define:
+
+- which feature tables are authoritative
+- which validation dataset represents production risk
+- which model metric is allowed to degrade
+- who can approve promotion
+- whether staging is representative enough
+- which service principal should run production inference
+- what freshness delay requires an incident
+- what rollback means for a batch scoring job
+
+Those choices are engineering and operating decisions, not template details.
+
+Evaluate MLOps Stacks by asking a stronger question than "does the generated repo deploy?"
+
+`what production standards do we attach to this generated structure?`
+
+<Callout tone="production-note" title="Production note">
+The template reduces the cost of starting correctly. It still leaves the team to define what "correct" means for data, model release, runtime ownership and operations.
+</Callout>
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/databricks-mlops-stacks-template-vs-production-standards.webp"
+    alt="Hand-drawn split diagram showing Databricks MLOps Stacks template components on the left and production standards such as data contracts, model gates, ownership, identity, observability and rollback on the right"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    The template gives useful structure. Production readiness comes from the standards the team adds around data, release gates, ownership, identity and operations.
+  </figcaption>
+</figure>
+
+## Standardize the generated components you will actually keep
+
+The first practical decision is scope.
+
+Do not accept every generated component only because it exists. Also do not delete structure too aggressively and end up back at an ungoverned notebook workflow.
+
+For a production ML project, I would explicitly decide which parts of the template are active:
+
+- training workflow
+- validation workflow
+- batch inference workflow
+- optional serving workflow
+- feature or data preparation workflow
+- CI/CD workflow
+- model registration and promotion logic
+- monitoring hooks
+
+Then document the inactive parts.
+
+This prevents a common failure mode: a repository where half the generated files are obsolete, nobody knows whether they are safe to remove, and production behavior is hidden in a job that no longer matches the template.
+
+I would write the standard this bluntly:
+
+`Generated does not mean owned. Kept and customized means owned.`
+
+## Standardize bundle targets around real environments
+
+MLOps Stacks are built on Bundles, so environment targets are part of the project shape.
+
+Before production, the team should define what each target means:
+
+- `dev` is for individual or team development.
+- `staging` is for release validation against representative dependencies.
+- `prod` is for controlled production execution.
+
+Naming matters less than isolation.
+
+For Databricks, that usually means clear workspace, catalog and schema boundaries. Production data products should not be writable from development. Staging should not silently use toy data when production uses real feature windows, real permissions and real downstream consumers.
+
+If the generated target configuration points to environments that are not operationally meaningful, the stack will only make weak boundaries look official.
+
+## Standardize the ML code boundary
+
+MLOps Stacks help teams move away from isolated notebooks toward a more testable project layout.
+
+Before production, I would standardize what belongs in reusable Python modules and what can remain in notebooks.
+
+Good candidates for modules:
+
+- feature transformation logic
+- model training functions
+- evaluation code
+- inference transformations
+- metric calculation
+- data contract checks
+- utility clients
+
+Good candidates for notebooks:
+
+- exploration
+- readable orchestration entry points
+- investigation
+- documentation-heavy analysis
+
+This distinction matters because production ML code needs tests, reviews and stable interfaces. If all logic remains inside notebooks, the MLOps Stack may deploy correctly while the system remains difficult to validate.
+
+The template can give the folder structure. The team has to enforce the code boundary.
+
+## Standardize data and feature contracts
+
+The generated MLOps project is only as reliable as the data path behind it.
+
+A production Databricks ML stack should define:
+
+- which tables are training inputs
+- which features are computed by this project
+- which features are consumed from shared assets
+- how schemas are checked
+- how freshness is measured
+- how late-arriving data is handled
+- who owns failed feature refreshes
+- which data quality checks block training or inference
+
+Here, MLOps Stacks run into data engineering practice. The model lifecycle does not start at `fit()`. It starts when input data becomes trusted enough for a model to depend on it.
+
+If feature reuse and governance matter, connect this standard to the feature store decision. I covered that boundary in [Feature stores: when you need one and when you don't](/blog/feature-stores-when-you-need-one-and-when-you-dont/).
+
+## Standardize model lifecycle rules around MLflow
+
+MLOps Stacks assume the project will use a Databricks-native ML lifecycle, and MLflow is a core part of that lifecycle.
+
+MLflow alone is not a release policy.
+
+Before production, the team should define:
+
+- where runs are tracked
+- which experiment is authoritative
+- how model candidates are named
+- which metrics are required
+- which baseline must be beaten
+- who reviews evaluation results
+- what promotion means
+- how rollback works
+
+Separate registration from release.
+
+A model can be registered because it is worth preserving. A model should be promoted only because it passed the release criteria for a specific production workload.
+
+If the MLOps Stack generates a model workflow, customize it until those rules are visible in code, documentation or both.
+
+## Standardize validation gates inside the stack
+
+This is where a scaffold becomes a production system.
+
+The generated project should evolve toward explicit gates:
+
+- unit tests for Python modules
+- bundle validation
+- integration checks after staging deployment
+- schema checks
+- feature freshness checks
+- model metric checks against a baseline
+- inference smoke tests
+- permission checks for production runtime identity
+- post-deploy verification
+
+Some gates belong in pull requests. Some belong after deployment to staging. Some belong before model promotion. Some belong after production release.
+
+Use this production rule:
+
+`A bundle can deploy successfully while the model release is still rejected.`
+
+That rule keeps this article distinct from a CI/CD tutorial. GitHub Actions, Azure DevOps or another runner can coordinate the flow. The MLOps standard is the definition of what is allowed to pass.
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/databricks-mlops-stacks-production-gates.webp"
+    alt="Hand-drawn flow diagram showing production gates inside a Databricks MLOps Stacks project from pull request through bundle validation, staging, model gate, production and observability feedback"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    Deployment alone is too weak. A release candidate should pass staging checks, model gates and production observability expectations before the team treats it as production-ready.
+  </figcaption>
+</figure>
+
+## Standardize ownership between data science, MLOps and platform teams
+
+MLOps Stacks deliberately support different roles. The documentation describes separate concerns for ML code, CI/CD setup and production infrastructure. That helps because Databricks ML projects often cross three groups:
+
+- data scientists who build and evaluate models
+- ML engineers or MLOps engineers who productize workflows
+- platform engineers who manage workspace, identity and governance foundations
+
+Before production, decide who owns each part:
+
+- training logic
+- inference logic
+- Databricks resource definitions
+- bundle targets
+- CI/CD configuration
+- service principals
+- feature tables
+- model promotion
+- monitoring and alert response
+
+Put this ownership model in the repository documentation. Otherwise the template creates a shared codebase without shared responsibility.
+
+<Callout tone="field-note" title="Field note">
+The first production problem is rarely the template itself. The generated project crosses team boundaries before ownership is written down. A training job fails, a feature table is stale, a model metric drops, and the team has to discover during the incident who owns which part.
+</Callout>
+
+## Standardize identity and permissions early
+
+Production Databricks projects need separate identities for different responsibilities.
+
+At minimum, distinguish:
+
+- the human developer
+- the CI/CD deployment identity
+- the production runtime identity
+- the platform administration identity
+
+That separation matters for auditability and least privilege. The identity that deploys a bundle does not always need the same permissions as the identity that reads production features and writes prediction outputs.
+
+Customize this part of the generated stack instead of treating the template as the authority. The right permissions depend on workspace layout, Unity Catalog structure, data products, secrets, serving requirements and internal controls.
+
+## Standardize observability as part of the generated project
+
+The default template is a starting point for delivery. Production still needs operating signals.
+
+For a Databricks ML workload, I would expect the project to define or at least document:
+
+- job run status
+- task duration
+- retry count
+- input row counts
+- feature freshness
+- schema compatibility
+- model version
+- code revision
+- prediction volume
+- prediction distribution
+- serving latency and error rate when serving exists
+
+Labels often arrive late. That means production checks cannot depend only on eventual model quality metrics. You need earlier signals that catch broken inputs, missing partitions, schema drift and suspicious prediction shifts.
+
+The same principle drives [minimal viable ML observability](/blog/minimal-viable-ml-observability-what-to-monitor-first/). In a Databricks MLOps Stack, observability belongs in the production standard before the first release.
+
+## A practical checklist before production
+
+Before promoting an MLOps Stacks project, I would want clear answers to these questions.
+
+### Template scope
+
+- Which `mlops-stacks` components did we generate?
+- Which components are active?
+- Which generated files are intentionally unused?
+- Where is customization documented?
+
+### Bundle and environments
+
+- What is the bundle name?
+- What are the dev, staging and production targets?
+- Which workspace does each target deploy to?
+- Which catalog and schema does each target use?
+- Is staging representative of production dependencies?
+
+### Data and features
+
+- What are the authoritative training inputs?
+- Which feature tables are owned by this project?
+- Which feature tables are consumed from elsewhere?
+- Which data checks block training?
+- Which data checks block inference?
+
+### Model lifecycle
+
+- Which MLflow experiment is authoritative?
+- How are model candidates evaluated?
+- What baseline must be beaten?
+- Who approves model promotion?
+- How is rollback handled?
+
+### Engineering quality
+
+- Which logic is packaged as testable modules?
+- Which notebooks remain as orchestration or exploration?
+- What tests run in pull requests?
+- What tests run after staging deployment?
+- What validation blocks production?
+
+### Operations
+
+- Which identity deploys?
+- Which identity runs production workloads?
+- Who owns failed jobs?
+- Who owns stale features?
+- Which metrics and alerts exist before labels arrive?
+- Where is post-deploy verification recorded?
+
+If the answers are not clear, adding another tool will not help. Turn the template into a standard first.
+
+## What are Databricks MLOps Stacks?
+
+Databricks MLOps Stacks are an official advanced Bundle template for production-oriented MLOps projects.
+
+You create one with:
+
+```bash
+databricks bundle init mlops-stacks
+```
+
+The generated project can include ML code components, CI/CD components or both. It gives teams a recommended structure for training, validation, inference, Databricks resources and environment promotion.
+
+The phrase to keep is "start with." The generated stack should become your project standard only after you adapt it to your production boundaries.
+
+## Are MLOps Stacks the same thing as Databricks Asset Bundles?
+
+No.
+
+Declarative Automation Bundles are the mechanism for defining and deploying Databricks projects as source-controlled assets. MLOps Stacks are a template built on top of that mechanism.
+
+The relationship is:
+
+`Bundles are the packaging and deployment model. MLOps Stacks are a generated MLOps project template that uses Bundles.`
+
+That distinction helps avoid confusion. You can use Bundles without MLOps Stacks. You use MLOps Stacks when you want a production-oriented ML project scaffold.
+
+## Should teams use the MLOps Stacks template as-is?
+
+Rarely.
+
+Use it as a strong starting point. Then customize it around your production reality:
+
+- workspace and catalog design
+- data contracts
+- feature ownership
+- model evaluation rules
+- promotion approval
+- serving or batch inference pattern
+- observability requirements
+- identity and permission boundaries
+
+The template should reduce the cost of standardization. It should not become an excuse to skip standardization.
+
+## What should be standardized before production with MLOps Stacks?
+
+Standardize the decisions that make the project operable:
+
+- generated component scope
+- bundle targets
+- environment boundaries
+- code versus notebook responsibilities
+- data and feature contracts
+- MLflow model lifecycle rules
+- validation gates
+- identities and permissions
+- monitoring and alert response
+
+Those standards are what turn a generated MLOps Stack into a production ML system.
+
+## Final point
+
+Databricks MLOps Stacks are valuable because they give teams a production-oriented starting structure instead of a blank repo or a copied notebook workflow.
+
+The template is the starting structure. The production architecture is the set of standards you attach to it: how environments work, how data is trusted, how models are evaluated, how releases are approved, how identities are separated and how the system is observed after deployment.
+
+## Further reading
+
+- [MLOps Stacks: model development process as code](https://learn.microsoft.com/azure/databricks/machine-learning/mlops/mlops-stacks)
+- [Declarative Automation Bundles for MLOps Stacks](https://learn.microsoft.com/azure/databricks/dev-tools/bundles/mlops-stacks)
+- [Declarative Automation Bundles project templates](https://learn.microsoft.com/azure/databricks/dev-tools/bundles/templates)
+- [What are Declarative Automation Bundles?](https://learn.microsoft.com/azure/databricks/dev-tools/bundles/)
+- [CI/CD workflows on Databricks](https://learn.microsoft.com/azure/databricks/dev-tools/ci-cd/flows)
+- [Databricks MLOps delivery patterns with GitHub Actions](/blog/databricks-mlops-delivery-patterns-with-github-actions/)
+- [ML delivery patterns with MLflow: Azure ML, Databricks and what survives production](/blog/ml-delivery-patterns-with-mlflow-azure-ml-and-databricks/)
+- [Minimal viable ML observability: what to monitor first](/blog/minimal-viable-ml-observability-what-to-monitor-first/)
+- [Feature stores: when you need one and when you don't](/blog/feature-stores-when-you-need-one-and-when-you-dont/)
+- [Databricks topic hub](/blog/topic/databricks/)
+- [MLOps topic hub](/blog/topic/mlops/)

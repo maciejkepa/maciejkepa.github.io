@@ -2,6 +2,8 @@ const responsiveCoverImages = new Set([
   '/blog-covers/ai-generated-code-risks-fallbacks-and-mocks.png',
   '/blog-covers/beyond-the-notebook.png',
   '/blog-covers/databricks-mlops-delivery-patterns-with-github-actions.png',
+  '/blog-covers/databricks-mlops-stack-before-production.png',
+  '/blog-covers/feature-store-architecture-boundaries.png',
   '/blog-covers/feature-stores-when-you-need-one-and-when-you-dont.png',
   '/blog-covers/how-to-build-a-simple-mcp-server-and-deploy-it-on-databricks.png',
   '/blog-covers/medallion-architecture-for-engineers.png',
