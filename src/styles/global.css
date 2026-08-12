@@ -852,6 +852,8 @@ html[data-theme="light"] .metric__value {
 
 .featured-post__media {
   display: block;
+  align-self: center;
+  aspect-ratio: 16 / 10;
   overflow: hidden;
   border-radius: calc(var(--radius) + 2px);
   border: 1px solid var(--line);
@@ -862,7 +864,7 @@ html[data-theme="light"] .metric__value {
 .featured-post__media img {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 10;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -1710,6 +1712,17 @@ html[data-theme="light"] .prose td {
   border-radius: calc(var(--radius) - 2px);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
+}
+
+.prose .article-figure--wide {
+  width: min(100%, 52rem);
+}
+
+.prose .article-figure--wide img {
+  width: 100%;
+  height: auto !important;
+  aspect-ratio: 1774 / 887;
+  object-fit: contain;
 }
 
 .prose .article-cover-figure {
