@@ -8,6 +8,7 @@ const responsiveCoverImages = new Set([
   '/blog-covers/how-to-build-a-simple-mcp-server-and-deploy-it-on-databricks.png',
   '/blog-covers/medallion-architecture-for-engineers.png',
   '/blog-covers/minimal-viable-ml-observability-what-to-monitor-first.png',
+  '/blog-covers/ml-observability.png',
   '/blog-covers/ml-delivery-patterns-with-mlflow-azure-ml-and-databricks.png',
   '/blog-covers/mlops-engineering-not-tooling.png',
   '/blog-covers/what-mlops-actually-is.png'

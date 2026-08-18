@@ -1708,10 +1708,21 @@ html[data-theme="light"] .prose td {
 .prose .article-figure img {
   display: block;
   width: min(100%, 52rem);
+  height: auto !important;
   margin: 0 auto;
   border-radius: calc(var(--radius) - 2px);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
+}
+
+.prose .article-figure--compact {
+  width: min(100%, 42rem);
+}
+
+.prose .article-figure--compact img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
 }
 
 .prose .article-figure--wide {
