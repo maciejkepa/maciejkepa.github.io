@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import LinkedInIcon from '../components/LinkedInIcon.astro';
 import { principles, siteConfig } from '../lib/site';
 
 const operatingSpace = [
@@ -54,7 +55,10 @@ const portrait = '/images/maciej-kepa-about.jpg';
           I care about systems that are scalable, observable, maintainable and actually ready for production, not only persuasive in a workshop or notebook demo.
         </p>
         <div class="button-row">
-          <a class="button" href={siteConfig.links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+          <a class="button" href={siteConfig.links.linkedin} target="_blank" rel="noreferrer" aria-label="Follow Maciej Kępa on LinkedIn">
+            <LinkedInIcon />
+            Follow me
+          </a>
           <a class="button button--secondary" href={siteConfig.links.sessionize} target="_blank" rel="noreferrer">Sessionize</a>
         </div>
       </div>

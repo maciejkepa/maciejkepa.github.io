@@ -1,5 +1,6 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import LinkedInIcon from '../components/LinkedInIcon.astro';
 import { formatDate } from '../lib/blog';
 
 interface Heading {
@@ -199,10 +200,15 @@ const lightboxController = `
               Data & AI Architect and Senior Data Engineer working on production data platforms, Azure, Databricks,
               MLOps foundations and ML observability for systems that need to be operated after the first model works.
             </p>
+            <div class="article-author__follow">
+              <a class="button" href="https://www.linkedin.com/in/maciej-kepa/" target="_blank" rel="noreferrer" aria-label="Follow Maciej Kępa on LinkedIn">
+                <LinkedInIcon />
+                Follow me
+              </a>
+            </div>
             <div class="article-author__links">
               <a href="/about/">About</a>
               <a href="/speaking/">Speaking</a>
-              <a href="https://www.linkedin.com/in/maciej-kepa/" target="_blank" rel="noreferrer">LinkedIn</a>
               <a href="https://sessionize.com/maciej-kepa/" target="_blank" rel="noreferrer">Sessionize</a>
             </div>
           </div>

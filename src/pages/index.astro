@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 
 import ArticleCard from '../components/ArticleCard.astro';
+import LinkedInIcon from '../components/LinkedInIcon.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getPostFilterTokens, getTopicCards, sortPosts } from '../lib/blog';
 import { getResponsiveCoverSources } from '../lib/images';
@@ -215,8 +216,11 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
             I am a Data & AI Architect working on production data platforms, MLOps and cloud-native AI systems. My work focuses on the engineering decisions that make these systems operable, observable and maintainable.
           </p>
           <div class="button-row">
-            <a class="button" href="/about/">Read more about Maciej Kępa</a>
-            <a class="button button--secondary" href="/projects/">View projects</a>
+            <a class="button" href="/about/">Read more about me</a>
+            <a class="button button--secondary" href={siteConfig.links.linkedin} target="_blank" rel="noreferrer" aria-label="Follow Maciej Kępa on LinkedIn">
+              <LinkedInIcon />
+              Follow me
+            </a>
           </div>
         </div>
       </article>

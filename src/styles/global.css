@@ -666,6 +666,7 @@ html[data-theme="light"] .hero-side--graphic {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
   min-height: 2.9rem;
   padding: 0.72rem 1rem;
   border-radius: 0.85rem;
@@ -686,6 +687,16 @@ html[data-theme="light"] .hero-side--graphic {
   transform: translateY(-1px);
   border-color: rgba(240, 179, 94, 0.56);
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
+}
+
+.button__icon {
+  display: block;
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 0.22rem;
+  fill: var(--steel);
 }
 
 .button--secondary {
@@ -1196,6 +1207,19 @@ html[data-theme="light"] .filter-chip[data-active="true"] {
   font-size: 1.02rem;
   margin-left: 0;
   margin-right: 0;
+}
+
+@media (min-width: 40rem) {
+  .about-inline-content .button-row {
+    flex-wrap: nowrap;
+    gap: 0.6rem;
+  }
+
+  .about-inline-content .button {
+    padding-inline: 0.85rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
 }
 
 .split {
@@ -1807,6 +1831,10 @@ html[data-theme="light"] .prose td {
 .article-author p {
   margin: 0;
   color: var(--muted);
+}
+
+.article-author__follow {
+  margin-top: 1rem;
 }
 
 .article-author__links {
