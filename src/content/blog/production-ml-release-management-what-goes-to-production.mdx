@@ -1,0 +1,228 @@
+---
+title: "ML release management: what a model release needs beyond the registry"
+seoTitle: "ML Release Management Beyond the MLflow Model Registry"
+description: "ML release management needs more than a registered model. Learn how MLflow supports versioning, validation and rollback on Azure Databricks."
+date: "2026-08-26"
+updated: "2026-08-26"
+tags: ["mlops", "production-ml", "architecture", "mlflow", "databricks"]
+type: "article"
+valueType: "Architectural guide"
+featured: false
+draft: false
+coverImage: "/blog-covers/production-ml-release-management-what-goes-to-production.png"
+coverAlt: "Hand-drawn technical sketch of an MLflow release manifest connecting code, model, data, configuration and runtime to a validated Azure Databricks deployment"
+faqs:
+  - question: "What is ML release management?"
+    answer: "ML release management identifies, validates and promotes the complete versioned decision system: code, model, input contract, configuration, runtime, target and release evidence. MLflow tracks the experiment and model lineage; the release record captures the resolved state that operates in production."
+  - question: "Are MLflow model aliases safe to use in production?"
+    answer: "Yes. Model aliases are useful mutable lifecycle pointers such as Champion and Challenger. Do not use an alias alone as the immutable identity of a past release. Record the resolved registered-model version alongside the alias, code revision and deployment evidence."
+  - question: "Should Azure Databricks MLflow projects deploy code or models?"
+    answer: "Both patterns are valid. Azure Databricks generally recommends promoting code so production trains and deploys from reviewed production logic. Promoting a model artifact is appropriate for specific cases, including training that is too expensive or impractical to repeat in each environment."
+  - question: "How do you roll back an MLflow deployment?"
+    answer: "Roll back the smallest state that explains the failure. A model alias can return a workload to a previous model version, but code, configuration, runtime and input-contract failures need their own reversal. Keep an immutable release record so the correct scope is visible during an incident."
+---
+
+import Callout from '../../components/Callout.astro';
+
+MLflow makes it easy to point at a model version. That reference is useful, but it is rarely enough to explain what reached production.
+
+On Azure Databricks, MLflow records runs, parameters, metrics, artifacts and model versions. The Models in Unity Catalog registry adds governance, lineage, access control and deployment status across workspaces. Together, they provide a strong record of a model. The scoring revision, input contract, runtime, configuration and target still need their own release identity.
+
+**ML release management needs two records: a model record and a release record.** The model record explains where a model came from. The release record explains which complete decision system reached a particular target.
+
+<figure class="article-figure article-cover-figure">
+  <img
+    src="/blog-covers/production-ml-release-management-what-goes-to-production-1600.webp"
+    alt="Hand-drawn technical sketch of an MLflow release manifest connecting code, model, data, configuration and runtime to a validated Azure Databricks deployment"
+    width="1600"
+    height="1000"
+    loading="eager"
+    decoding="async"
+  />
+</figure>
+
+The registry gives a model a governed identity. The release record gives an operator enough context to explain a result, validate a change and reverse the right state when something fails.
+
+## MLflow records the model, not the complete release
+
+An MLflow run preserves parameters, metrics, artifacts and code context behind training. A registered model version gives that result a stable, governed home. A deployed prediction still depends on more state than the model artifact.
+
+Consider a customer-risk batch job. Model version `42` may be unchanged while a scoring-code change rounds a feature differently, a configuration change raises the review threshold, or the production input table arrives late. The output changes in each case. The registry can show the correct model version while the release itself is wrong.
+
+| Workload | A release should identify | What cannot stay implicit |
+| --- | --- | --- |
+| Online inference | Registered model version, scoring code, runtime image, endpoint configuration, request and feature contract | Traffic routing, timeout behavior, fallback policy and threshold values |
+| Batch scoring | Code revision, model reference, input snapshot or `as_of` time, output contract and job configuration | Input window, rerun behavior, output version and backfill policy |
+| Retraining pipeline | Pipeline code, training-data contract, environment, evaluation policy and promotion rules | Eligible data, acceptance evidence and how a candidate becomes deployable |
+
+This is the operational boundary behind [Beyond the Notebook](/blog/beyond-the-notebook-moving-ml-to-production/). A notebook proves that an experiment can work. A release proves what is expected to work together under a defined runtime and input contract.
+
+## Use the registry for lineage and aliases for lifecycle
+
+[MLflow on Azure Databricks](https://learn.microsoft.com/azure/databricks/mlflow/) combines tracking, evaluation, a model registry and deployment tools. [Models in Unity Catalog](https://learn.microsoft.com/azure/databricks/machine-learning/manage-model-lifecycle) extends the registry with centralized access control, auditing, lineage and model discovery across workspaces. It should preserve model lineage and govern who can use a model.
+
+MLflow aliases solve a different problem. An alias such as `Champion` or `Challenger` is a mutable named pointer to a model version. It is useful when a workload needs to resolve the currently approved candidate without hardcoding a version.
+
+That mutability is why an alias is not enough to identify a past release. A batch job that loads `models:/prod.ml_team.customer_risk@Champion` uses whichever version the alias resolves to when the job runs. If the alias moves tomorrow, the same job definition can produce a different result. Record the resolved version in the release record.
+
+| Record | Answers | Should it change? |
+| --- | --- | --- |
+| MLflow run | How was this candidate trained and evaluated? | No. It is historical evidence. |
+| Registered model version | Which governed model artifact was selected? | No. Use the version as an immutable reference. |
+| Model alias | Which candidate is currently approved for a lifecycle role? | Yes. It is a deliberate operational pointer. |
+| Release record | What code, model, data contract, configuration and target produced this deployment? | No. Treat it as incident evidence. |
+
+<Callout tone="production-note" title="Production note">
+Use aliases for controlled discovery, not as the sole identifier of an incident. Store the resolved three-level Unity Catalog model name and version with the release evidence.
+</Callout>
+
+## Record an immutable MLflow release manifest
+
+An MLflow release manifest is a small immutable record that joins the deployable parts together. It can be written by CI/CD, stored with a deployment artifact or emitted to a release table. The storage choice matters less than the contract.
+
+```yaml
+release:
+  id: customer-risk-2026-08-26.3
+  code:
+    repository: github.com/example/customer-risk
+    revision: 8a2a6b1
+  model:
+    name: prod.ml_team.customer_risk
+    version: 42
+    uri: models:/prod.ml_team.customer_risk/42
+    alias_at_release: Champion
+  mlflow:
+    experiment_id: "921"
+    run_id: 4e31b6f
+  data:
+    feature_contract: customer_risk/v3
+    source_snapshot: commerce.trusted.fact_orders@2026-08-25
+    as_of: "2026-08-26T04:00:00Z"
+  runtime:
+    environment: databricks-runtime-ml-16.4
+  config:
+    profile: production
+    review_threshold: 0.72
+  target:
+    workload: batch-customer-risk
+    output: risk.published.daily_scores_v5
+  evidence:
+    contract_check: passed
+    smoke_test: passed
+```
+
+This YAML makes the relevant state queryable. An output partition, endpoint trace or incident ticket can be joined back to the release that created it without reconstructing the deployment from Git history, job settings and somebody's memory.
+
+<figure class="article-figure article-figure--wide">
+  <img
+    src="/blog-inline/production-ml-release-manifest.webp"
+    alt="Hand-drawn technical diagram showing code, MLflow model version, input contract, configuration and runtime collected in a release manifest before Azure Databricks deployment"
+    width="1600"
+    height="800"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    The model registry provides lineage. The release manifest captures the resolved state that the Azure Databricks target receives.
+  </figcaption>
+</figure>
+
+Keep portable release state separate from environment-owned state. The manifest can name a production target, but it should not carry secrets, live credentials, tenant-specific network rules or infrastructure identities. Those belong to the target platform and deployment configuration.
+
+## Deploy code and promote models are two valid MLflow paths
+
+MLflow supports both paths. The decision is about what the production environment needs to reproduce.
+
+Azure Databricks generally recommends promoting code between development, staging and production. That puts training, evaluation, inference and monitoring logic through the same review and integration process, then trains the production model from reviewed production code. It is the better default when production data, permissions and runtime are part of the behavior being validated.
+
+Promoting a model artifact is still useful in specific cases. A model may be too expensive to retrain in each environment, tied to a controlled training run, or intentionally approved as a concrete artifact after evaluation. In that case, the production release must preserve the precise registered version, its MLflow run and the integration state around it.
+
+| Delivery path | MLflow's role | Release evidence that still matters |
+| --- | --- | --- |
+| Deploy code | Track experiments, evaluation and the production-trained model | Commit, bundle or job revision, production input contract, runtime, target configuration and post-deployment checks |
+| Promote model | Register the selected immutable model version and its lineage | Resolved model version, originating run, scoring code, runtime, target configuration and validation evidence |
+
+[ML delivery patterns with MLflow, Azure ML and Databricks](/blog/ml-delivery-patterns-with-mlflow-azure-ml-and-databricks/) covers the larger operating-model decision. A model reference and a release identity remain different things in either path.
+
+## Validate the release after it reaches Azure Databricks
+
+Offline evaluation shows whether a model candidate meets a quality bar. It does not prove that the target can run the selected state. Permissions can differ, inputs can differ, and the deployment can resolve a different runtime or configuration than the one used in evaluation.
+
+Azure Databricks' [MLOps workflow](https://learn.microsoft.com/azure/databricks/machine-learning/mlops/mlops-workflow) recommends validation beyond one aggregate metric, including model format and metadata checks, performance by slice and compliance checks where needed. Its [machine learning lifecycle guidance](https://learn.microsoft.com/azure/databricks/machine-learning/concepts/ml-lifecycle) also recommends realistic staging tests, followed by A/B or shadow validation when the risk warrants it.
+
+Release validation has two moments:
+
+1. **Before promotion**, validate the resolved code or model artifact, input contract, runtime, configuration and approval evidence.
+2. **After deployment**, validate target behavior: an online smoke request or controlled traffic path; a batch sample run with output schema, partition counts and reconciliation checks.
+
+Put the release ID, model version, code revision and input contract into job runs, deployment logs and decision records. [ML observability](/blog/ml-observability/) explains why these records need to be joinable before an incident, not assembled afterwards.
+
+## Roll back the state that changed
+
+Rollback scope has to match the state that caused the failure. Reverting a model version cannot repair a broken input contract, runtime or threshold.
+
+<figure class="article-figure article-figure--wide">
+  <img
+    src="/blog-inline/production-ml-rollback-scope.webp"
+    alt="Hand-drawn technical decision diagram mapping a production symptom to rollback of code, MLflow model version, configuration, input contract or a complete release"
+    width="1600"
+    height="800"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    Roll back the state that explains the failure. A model alias can change the model version, but it cannot correct a bad threshold, runtime or input contract.
+  </figcaption>
+</figure>
+
+| Symptom | Likely containment or rollback | Evidence to preserve |
+| --- | --- | --- |
+| Schema or response regression after a scoring change | Code, runtime or configuration | Request or run IDs, error traces, previous release record and contract result |
+| Quality regression with stable inputs and runtime | Registered model version or full release | Evaluation slices, MLflow run, model lineage and live or delayed outcomes |
+| Stale or invalid inputs | Input contract, source dependency or scoring schedule | Source freshness, `as_of` time, feature version and affected outputs |
+| Threshold or routing change produces unsafe decisions | Configuration or traffic policy | Resolved configuration, decision distribution and approval record |
+| Several states changed together | Full release | The complete manifest and validation evidence |
+
+For an online workload, a model alias or deployment route may return traffic to a previous healthy version. For a batch workload, recovery usually means a corrected rerun. Preserve the original output and publish a marked correction instead of silently overwriting history.
+
+## A practical MLflow release checklist
+
+Before releasing an MLflow workload to production, the team should be able to answer these questions:
+
+1. Which immutable MLflow model version or source revision does this release use?
+2. Which MLflow run provides the training and evaluation evidence for the selected model?
+3. If an alias was used, which version did it resolve to at release time?
+4. What input or feature contract will the target use, including the snapshot or `as_of` time for batch work?
+5. Which runtime, configuration and Azure Databricks target will execute the workload?
+6. Which checks approve the release before it reaches consumers, and which check proves the target is healthy afterwards?
+7. Can an operator find the release ID in logs, job runs and decision records, then roll back the relevant state without guessing?
+
+If those answers are scattered across MLflow, a pull request, a job UI and chat messages, the team has useful artifacts but not a reliable MLflow production release.
+
+## FAQ
+
+### What is ML release management?
+
+ML release management identifies, validates and promotes the complete versioned decision system: code, model, input contract, configuration, runtime, target and release evidence. MLflow tracks the experiment and model lineage; the release record captures the resolved state that operates in production.
+
+### Are MLflow model aliases safe to use in production?
+
+Yes. Aliases are useful mutable pointers for roles such as `Champion` and `Challenger`. Record the resolved registered-model version alongside the alias, code revision and deployment evidence, because an alias can intentionally point somewhere else later.
+
+### Should Azure Databricks MLflow projects deploy code or models?
+
+Both patterns are valid. Azure Databricks generally recommends promoting code so production trains and deploys from reviewed production logic. Promote a model artifact for specific cases, such as training that is too expensive or impractical to repeat in each environment.
+
+### How do you roll back an MLflow deployment?
+
+Roll back the smallest state that explains the failure. A model alias can return a workload to a previous model version, but code, configuration, runtime and input-contract failures need their own reversal. An immutable release record makes that scope visible during an incident.
+
+## Further reading
+
+- [MLflow on Azure Databricks](https://learn.microsoft.com/azure/databricks/mlflow/)
+- [Manage model lifecycle in Unity Catalog](https://learn.microsoft.com/azure/databricks/machine-learning/manage-model-lifecycle)
+- [MLOps workflows on Azure Databricks](https://learn.microsoft.com/azure/databricks/machine-learning/mlops/mlops-workflow)
+- [Machine learning lifecycle on Azure Databricks](https://learn.microsoft.com/azure/databricks/machine-learning/concepts/ml-lifecycle)
+- [ML delivery patterns with MLflow, Azure ML and Databricks](/blog/ml-delivery-patterns-with-mlflow-azure-ml-and-databricks/)
+- [Databricks MLOps delivery patterns with GitHub Actions](/blog/databricks-mlops-delivery-patterns-with-github-actions/)
+- [ML observability: what it means beyond model monitoring](/blog/ml-observability/)

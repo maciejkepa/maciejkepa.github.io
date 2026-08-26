@@ -11,6 +11,7 @@ const responsiveCoverImages = new Set([
   '/blog-covers/ml-observability.png',
   '/blog-covers/ml-delivery-patterns-with-mlflow-azure-ml-and-databricks.png',
   '/blog-covers/mlops-engineering-not-tooling.png',
+  '/blog-covers/production-ml-release-management-what-goes-to-production.png',
   '/blog-covers/what-mlops-actually-is.png'
 ]);
 
