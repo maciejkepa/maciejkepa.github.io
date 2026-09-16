@@ -3,6 +3,7 @@ const responsiveCoverImages = new Set([
   '/blog-covers/beyond-the-notebook.png',
   '/blog-covers/databricks-mlops-delivery-patterns-with-github-actions.png',
   '/blog-covers/databricks-mlops-stack-before-production.png',
+  '/blog-covers/ml-model-deployment-patterns.png',
   '/blog-covers/feature-store-architecture-boundaries.png',
   '/blog-covers/feature-store-alternatives.png',
   '/blog-covers/feature-stores-when-you-need-one-and-when-you-dont.png',

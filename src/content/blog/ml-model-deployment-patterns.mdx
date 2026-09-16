@@ -1,0 +1,365 @@
+---
+title: "ML model deployment patterns: batch jobs, functions and managed endpoints"
+seoTitle: "ML Model Deployment Patterns with MLflow"
+description: "Compare ML model deployment patterns with MLflow: batch jobs, serverless functions, container APIs and managed endpoints for production inference."
+date: "2026-09-16"
+updated: "2026-09-16"
+tags: ["mlops", "production-ml", "mlflow", "architecture"]
+type: "article"
+valueType: "Architectural guide"
+featured: false
+draft: false
+coverImage: "/blog-covers/ml-model-deployment-patterns.png"
+coverAlt: "Hand-drawn technical diagram of one MLflow model package connected independently to a batch job, serverless function, container API and managed endpoint"
+faqs:
+  - question: "What are the main ML model deployment patterns?"
+    answer: "The main ML model deployment patterns are batch jobs, serverless functions, container APIs and managed endpoints. Batch fits reproducible data windows; functions fit light, sporadic calls; containers provide runtime control; managed endpoints provide a platform-operated serving boundary."
+  - question: "Can you deploy an MLflow model to Azure Functions?"
+    answer: "Yes. An Azure Function can load an MLflow pyfunc model once when its worker starts and call predict from an HTTP or event handler. It works best for small models, short executions and irregular traffic; large dependencies, slow initialization, tight latency targets or GPU inference usually need a container or managed endpoint."
+  - question: "Should inference run as a batch job or online endpoint?"
+    answer: "Use a batch job when the consumer accepts delayed results and recovery means rerunning a known, idempotent input window. Use an online endpoint when a caller needs a synchronous answer within a deadline and recovery happens per request."
+  - question: "When is a serverless function a good ML runtime?"
+    answer: "A serverless function is a good ML runtime when the model and dependencies are small, traffic is intermittent, initialization is controlled and each request finishes quickly. It is a poor fit when cold starts, memory limits, large images, GPU requirements or sustained throughput dominate the design."
+  - question: "What does a managed endpoint provide beyond MLflow?"
+    answer: "A managed endpoint adds the serving control plane that MLflow does not define: provisioning, authentication, health checks, routing, autoscaling, deployment rollout and platform telemetry. The exact features depend on the platform, so the endpoint contract still needs explicit capacity, failure and observability rules."
+---
+
+An MLflow model can be perfectly packaged and still have nowhere sensible to run.
+
+MLflow can preserve the model artifact, its flavors, input and output signature, dependency declarations and a common `predict()` interface. None of that decides whether predictions should run every night over fifty million rows, inside an HTTP function called twice an hour, behind a custom FastAPI service or on a managed endpoint with dedicated capacity.
+
+I see this decision collapse into "batch or endpoint" too often. That skips several useful options and, more importantly, starts from the platform menu instead of the consumer.
+
+**I treat ML model deployment patterns as different operating contracts around the same model package.** I start with the consumer and its failure path, then choose the smallest runtime that can meet the latency, scale, recovery and ownership requirements.
+
+<figure class="article-figure article-cover-figure">
+  <img
+    src="/blog-covers/ml-model-deployment-patterns-1600.webp"
+    alt="Hand-drawn technical diagram of one MLflow model package connected independently to a batch job, serverless function, container API and managed endpoint"
+    width="1600"
+    height="1000"
+    loading="eager"
+    decoding="async"
+  />
+</figure>
+
+The same registered model can support all four patterns. A stable scoring contract makes that portability useful even though each runtime behaves differently.
+
+## MLflow model deployment begins at the package boundary
+
+An [MLflow Model](https://mlflow.org/docs/latest/ml/model/) is a directory with an `MLmodel` file, one or more model flavors and the artifacts needed by those flavors. The `python_function` flavor gives different frameworks a common loading and prediction interface through `mlflow.pyfunc`.
+
+A useful production package normally contains or references an immutable model artifact, an input and output [model signature](https://mlflow.org/docs/latest/ml/model/signatures/), a pyfunc or framework-specific flavor, dependency declarations and lineage back to the training run and registered model version.
+
+The signature matters because a pyfunc model can validate incoming columns and types before inference. Dependency declarations matter because they describe the environment the model expects. There is one practical caveat: `mlflow.pyfunc.load_model()` loads the model into the current environment. It does not turn that environment into the declared one. The job image, function package, container build or managed platform still has to provide compatible dependencies.
+
+MLflow also does not define authentication, feature retrieval, request routing, concurrency, retry policy, health probes, autoscaling or runtime monitoring. Those belong to the deployment pattern.
+
+This is the same boundary described in [ML release management beyond the registry](/blog/production-ml-release-management-what-goes-to-production/). The registered model identifies the model. The release must also identify the code, runtime, configuration and target that execute it.
+
+## Choose the runtime from the consumer contract
+
+The runtime decision gets easier once the consumer is concrete. In reviews, I usually ask what needs the prediction and what the team can safely retry. Latency only makes sense after those two answers.
+
+| Consumer contract | Better default | Useful recovery unit | Typical output |
+| --- | --- | --- | --- |
+| Score a known data snapshot on a schedule | Batch job | Input partition or time window | Table, file or published dataset |
+| Handle occasional small HTTP or event-driven calls | Serverless function | One event or request | HTTP response or emitted event |
+| Serve a custom synchronous API with runtime control | Container API | One request plus a deployment revision | Versioned API response |
+| Operate online or batch serving through an ML platform | Managed endpoint | Request, batch invocation or routed deployment | Managed response or batch output |
+
+The table compares operating contracts rather than products. A team can run a batch job in Azure Machine Learning, Databricks, Kubernetes, a cloud batch service or an existing orchestrator. It can run a container API in Azure Container Apps, App Service, AKS or another container platform. The pattern describes the operating contract; the product implements it.
+
+## Pattern 1: a batch job scores a reproducible input window
+
+For a known population, I usually start with a batch job. Nightly churn scores, weekly demand forecasts, document classification backfills and periodic risk segmentation rarely gain anything from an HTTP endpoint.
+
+The job should resolve one immutable model URI at the start, read a reproducible input window, score it and publish the result idempotently. A rerun for the same `input_window` and `release_id` should replace or reconcile the same logical output instead of appending duplicates.
+
+```python
+import os
+
+import mlflow.pyfunc
+import pandas as pd
+
+MODEL_URI = os.environ["MODEL_URI"]  # models:/customer-risk/42
+RELEASE_ID = os.environ["RELEASE_ID"]
+
+model = mlflow.pyfunc.load_model(MODEL_URI)
+
+features = pd.read_parquet("/inputs/2026-09-15/features.parquet")
+predictions = model.predict(features)
+
+output = pd.DataFrame(
+    {
+        "customer_id": features["customer_id"],
+        "prediction": predictions,
+        "model_uri": MODEL_URI,
+        "release_id": RELEASE_ID,
+        "input_window": "2026-09-15",
+    }
+)
+
+publish_atomically(output, partition="2026-09-15")
+```
+
+`publish_atomically()` is deliberately the important part of this example. Production safety comes from preventing a failed attempt from exposing half a partition and from making a corrected rerun predictable.
+
+Large inputs should be partitioned and processed where the data already lives. I would not load a hundred million rows into one Python process only because the model exposes `predict()`. Portability does not make the execution engine irrelevant.
+
+Streaming inference belongs near this pattern. A stream continuously scores new records and stores progress in a checkpoint, but the consumer still receives an asynchronously published result. Recovery means restoring progress and replaying events, not answering an HTTP request before its deadline. Treat the checkpoint, source offsets and sink idempotency as release state.
+
+## Keep one portable scoring core and thin runtime adapters
+
+I keep feature validation, model loading and output metadata in one small scoring module. The function handler, batch runner and HTTP API should translate their own transport contracts without reimplementing that logic.
+
+<figure class="article-figure article-figure--wide">
+  <img
+    src="/blog-inline/ml-model-portable-core-thin-adapters.webp"
+    alt="Hand-drawn architecture diagram showing an MLflow model URI, signature and dependencies entering a shared load, validate and predict core with separate batch, function, HTTP API and managed endpoint adapters"
+    width="1600"
+    height="800"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    The scoring core owns model loading and prediction behavior. Runtime adapters translate transport-specific input and output without copying model logic.
+  </figcaption>
+</figure>
+
+The following core expects a model with a single prediction vector. A model returning a DataFrame or structured object should define an equally explicit output serializer.
+
+```python
+# scoring.py
+import os
+from typing import Any
+
+import mlflow.pyfunc
+import pandas as pd
+
+MODEL_URI = os.environ["MODEL_URI"]  # immutable registered version
+MODEL_VERSION = os.environ["MODEL_VERSION"]
+RELEASE_ID = os.environ["RELEASE_ID"]
+
+_model = mlflow.pyfunc.load_model(MODEL_URI)
+
+
+def score_records(records: list[dict[str, Any]]) -> dict[str, Any]:
+    if not records:
+        raise ValueError("records must contain at least one item")
+
+    frame = pd.DataFrame.from_records(records)
+    predictions = _model.predict(frame)
+
+    return {
+        "model_version": MODEL_VERSION,
+        "release_id": RELEASE_ID,
+        "predictions": predictions.tolist(),
+    }
+```
+
+The process loads the model once, outside the request handler. `MODEL_URI` points to a concrete registered version such as `models:/customer-risk/42`, not to a mutable alias resolved on every request. A deployment pipeline can use an alias to select version `42`, but the running release should record the resolved version.
+
+There are two sensible ways to deliver the artifact:
+
+1. Bake the immutable model artifact and its environment into the image or deployment package. Startup is independent of the registry, but every model change produces a new package.
+2. Pull an immutable model version when the process starts. The same runtime image can serve different releases, but startup now depends on registry access, credentials and artifact download time.
+
+I have no strong preference between those two approaches until startup time, artifact size and registry access make one clearly better. I do have a strong preference against resolving `@Champion` and downloading a model for every request. It adds network latency and lets one running deployment silently switch versions between calls.
+
+## Pattern 2: a serverless function fits light and irregular inference
+
+I would use a serverless ML model deployment when traffic is sporadic, the model is small and each invocation should finish quickly. An event-triggered fraud rule, a low-volume internal classification endpoint or a small preprocessing model can fit this shape.
+
+The current Azure Functions Python programming model uses a `FunctionApp` and decorators. The HTTP handler below only translates the request into the shared scoring contract.
+
+```python
+# function_app.py
+import json
+
+import azure.functions as func
+from mlflow.exceptions import MlflowException
+
+from scoring import score_records
+
+app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
+
+
+@app.route(route="score", methods=["POST"])
+def score_http(req: func.HttpRequest) -> func.HttpResponse:
+    try:
+        payload = req.get_json()
+        result = score_records(payload["records"])
+    except (ValueError, KeyError, TypeError, MlflowException) as exc:
+        return func.HttpResponse(
+            json.dumps({"error": str(exc)}),
+            mimetype="application/json",
+            status_code=400,
+        )
+
+    return func.HttpResponse(
+        json.dumps(result),
+        mimetype="application/json",
+        status_code=200,
+    )
+```
+
+The official [Azure Functions machine-learning tutorial](https://learn.microsoft.com/azure/azure-functions/functions-machine-learning-tensorflow) uses the same useful idea: initialize the model outside the handler so later invocations on the same worker can reuse it. The current decorator-based structure is documented in the [Python developer guide](https://learn.microsoft.com/azure/azure-functions/functions-reference-python?pivots=python-mode-decorators).
+
+Model size changes the economics quickly. Cold starts include importing the Python environment and initializing the model. Large wheels, a multi-gigabyte artifact or a GPU requirement turn a small function into a poor serving platform. [Azure Functions reliability guidance](https://learn.microsoft.com/azure/azure-functions/functions-best-practices) recommends treating cold starts, plan choice, concurrency and long-running work explicitly. Always-ready instances can reduce startup latency, but they also remove part of the scale-to-zero cost advantage.
+
+Functions work well when their constraints are part of the design. Once I need a persistent process, more memory or controlled concurrency, I stop trying to make the function look attractive on a diagram and move the workload to a container.
+
+## Pattern 3: a container API gives the team control over the runtime
+
+A container API is my usual next step when the team needs a custom server, explicit health probes, process-level concurrency, a larger dependency graph or more control over startup. The same scoring core can sit behind FastAPI:
+
+```python
+# api.py
+from typing import Any
+
+from fastapi import FastAPI, HTTPException
+from mlflow.exceptions import MlflowException
+from pydantic import BaseModel
+
+from scoring import score_records
+
+app = FastAPI()
+
+
+class ScoreRequest(BaseModel):
+    records: list[dict[str, Any]]
+
+
+@app.get("/healthz")
+def health() -> dict[str, str]:
+    return {"status": "ready"}
+
+
+@app.post("/score")
+def score(request: ScoreRequest) -> dict[str, Any]:
+    try:
+        return score_records(request.records)
+    except (ValueError, MlflowException) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+```
+
+This container can run on Azure Container Apps, App Service, AKS or any platform that supports the image and its network contract. The team now owns more of the serving behavior: worker count, timeouts, concurrency, probes, image patching and rollout. That control is useful only if somebody owns it.
+
+Scale-to-zero does not remove startup cost. The [Azure Container Apps cold-start guidance](https://learn.microsoft.com/azure/container-apps/cold-start) calls out large container images, dependency initialization and external storage as common contributors. For ML inference, model initialization belongs in the startup budget too. Keep images small, place the registry close to the runtime, use startup and liveness probes correctly, and set a minimum replica count when the latency objective cannot tolerate a cold instance.
+
+A container API is often a better home than a function for a medium-sized CPU model with sustained traffic. It is also the point where load testing becomes mandatory. One healthy request proves little about memory pressure and latency at twenty concurrent requests.
+
+## Pattern 4: a managed endpoint buys a serving control plane
+
+I reach for a managed model endpoint when the platform should own provisioning, endpoint health, traffic routing, autoscaling and deployment lifecycle. The team still owns the payload contract, model quality, capacity assumptions and client behavior.
+
+[Azure Machine Learning can deploy MLflow models](https://learn.microsoft.com/azure/machine-learning/how-to-deploy-mlflow-models?view=azureml-api-2) to managed online or batch endpoints. For supported MLflow models, it can derive the scoring environment and scoring server from the model package, so the team does not need to provide a scoring script for the basic case. Online endpoints expose synchronous inference; batch endpoints run long-running, asynchronous inference over data inputs.
+
+[Databricks Model Serving](https://learn.microsoft.com/azure/databricks/machine-learning/model-serving/) is another managed endpoint implementation. It exposes registered models through a managed REST API and adds platform-specific routing, autoscaling, permissions and telemetry. It makes sense when the model lifecycle and governed data already live in that platform. It is one example of the pattern, not the definition of it.
+
+A managed endpoint can remove infrastructure work while the architecture decisions remain with the team. Check the supported payload shape, dependency limits, networking model, scale behavior, request logging and rollback mechanics before adopting the platform-generated runtime. MLflow model serving behind a generated deployment is still a production API.
+
+## Batch inference vs online inference: different failure contracts
+
+The same MLflow model can run in every pattern. What changes completely is the unit of recovery.
+
+<figure class="article-figure article-figure--wide">
+  <img
+    src="/blog-inline/ml-model-inference-failure-contracts.webp"
+    alt="Hand-drawn comparison of batch inference rerunning a known input window and request-response inference using bounded retries before returning an explicit error"
+    width="1600"
+    height="800"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    Batch protects publication and reruns a known window. Request-response inference protects the deadline and returns an explicit error after a bounded retry budget.
+  </figcaption>
+</figure>
+
+| Concern | Batch or checkpointed stream | Function, container or online endpoint |
+| --- | --- | --- |
+| Input identity | Snapshot, partition, source version or stream offset | Request ID and payload contract |
+| Success | Complete validated output is published | A valid response arrives within the deadline |
+| Retry | Rerun an idempotent window or resume from a checkpoint | Retry transient failures with a small bounded budget |
+| Permanent failure | Block publication, quarantine or mark the failed window | Return an explicit `4xx` or `5xx`; do not invent a prediction |
+| Release identity | Model version, code revision, input window and `release_id` | Model version, deployment revision, request ID and `release_id` |
+| Core signals | Freshness, row counts, run duration, invalid records and output reconciliation | Availability, latency percentiles, concurrency, queue depth and error rate |
+
+Retries need the same distinction. A timeout or a `429` may justify exponential backoff with jitter. An invalid schema, missing permission or deterministic model exception does not become transient because the runtime tried it five times.
+
+[ML observability beyond model monitoring](/blog/ml-observability/) explains the larger requirement. Runtime metrics need to join model version, release identity, input context and eventual outcomes. An endpoint with healthy CPU can still serve the wrong model. A completed batch job can still publish incomplete predictions.
+
+## Release the runtime as code and test its real contract
+
+The runtime definition belongs in version control beside the scoring adapter. For a function, that includes host settings, dependencies and deployment configuration. For a container API, it includes the Dockerfile, server configuration, probes and scaling rules. For a managed endpoint, it includes the endpoint and deployment specification rather than a sequence of UI changes.
+
+I would make CI/CD test the contract that consumers will use:
+
+- run the scoring core against a fixed model version and representative records;
+- verify that invalid columns fail before inference rather than receiving defaults;
+- deploy the runtime to a non-production target and wait for readiness;
+- run a batch reconciliation or send a schema-valid smoke request;
+- test the concurrency and payload sizes expected in production;
+- record the resolved model version, runtime revision and `release_id` after deployment.
+
+[ML delivery patterns with MLflow, Azure ML and Databricks](/blog/ml-delivery-patterns-with-mlflow-azure-ml-and-databricks/) covers the wider platform choice. If Databricks is the target, [Databricks MLOps delivery with GitHub Actions](/blog/databricks-mlops-delivery-patterns-with-github-actions/) shows how workload definitions and validation gates fit around that release. In either case, an accepted deployment request is not evidence that inference is ready.
+
+## A practical ML model deployment checklist
+
+Before selecting or releasing a runtime, answer these questions:
+
+1. Does the consumer expect a table, an event or a synchronous response?
+2. What is the maximum useful latency, and does it include cold start and model initialization?
+3. Is the recoverable unit a data window, checkpoint, event or request?
+4. Which immutable MLflow model version will every execution load?
+5. Will the artifact be baked into the deployment or pulled once when the process starts?
+6. Who owns authentication, feature retrieval, concurrency, retries, scaling and runtime patches?
+7. Can a failed batch window be rerun without duplicate or partial output?
+8. Which online errors are retryable, and what explicit response follows retry exhaustion?
+9. Can every result be joined to a model version, release ID and input or request identity?
+10. Has the team tested the expected data volume or request concurrency rather than one happy-path example?
+
+If those answers are vague, moving from a function to a managed endpoint only changes the product names on the diagram. The deployment contract stays vague.
+
+## FAQ
+
+### What are the main ML model deployment patterns?
+
+The main ML model deployment patterns are batch jobs, serverless functions, container APIs and managed endpoints. Batch fits reproducible data windows; functions fit light, sporadic calls; containers provide runtime control; managed endpoints provide a platform-operated serving boundary.
+
+### Can you deploy an MLflow model to Azure Functions?
+
+Yes. An Azure Function can load an MLflow pyfunc model once when its worker starts and call `predict()` from an HTTP or event handler. It works best for small models, short executions and irregular traffic; large dependencies, slow initialization, tight latency targets or GPU inference usually need a container or managed endpoint.
+
+### Should inference run as a batch job or online endpoint?
+
+Use a batch job when the consumer accepts delayed results and recovery means rerunning a known, idempotent input window. Use an online endpoint when a caller needs a synchronous answer within a deadline and recovery happens per request.
+
+### When is a serverless function a good ML runtime?
+
+A serverless function is a good ML runtime when the model and dependencies are small, traffic is intermittent, initialization is controlled and each request finishes quickly. It is a poor fit when cold starts, memory limits, large images, GPU requirements or sustained throughput dominate the design.
+
+### What does a managed endpoint provide beyond MLflow?
+
+A managed endpoint adds the serving control plane that MLflow does not define: provisioning, authentication, health checks, routing, autoscaling, deployment rollout and platform telemetry. The exact features depend on the platform, so the endpoint contract still needs explicit capacity, failure and observability rules.
+
+## Final point
+
+Start the runtime review with one operational question: what is the smallest unit the system can retry safely? A known data window points to a job. A request with a deadline points to a serving runtime whose capacity and errors are part of the API.
+
+After that choice, pin the model version, release the runtime as code and attach the same release identity to every result. Those records make the deployment testable during a release and explainable during an incident.
+
+## Further reading
+
+- [MLflow Models](https://mlflow.org/docs/latest/ml/model/)
+- [MLflow model signatures and input examples](https://mlflow.org/docs/latest/ml/model/signatures/)
+- [Managing dependencies in MLflow models](https://mlflow.org/docs/latest/ml/model/dependencies/)
+- [Azure Functions Python developer guide](https://learn.microsoft.com/azure/azure-functions/functions-reference-python?pivots=python-mode-decorators)
+- [Best practices for reliable Azure Functions](https://learn.microsoft.com/azure/azure-functions/functions-best-practices)
+- [Cold starts in Azure Container Apps](https://learn.microsoft.com/azure/container-apps/cold-start)
+- [Deploy MLflow models to Azure Machine Learning](https://learn.microsoft.com/azure/machine-learning/how-to-deploy-mlflow-models?view=azureml-api-2)
+- [Deploy models using Databricks Model Serving](https://learn.microsoft.com/azure/databricks/machine-learning/model-serving/)
+- [Beyond the Notebook: moving ML to production](/blog/beyond-the-notebook-moving-ml-to-production/)
+- [ML release management beyond the registry](/blog/production-ml-release-management-what-goes-to-production/)
