@@ -187,6 +187,8 @@ pre,
   border-bottom: 1px solid rgba(142, 151, 163, 0.12);
   background: rgba(18, 17, 15, 0.92);
   backdrop-filter: blur(10px);
+  transition: transform 220ms ease;
+  will-change: transform;
 }
 
 html[data-theme="light"] .site-header {
@@ -923,10 +925,10 @@ html[data-theme="light"] .metric__value {
 }
 
 .post-card--stack .post-card__media {
-  margin-top: 0;
-  margin-left: 0.85rem;
+  width: calc(100% - 1.7rem);
+  margin: 0 0.85rem;
   align-self: center;
-  justify-self: start;
+  justify-self: center;
 }
 
 .post-card__media {
@@ -1572,6 +1574,10 @@ html[data-theme="light"] .callout li {
   font-size: 1.45rem;
 }
 
+.prose :is(h2, h3, h4)[id] {
+  scroll-margin-top: 6.25rem;
+}
+
 .prose p,
 .prose ul,
 .prose ol,
@@ -1681,6 +1687,37 @@ html[data-theme="light"] .prose h4 {
   box-shadow: var(--shadow);
 }
 
+.prose .table-scroll {
+  width: 100%;
+  max-width: 100%;
+  margin: 1rem 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid var(--line);
+  background: rgba(20, 22, 26, 0.38);
+  box-shadow: var(--shadow);
+  -webkit-overflow-scrolling: touch;
+}
+
+.prose .table-scroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.prose .table-scroll table {
+  width: 100%;
+  min-width: 44rem;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+html[data-theme="light"] .prose .table-scroll {
+  background: rgba(255, 255, 255, 0.48);
+}
+
 .prose thead {
   background: rgba(209, 135, 54, 0.08);
 }
@@ -1713,6 +1750,12 @@ html[data-theme="light"] .prose table {
   background: rgba(250, 247, 241, 0.92);
   border-color: rgba(92, 102, 114, 0.18);
   box-shadow: 0 10px 24px rgba(56, 60, 67, 0.06);
+}
+
+html[data-theme="light"] .prose .table-scroll table {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 html[data-theme="light"] .prose thead {
@@ -1885,7 +1928,13 @@ html[data-theme="light"] .prose td {
   z-index: 60;
   display: grid;
   place-items: center;
-  padding: 1.5rem;
+  width: 100%;
+  max-width: 100vw;
+  height: 100%;
+  max-height: 100vh;
+  max-height: 100dvh;
+  padding: clamp(0.75rem, 3vw, 1.5rem);
+  overflow: hidden;
 }
 
 .image-lightbox__backdrop {
@@ -1899,14 +1948,23 @@ html[data-theme="light"] .prose td {
   position: relative;
   z-index: 1;
   margin: 0;
-  width: min(92vw, 78rem);
+  width: min(100%, 78rem);
+  max-width: 100%;
+  min-width: 0;
+  max-height: 100%;
   display: grid;
   gap: 0.9rem;
   justify-items: center;
 }
 
 .image-lightbox__frame {
+  display: grid;
+  place-items: center;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  max-height: calc(100vh - 6rem);
+  max-height: calc(100dvh - 6rem);
   border-radius: calc(var(--radius) + 2px);
   border: 1px solid var(--steel-line);
   background: var(--panel-strong);
@@ -1916,10 +1974,19 @@ html[data-theme="light"] .prose td {
 
 .image-lightbox__image {
   display: block;
-  width: 100%;
-  max-height: calc(100vh - 10rem);
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: calc(100vh - 6rem);
+  max-height: calc(100dvh - 6rem);
   object-fit: contain;
   background: linear-gradient(180deg, rgba(24, 27, 31, 0.92), rgba(14, 13, 11, 0.96));
+}
+
+html.lightbox-open,
+html.lightbox-open body {
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .image-lightbox__caption {
@@ -2163,7 +2230,9 @@ html[data-theme="light"] .article-author__meta dd {
     grid-column: 1;
     grid-row: 1 / span 3;
     width: var(--stack-media-width);
+    margin: 0 0 0 0.85rem;
     align-self: center;
+    justify-self: start;
   }
 
   .post-card--stack .post-card__header {
@@ -2246,6 +2315,14 @@ html[data-theme="light"] .article-author__meta dd {
 }
 
 @media (max-width: 63.99rem) {
+  .site-header--hidden {
+    transform: translateY(calc(-100% - 1px));
+  }
+
+  .prose :is(h2, h3, h4)[id] {
+    scroll-margin-top: 1.5rem;
+  }
+
   .site-header__inner,
   .site-header__controls {
     align-items: flex-start;
@@ -2304,6 +2381,12 @@ html[data-theme="light"] .article-author__meta dd {
 
   body::after {
     inset: 0.4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header {
+    transition: none;
   }
 }
 

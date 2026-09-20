@@ -92,19 +92,38 @@ const faqSchema = faqs.length > 0
 const lightboxController = `
 (() => {
   const article = document.querySelector('.article-body');
+
+  if (!article) {
+    return;
+  }
+
+  article.querySelectorAll('table').forEach((table) => {
+    if (table.parentElement?.classList.contains('table-scroll')) {
+      return;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'table-scroll';
+    wrapper.setAttribute('role', 'region');
+    wrapper.setAttribute('aria-label', 'Scrollable data table');
+    wrapper.setAttribute('tabindex', '0');
+    table.before(wrapper);
+    wrapper.appendChild(table);
+  });
+
   const lightbox = document.querySelector('[data-image-lightbox]');
   const lightboxImage = lightbox?.querySelector('[data-lightbox-image]');
   const lightboxCaption = lightbox?.querySelector('[data-lightbox-caption]');
   const closeControls = lightbox?.querySelectorAll('[data-lightbox-close]');
 
-  if (!article || !lightbox || !lightboxImage || !lightboxCaption) {
+  if (!lightbox || !lightboxImage || !lightboxCaption) {
     return;
   }
 
   const close = () => {
     lightbox.hidden = true;
     lightbox.setAttribute('aria-hidden', 'true');
-    document.body.style.removeProperty('overflow');
+    document.documentElement.classList.remove('lightbox-open');
     lightboxImage.removeAttribute('src');
     lightboxImage.removeAttribute('alt');
     lightboxCaption.textContent = '';
@@ -126,7 +145,7 @@ const lightboxController = `
     lightboxCaption.hidden = caption.length === 0;
     lightbox.hidden = false;
     lightbox.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
+    document.documentElement.classList.add('lightbox-open');
   };
 
   article.addEventListener('click', (event) => {
