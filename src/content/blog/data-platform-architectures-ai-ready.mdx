@@ -1,0 +1,205 @@
+---
+title: "Data platform architectures: what changes when AI needs your data?"
+seoTitle: "Data Platform Architectures for Analytics and AI"
+description: "Understand warehouses, lakes, lakehouses, mesh and fabric through one business example, and learn what makes a data platform ready for AI."
+date: "2026-09-23"
+tags: ["data-architecture", "data-engineering", "data-platform", "ai-architecture"]
+type: "article"
+valueType: "Architectural guide"
+featured: true
+draft: false
+coverImage: "/blog-covers/data-platform-architectures-ai-ready.png"
+coverAlt: "Data platform architecture connecting source systems to storage, preparation and publishing for analytics and AI, with ownership, history and access responsibilities."
+faqs:
+  - question: "Can an existing data warehouse support AI?"
+    answer: "Yes. Northstar could prepare its forecasting inputs from warehouse tables and run the model in a separate job. The team would still need to preserve the right history and make the preparation repeatable. An existing warehouse may be enough until a specific workload calls for another component."
+  - question: "Can data mesh and a lakehouse coexist?"
+    answer: "Yes. Northstar's sales team could maintain its data products on a lakehouse shared with other domains. Following mesh principles would also require self-service tooling and shared governance, so the team can support the people using its data. The lakehouse provides storage and processing capabilities for that work."
+  - question: "Does table time travel prevent training-data leakage?"
+    answer: "Not by itself. An older table version helps Northstar recover a previous storage state, but the forecasting team must still check what was available at each prediction time. If the selected version includes Monday's correction, using it for Friday's inputs would give the model information it could not have used then."
+  - question: "Do catalog permissions automatically protect an assistant?"
+    answer: "No. Northstar may record a document's access restrictions in its catalog, but the assistant's retrieval service must enforce them before returning content to the model. Copies in a search index need the same restrictions, including updates when an employee loses access."
+---
+
+It's Monday morning at Northstar Retail, our fictional retailer with shops and an online store. The sales manager opens Friday's report and notices that revenue has fallen since he last checked it. A return requested on Friday only reached the data platform this morning. The report has caught up.
+
+Later that day, the team meets to plan a demand forecast and an assistant for returns questions. Manager brings up the changed number. Data scientist responsible for forecasting asks whether testing against the corrected history would give the model information it couldn't have used on Friday. The support lead has another concern. Employees keep finding the newest return policy, even when a customer's purchase falls under an older one.
+
+Architecture discussion starts here. Someone suggests a lakehouse. A colleague proposes data mesh. Both go on the whiteboard, while the questions about the return remain unanswered.
+
+The story above is an example of the challenges teams face when building data platforms for analytics and AI. We will use it to compare different architecture patterns and follow Northstar Retail through the next several articles to examine warehouses, lakes, lakehouses, data mesh and data fabric in practice.
+
+<figure class="article-figure article-cover-figure">
+  <img
+    src="/blog-covers/data-platform-architectures-ai-ready-1600.webp"
+    srcset="/blog-covers/data-platform-architectures-ai-ready-800.webp 800w, /blog-covers/data-platform-architectures-ai-ready-1600.webp 1600w"
+    sizes="(min-width: 64rem) 52rem, 100vw"
+    alt="Data platform architecture connecting source systems to storage, preparation and publishing for analytics and AI, with ownership, history and access responsibilities."
+    width="1600"
+    height="1000"
+    loading="eager"
+    decoding="async"
+  />
+</figure>
+
+## What is a data platform, in plain English?
+
+A **data platform** is the combination of systems and operating practices that collects, prepares and supplies data for other uses. Its architecture defines how those parts connect, where data changes, and how people maintain the result.
+
+An order database helps an application accept purchases and update their status. A data platform might combine those orders with stock levels and returns, preserve history, and prepare information for a report or model. The database can be part of that platform, alongside the processes that prepare and deliver its data to reports, forecasts and other applications.
+
+A small business can start with its existing database. One application, a few reporting views and a scheduled preparation job may be enough. You typically should start adding components when a specific requirement exceeds what that arrangement can reliably provide.
+
+## One business, different data needs
+
+Let's go back to Northstar. The report asks: how much did we sell yesterday after returns? For this example, the business chooses to subtract a return from the **original sale date**. Recording it on the return date would answer a different question. The team must choose and document the rule.
+
+A purchase and its return request both occur on Friday. The platform receives the request on Monday. Under Northstar's rule, Monday's processing corrects Friday's sales report. The revised number reflects what is now known about Friday.
+
+The forecasting team has a different requirement. Suppose Northstar made a replenishment forecast on Friday evening. When the team later builds historical training inputs or reconstructs inputs to evaluate the model, Monday's return information must stay out. It was unavailable to the prediction pipeline on Friday, even though the return had already happened.
+
+If the team rebuilds those inputs from today's corrected sales table, it gives the model knowledge it could not have used. Evaluation can then suggest better performance than the live system could achieve. In data science, this is called a **data leakage**. Keeping only the business event date does not prevent it - the preparation process must also preserve when information became available to the prediction path, including later corrections. Saved input snapshots can help reproduce particular runs. If an evaluation used later corrections, rebuild its inputs with the correct availability cutoff and rerun it before trusting the comparison.
+
+The AI assistant needs both the return policy and details of the purchase. When an employee asks whether a customer can return a product, the assistant must find the policy that applied when the customer bought it. The latest version may contain different rules. To select the right policy, the assistant needs details such as the purchase date and product from the order system. It must check the employee's access to both the policy documents and the purchase details before using them to answer.
+
+As you can see, one late return sends Northstar's teams in different directions: sales needs to correct Friday's report, the forecasting team needs to preserve what was known that evening, and support needs to find the policy that applies to the customer's purchase. Our data platform must support all three without losing the context each team needs.
+
+<figure class="article-figure article-figure--wide">
+  <img
+    src="/blog-inline/data-platform-consumer-requirements.webp"
+    alt="Orders and returns feed corrected sales reporting and historical forecast inputs through separate preparation paths. Policy documents retain versions and permissions, with user access checked before their content reaches the assistant."
+    width="1600"
+    height="800"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    Each path needs deliberate preparation. The document path shows one part of the assistant's inputs; storing a file does not enforce access to its contents.
+  </figcaption>
+</figure>
+
+## Warehouse, lake, lakehouse, mesh and fabric: what do they mean?
+
+We are going back to the architecture discussion. Northstar's team has several names on the whiteboard, and each suggestion needs to be connected to a problem they are trying to solve.
+
+For the sales manager, a **data warehouse** could provide a consistent place to read sales figures. It organizes data for analysis, usually in prepared tables with agreed business definitions. The team would combine orders and returns using Northstar's reporting rule, so everyone reading those tables gets the same definition of sales. The forecasting team could use warehouse tables too, with a separate job preparing the historical inputs and running the model. A warehouse can support AI use-cases even when the model runs elsewhere.
+
+Northstar also has files it may want to keep, like order extracts, application logs and different versions of return policies. A **data lake** stores data in their base formats so processing engines can read it later. Keeping the source files gives the team a way to revisit the preparation when requirements change. Someone still has to describe those files, check their contents and control access. Schemas and access controls can be part of a lake, but the team must put them in place.
+
+As reporting and forecasting begin using the same records, the team may consider a **data lakehouse**. It adds table-management capabilities over lake storage, alongside engines that process the data. These capabilities support consistent table updates and reads of earlier table versions. The [original lakehouse paper](https://www.cidrdb.org/cidr2021/papers/cidr2021_paper17.pdf) describes this combination of accessible storage and database management. Northstar could use it as a shared foundation, while still preparing different inputs for its report and forecast.
+
+Choosing storage layer leaves another question open. When the forecasting team finds a return assigned to the wrong sale, who should fix it? **Data mesh** puts responsibility with business domains such as sales or inventory. Its [four principles](https://martinfowler.com/articles/data-mesh-principles.html) combine domain ownership, data treated as a maintained product, a self-service platform and shared governance. Northstar's sales team would support the data it publishes, with common tooling and rules that help other teams use it. Assigning a table owner is one part of that work - the team also needs the means to maintain the product.
+
+The AI assistant introduces a problem that crosses system boundaries. Its developers need to find purchase records and policy documents, understand where they came from and apply the right access rules. For this purpose, we can define **data fabric** as the integration, discovery and usage controls that help teams do this across systems. These capabilities use *metadata*: information about the data, such as its source, meaning, owner and permitted uses. The definitions for data fabric vary. [James Serra presents his own interpretation](https://www.jamesserra.com/archive/2021/06/data-fabric-defined/) on his blog, while [IBM's architecture guide](https://www.ibm.com/think/architectures/patterns/data-fabric) describes capabilities across different sources and locations. Our working definition allows Northstar's data to remain in several systems.
+
+## What AI-ready means in practice?
+
+Suppose Northstar has copied every order, return and policy document into its new platform. The team can query them all. Before using them for AI, it still needs to establish which sales history the forecast will see and which policy the assistant may retrieve.
+
+When talking about **AI-ready data platforms**, I mean a platform that supplies data suited to a specific task, preserves the context needed to use it correctly and enforces access. When an output is wrong, the team must also be able to trace it to its inputs, correct the data and rerun the affected work.
+
+Northstar's three applications give the team several requirements to check:
+
+| Consumer need | What must be true about the data | What the platform name does not guarantee |
+| --- | --- | --- |
+| Corrected sales report | Returns follow an agreed reporting rule; affected periods can be recalculated | A shared meaning of sales |
+| Reproducible forecast inputs | Historical inputs use only information available at the prediction cutoff | Inputs as they were known at prediction time |
+| Purchase-specific return guidance | Relevant policy versions are available and retrieval enforces employee access | Appropriate evidence for this purchase and user |
+
+Before trusting the outputs, I would walk through six questions with the team:
+
+1. **What does the data mean?** The sales manager and forecasting team need to agree on net sales, use the same order identifiers and know who can settle a disagreement about a return.
+2. **What time does it represent?** For Friday's return, the team needs both the time it happened and the time the prediction pipeline could use it. Monday's correction must remain distinguishable from what was known on Friday.
+3. **Is it good enough for this task?** Suppose the returns feed stops arriving. Its owner needs to detect the delay, and the team needs a rule for flagging or withholding affected reports and forecasts.
+4. **Who may use it?** An employee asking the assistant a question should receive only content they can access. That restriction must also cover any copies prepared for search.
+5. **How does it reach the consumer?** The forecasting team may be able to wait for a daily table export. An employee helping a customer needs the assistant to retrieve information during the conversation.
+6. **How will we explain and repair an error?** If Friday's report is wrong, someone must be able to identify the inputs and preparation version, find the responsible owner, correct the data and rerun the affected work.
+
+These answers give Northstar a reason for each preparation step. The [medallion architecture guide](/blog/medallion-architecture-for-engineers/) explains how to organize those steps into raw, validated and consumer-ready data.
+
+Once the data meets these requirements, the team still has to validate the forecast and evaluate the assistant's answers. If the assistant can change an order, the application must also check whether the employee is authorized to make that change. Preparing the data does not establish permission to act on it.
+
+### Account for source delay when rebuilding model inputs
+
+The data scientist now tries to reproduce Friday's forecast. They need to retrieve the input values, called *features*, that the model could have used at that time. Choosing records by their business event date alone would let Monday's return information slip into the test.
+
+Microsoft's [Azure Machine Learning documentation](https://learn.microsoft.com/en-us/azure/machine-learning/offline-retrieval-point-in-time-join-concepts?view=azureml-api-2) describes how its managed feature store accounts for an expected delay before features become available. The `source_delay` setting moves the latest acceptable feature timestamp back from the observation time, which is the prediction time in our example. Another setting, `temporal_join_lookback`, limits how far into the past the lookup can reach.
+
+Suppose Northstar makes a prediction at 18:00 and configures a two-hour source delay. Eligible feature timestamps then stop at 16:00, within the configured lookback window. This gives the lookup a delay to work with. It cannot recover the actual arrival time of an unexpectedly late return if nobody recorded that information.
+
+For such cases, I would keep the return's event time and the time it became usable by the prediction pipeline. When rebuilding Friday's inputs, the team can then exclude the return that arrived on Monday while keeping it in the corrected sales report. If an earlier evaluation included that return, the team needs to rebuild the inputs and rerun the evaluation.
+
+The data scientist might also try reading an older table version. Its a good practice to [distinguish these versioned reads from point-in-time feature lookups](https://learn.microsoft.com/en-us/azure/databricks/machine-learning/feature-store/time-series). Table time travel selects a stored version of a table. A point-in-time lookup selects historical feature values for each prediction time. Northstar still needs to know when those values became available to establish whether the model could have used them.
+
+### Enforce access before retrieved content reaches the model
+
+Now let's follow the employee asking about a return. The AI assistant searches for the relevant policy and uses the retrieved text to answer. The access check must happen before that text reaches the model, including when the search returns a fragment copied from a larger document.
+
+[Azure AI Search's security-filter pattern](https://learn.microsoft.com/en-us/azure/search/search-security-trimming-for-azure-search) gives Northstar one way to implement this. Each indexed document carries the identifiers of users or groups allowed to read it. Microsoft's example stores group identifiers in a filterable collection of strings called `group_ids`. The application includes a filter with each search request so the service returns only matching documents.
+
+The application has to establish who the employee is and obtain their trusted group memberships before building that filter. Search matches strings, but it does not authenticate the employee through `group_ids`. If the browser could supply arbitrary group identifiers, an employee could request another group's documents. Hiding the identifiers from search results would not close that gap.
+
+For Northstar, each indexed policy fragment should retain its parent document, applicable version and access metadata. Suppose an employee loses permission to read a document. That change must reach the indexed fragments too. The team can test it by repeating the same question and checking that the search no longer returns the restricted content. The model should never receive that content in the first place.
+
+## Why these architectures can work together?
+
+Northstar's team can now revisit the lakehouse and mesh suggestions with a clearer idea of what each would change. Suppose they choose a shared lakehouse for sales tables. The sales team maintains the business definitions, communicates changes and fixes incorrect returns data. Reporting reads corrected sales figures, while forecasting gets inputs prepared for the appropriate historical cutoff.
+
+This arrangement could also follow mesh principles if domain teams also have self-service tooling and maintain their data products under shared rules. The lakehouse gives them common storage and processing capabilities. Mesh describes how they take responsibility for the data that other teams depend on. They can work this way on shared infrastructure - each domain does not need a separate cloud.
+
+Policy documents may still live in another system. Common discovery and access mechanisms can help the assistant's developers find those documents, trace their origins and enforce permissions when retrieving them. These are the fabric capabilities connecting the parts of Northstar's platform.
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/data-platform-architectures-coexistence.webp"
+    alt="Sales and inventory teams own data products on a shared lakehouse, supported by self-service tooling and shared rules. Catalog, lineage and access mechanisms cover both the lakehouse and policy documents in a separate system."
+    width="1200"
+    height="900"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    One possible Northstar design: domain teams maintain data products on a shared lakehouse, while fabric capabilities connect discovery and access across systems. The orange arrows indicate responsibility, not data movement.
+  </figcaption>
+</figure>
+
+The team should still check how much of this it needs. With a small forecasting workload, consistent warehouse tables and a daily preparation job may be enough. The [feature store alternatives guide](/blog/feature-store-alternatives/) explores how maintained tables and shared preparation logic can support ML before the team adds another platform component.
+
+## Which question should you answer first?
+
+Northstar's discussion started with a changed sales number. Your team's starting point may be different. Pick one problem that people can already describe and show you.
+
+When two reports disagree about sales, start with the business definitions and transformations feeding them. Warehouse modelling can help the team publish consistent figures. When analysts find folders of files but cannot tell what they contain or whether they are current, examine how the lake's data is described, maintained and retired.
+
+Perhaps the reporting and forecasting teams keep repairing separate copies of the same records. That gives you a reason to compare a shared lakehouse with a lake and a separate warehouse, including how each would prepare the inputs those teams need. If useful changes wait indefinitely for one central team, investigate whether domain teams have the ownership, skills and tooling to support their consumers. Mesh principles help frame that decision.
+
+For Northstar's assistant, the immediate difficulty might be finding a policy in another system and knowing whether an employee can read it. Start with the integration, discovery and access mechanisms grouped under fabric. Moving the document will help only if the new arrangement also handles those requirements.
+
+Over the next articles, we'll follow Northstar through these decisions in more detail. For your own platform, take one report number, forecast or assistant answer and trace it back to its sources. Establish when the information became available and who can correct it. Use the gaps you find to decide what the team needs to build next.
+
+## FAQ
+
+### Can an existing data warehouse support AI?
+
+Yes. Northstar could prepare its forecasting inputs from warehouse tables and run the model in a separate job. The team would still need to preserve the right history and make the preparation repeatable. An existing warehouse may be enough until a specific workload calls for another component.
+
+### Can data mesh and a lakehouse coexist?
+
+Yes. Northstar's sales team could maintain its data products on a lakehouse shared with other domains. Following mesh principles would also require self-service tooling and shared governance, so the team can support the people using its data. The lakehouse provides storage and processing capabilities for that work.
+
+### Does table time travel prevent training-data leakage?
+
+Not by itself. An older table version helps Northstar recover a previous storage state, but the forecasting team must still check what was available at each prediction time. If the selected version includes Monday's correction, using it for Friday's inputs would give the model information it could not have used then.
+
+### Do catalog permissions automatically protect an assistant?
+
+No. Northstar may record a document's access restrictions in its catalog, but the assistant's retrieval service must enforce them before returning content to the model. Copies in a search index need the same restrictions, including updates when an employee loses access.
+
+## Further reading
+
+- [Azure Machine Learning: offline retrieval and point-in-time joins](https://learn.microsoft.com/en-us/azure/machine-learning/offline-retrieval-point-in-time-join-concepts?view=azureml-api-2): how source delay and the historical lookup window affect training inputs.
+- [Azure Databricks: point-in-time feature joins](https://learn.microsoft.com/en-us/azure/databricks/machine-learning/feature-store/time-series): timestamp-aware lookups and their distinction from table time travel.
+- [Azure AI Search: security filters for trimming results](https://learn.microsoft.com/en-us/azure/search/search-security-trimming-for-azure-search): the index fields, application responsibilities and query-time enforcement behind the access example.
+- [Zhamak Dehghani: Data Mesh Principles and Logical Architecture](https://martinfowler.com/articles/data-mesh-principles.html): the four principles and their organizational and technical implications.
+- [Armbrust et al.: Lakehouse, CIDR 2021](https://www.cidrdb.org/cidr2021/papers/cidr2021_paper17.pdf): the original architectural proposal, including the role of table-management capabilities.
+- [James Serra article about Data Fabric](https://www.jamesserra.com/archive/2021/06/data-fabric-defined/): data fabric definitions and differences from data mesh pattern.
