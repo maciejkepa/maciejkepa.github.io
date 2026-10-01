@@ -1827,6 +1827,7 @@ html[data-theme="light"] .prose td {
 .prose .article-figure figcaption {
   width: min(100%, 42rem);
   margin: 0.85rem auto 0;
+  text-align: center;
   color: var(--muted);
   font-size: 0.94rem;
   line-height: 1.55;
