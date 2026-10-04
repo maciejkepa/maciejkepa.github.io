@@ -11,13 +11,6 @@ featured: false
 draft: false
 coverImage: "/blog-covers/minimal-viable-ml-observability-what-to-monitor-first.png"
 coverAlt: "Hand-drawn observability sketch showing dashboard panels for service health, data quality, prediction behavior and business feedback"
-faqs:
-  - question: "What should you monitor first in machine learning?"
-    answer: "Start with four signal groups: service health, data quality, prediction behavior and business or human feedback. That gives you enough visibility to catch the most common failures without building a full observability program upfront."
-  - question: "Is model monitoring the same as ML observability?"
-    answer: "Not really. Model monitoring is only one part of ML observability. A perfectly healthy model endpoint can still be serving bad predictions because of stale inputs, broken feature logic or silent data quality issues."
-  - question: "Do you need labels in production to start ML observability?"
-    answer: "No. Labels help, but they often arrive late. You can still start with latency, error rate, schema violations, freshness checks, prediction distribution shifts and operational feedback from users or reviewers."
 ---
 
 import Callout from '../../components/Callout.astro';

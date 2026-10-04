@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LinkedInIcon from '../components/LinkedInIcon.astro';
-import { principles, siteConfig } from '../lib/site';
+import { principles, siteConfig, speakingSessions } from '../lib/site';
 
 const operatingSpace = [
   'Azure-native data platforms and delivery systems',
@@ -32,16 +32,24 @@ const beyondWork = [
 ];
 
 const portrait = '/images/maciej-kepa-about.jpg';
+const selectedTalks = speakingSessions.filter((talk) => ['aiba-2025-mlops', 'sqlday-2025-observability', 'sqlday-2026-workshop'].includes(talk.id));
+const profileSchema = {
+  '@type': 'ProfilePage',
+  '@id': `${siteConfig.url}/about/#profile`,
+  url: `${siteConfig.url}/about/`,
+  name: `About ${siteConfig.owner} - ${siteConfig.role}`,
+  mainEntity: { '@id': `${siteConfig.url}/#person` }
+};
 ---
 
-<BaseLayout title="About" description="Short bio and working principles for Maciej Kępa.">
+<BaseLayout seoTitle="About Maciej Kępa - Data & AI Architect" description="Maciej Kępa, Data & AI Architect at Datumo in Kraków, Poland. MLOps, AI-ready data platforms, Azure, Databricks and practical conference sessions." structuredData={profileSchema}>
   <section class="section">
     <div class="container about-hero surface">
       <div class="about-hero__content">
         <span class="eyebrow">About</span>
-        <h1 class="section-title">Designing data platforms that make AI operational</h1>
+        <h1 class="section-title">Maciej Kępa - {siteConfig.role}</h1>
         <p class="section-copy">
-          Senior Data Engineer and Data Architect at <a href={siteConfig.links.company} target="_blank" rel="noreferrer">Datumo</a>, focused on building production-grade Data and AI solutions on Microsoft Azure.
+          I’m Maciej Kępa, a Data & AI Architect at <a href={siteConfig.links.company} target="_blank" rel="noreferrer">Datumo</a>, based in {siteConfig.location}. I work on MLOps and data platforms, primarily with Azure and Databricks, focusing on how teams deploy, monitor and maintain data and ML systems.
         </p>
         <p class="section-copy">
           My work centers on making AI useful in real environments: platform architecture, repeatable delivery, MLOps foundations, observability and the engineering boundaries between data systems and machine learning systems.
@@ -57,7 +65,7 @@ const portrait = '/images/maciej-kepa-about.jpg';
         <div class="button-row">
           <a class="button" href={siteConfig.links.linkedin} target="_blank" rel="noreferrer" aria-label="Follow Maciej Kępa on LinkedIn">
             <LinkedInIcon />
-            Follow me
+            Contact me on LinkedIn
           </a>
           <a class="button button--secondary" href={siteConfig.links.sessionize} target="_blank" rel="noreferrer">Sessionize</a>
         </div>
@@ -73,6 +81,29 @@ const portrait = '/images/maciej-kepa-about.jpg';
           <img src={portrait} alt="Portrait of Maciej Kępa" width="4000" height="6000" loading="eager" fetchpriority="high" decoding="async" />
         </picture>
       </figure>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container about-section surface">
+      <div class="about-section__intro">
+        <span class="eyebrow">Speaking and community</span>
+        <h2 class="section-title section-title--compact">Sharing the work</h2>
+        <p class="section-copy">I am a member of Data Community Poland and part of the SQLDay organizing team. My talks and workshops connect architecture decisions to operating data and ML systems.</p>
+        <div class="button-row">
+          <a class="button" href="/speaking/">Talks and speaking invitations</a>
+          <a class="button button--secondary" href="/projects/">Explore public projects</a>
+        </div>
+      </div>
+      <div class="about-section__body about-entry-list">
+        {selectedTalks.map((talk) => (
+          <article class="about-entry">
+            <span class="kicker">{talk.event} {talk.year} · {talk.format}</span>
+            <h3 class="card__title"><a href={`/speaking/#${talk.id}`}>{talk.title}</a></h3>
+            <p>{talk.focus}</p>
+          </article>
+        ))}
+      </div>
     </div>
   </section>
 

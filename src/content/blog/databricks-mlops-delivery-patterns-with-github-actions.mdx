@@ -13,7 +13,7 @@ coverImage: "/blog-covers/databricks-mlops-delivery-patterns-with-github-actions
 coverAlt: "Hand-drawn sketch of a GitHub Actions pipeline controlling Databricks MLOps delivery across bundle validation, staging, model validation and production"
 faqs:
   - question: "What is the best default CI/CD pattern for production ML on Databricks?"
-    answer: "For most teams, the best default is Git-based CI/CD, Declarative Automation Bundles as the deployment contract for Databricks resources, and separate development, staging and production targets with validation gates between them. GitHub Actions is a good control plane when it is already the team's CI/CD runner."
+    answer: "For most teams, the best default is Git-based CI/CD, Declarative Automation Bundles as the deployment contract for Databricks resources, and separate development, staging and production targets with validation gates between them. GitHub Actions is a good control plane when it is already the team’s CI/CD runner."
   - question: "Should I use Declarative Automation Bundles or Terraform for Databricks MLOps?"
     answer: "Use Declarative Automation Bundles for Databricks workload resources such as jobs, pipelines, model-serving endpoints and ML project deployment settings. Use Terraform mainly for cloud-level or external infrastructure such as workspaces, networking, storage credentials and broader platform administration."
   - question: "What should GitHub Actions actually do in a Databricks MLOps flow?"

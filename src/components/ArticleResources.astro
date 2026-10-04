@@ -1,0 +1,23 @@
+---
+interface Props { tags: string[]; }
+const { tags } = Astro.props;
+const isMcp = tags.includes('mcp');
+const isData = tags.includes('data-architecture');
+const resources = isMcp ? [
+  { href: '/projects/#gtd-mcp-server', label: 'GTD MCP Server: quickstart, architecture and limitations' },
+  { href: '/speaking/#mcp-tools', label: 'MCP tools conference session' }
+] : isData ? [
+  { href: '/projects/#ai-ml-in-practice', label: 'Related workshop: data preparation and ML pipelines' },
+  { href: '/speaking/#data-observability', label: 'Data observability conference session' }
+] : tags.includes('mlops') ? [
+  { href: '/projects/#ai-ml-in-practice', label: 'Related exercises: AI/ML in Practice' },
+  { href: '/speaking/#mlops-operations', label: 'MLOps on Azure: production lessons' }
+] : [
+  { href: '/projects/#gtd-mcp-server', label: 'Explore an agent tool implementation: GTD MCP Server' },
+  { href: '/blog/topic/ai-architecture/', label: 'AI architecture reading paths' }
+];
+---
+<section class="article-resources" aria-label="Related code and sessions">
+  <h2>Related code and sessions</h2>
+  <ul>{resources.map((resource) => <li><a href={resource.href}>{resource.label}</a></li>)}</ul>
+</section>

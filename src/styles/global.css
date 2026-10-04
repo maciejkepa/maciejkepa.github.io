@@ -2424,3 +2424,59 @@ html[data-theme="light"] .article-author__meta dd {
     transform: translateY(0);
   }
 }
+
+.section-title--compact {
+  font-size: clamp(2rem, 4vw, 2.9rem);
+}
+
+.selected-work-grid,
+.reading-path-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.selected-work-grid > *,
+.reading-path-grid > * {
+  min-width: 0;
+}
+
+.resource-links {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.resource-links a,
+.reading-path-list a {
+  overflow-wrap: anywhere;
+}
+
+.reading-path-list {
+  padding-left: 1.4rem;
+}
+
+.reading-path-list li + li {
+  margin-top: 0.7rem;
+}
+
+.topic-archive-title {
+  margin-top: 3rem;
+}
+
+.series-navigation,
+.article-resources {
+  padding: 1.25rem;
+  margin-block: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.series-navigation [aria-current="page"] {
+  font-weight: 700;
+}
+
+.session-details {
+  font-size: 0.9rem;
+}

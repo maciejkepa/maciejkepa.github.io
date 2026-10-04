@@ -19,6 +19,7 @@ const readingTime = getReadingTime(post.body);
 ---
 
 <BlogPostLayout
+  postId={post.id}
   title={post.data.title}
   seoTitle={post.data.seoTitle}
   description={post.data.description}

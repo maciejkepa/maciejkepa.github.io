@@ -15,7 +15,7 @@ faqs:
   - question: "What are the main ML model deployment patterns?"
     answer: "The main ML model deployment patterns are batch jobs, serverless functions, container APIs and managed endpoints. Batch fits reproducible data windows; functions fit light, sporadic calls; containers provide runtime control; managed endpoints provide a platform-operated serving boundary."
   - question: "Can you deploy an MLflow model to Azure Functions?"
-    answer: "Yes. An Azure Function can load an MLflow pyfunc model once when its worker starts and call predict from an HTTP or event handler. It works best for small models, short executions and irregular traffic; large dependencies, slow initialization, tight latency targets or GPU inference usually need a container or managed endpoint."
+    answer: "Yes. An Azure Function can load an MLflow pyfunc model once when its worker starts and call predict() from an HTTP or event handler. It works best for small models, short executions and irregular traffic; large dependencies, slow initialization, tight latency targets or GPU inference usually need a container or managed endpoint."
   - question: "Should inference run as a batch job or online endpoint?"
     answer: "Use a batch job when the consumer accepts delayed results and recovery means rerunning a known, idempotent input window. Use an online endpoint when a caller needs a synchronous answer within a deadline and recovery happens per request."
   - question: "When is a serverless function a good ML runtime?"

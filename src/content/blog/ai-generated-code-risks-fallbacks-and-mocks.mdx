@@ -12,11 +12,11 @@ coverImage: "/blog-covers/ai-generated-code-risks-fallbacks-and-mocks.png"
 coverAlt: "Hand-drawn sketch of a green success response hiding retry loops, failed backend services and mock data"
 faqs:
   - question: "What are the main production risks of AI-generated code?"
-    answer: "The main AI-generated code risks are not only incorrect logic or insecure dependencies. Generated code can also hide failure paths with broad exception handling, unbounded retries, undeclared fallback data and success responses that do not reflect the real state of a downstream system."
+    answer: "The main AI-generated code risks are not only incorrect logic or insecure dependencies. Generated code can hide failure paths with broad exception handling, unbounded retries, undeclared fallback data and success responses that do not reflect the real state of a downstream system."
   - question: "Are fallbacks always bad in production systems?"
     answer: "No. A fallback can be a good resilience mechanism when it is intentional, safe for the user and visible in the response and telemetry. It becomes dangerous when it silently replaces failed live data with mock, stale or default data while presenting the result as a normal success."
   - question: "Should an API return HTTP 200 if a dependency failed?"
-    answer: "Only if the API contract was still fulfilled, for example when an explicitly documented cached or degraded result is acceptable. If an essential dependency failed and the endpoint cannot truthfully provide the requested result, returning HTTP 200 creates a false success and hides the incident from clients and monitoring."
+    answer: "Only if the API contract was still fulfilled, for example when an explicitly documented cached or degraded result is acceptable. If an essential dependency failed and the endpoint cannot truthfully provide the requested result, returning 200 OK creates a false success and hides the incident from clients and monitoring."
   - question: "How should teams review AI-generated code before UAT?"
     answer: "Review every catch block, retry loop, default value and fallback path as production behavior. Test downstream failure, timeout, retry exhaustion and invalid responses, then verify that the API, logs, traces and UI all expose the same outcome."
 ---

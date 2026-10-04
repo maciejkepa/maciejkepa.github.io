@@ -2,6 +2,8 @@
 import { getCollection } from 'astro:content';
 
 import ArticleCard from '../../../components/ArticleCard.astro';
+import ReadingPaths from '../../../components/ReadingPaths.astro';
+import { topicReadingPaths } from '../../../lib/reading-paths';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { getPostFilterTokens, getTopicCards, sortPosts } from '../../../lib/blog';
 
@@ -20,6 +22,19 @@ const allPosts = sortPosts(await getCollection('blog', ({ data }) => !data.draft
 const posts = allPosts.filter((post) => getPostFilterTokens(post).includes(activeTopic));
 const filters = [{ label: 'All', slug: 'all' }, ...getTopicCards(allPosts)];
 const topicHubCopy: Record<string, { title: string; description: string; intro: string[] }> = {
+  'ai-architecture': {
+    title: 'AI architecture: ML systems, data platforms and agents',
+    description: 'Three practical AI architecture reading paths: production ML systems, reliable data for AI and agent tools. Guides, code and talks by Maciej Kępa.',
+    intro: [
+      'An AI architecture has to explain how data reaches a model, how a release changes the system and which actions an agent is allowed to take. Each boundary needs a contract and an owner.',
+      'Choose a path below: operating ML systems, preparing data for AI, or connecting agents to tools. These selections put the design decisions in context before the implementation details.'
+    ]
+  },
+  'data-architecture': {
+    title: 'AI-ready data platforms: architecture and data contracts',
+    description: 'Read the data platform architecture series: business definitions, history, data quality and ownership for analytics and reliable AI applications.',
+    intro: ['AI consumers need data with a clear meaning, useful history and known ownership. Follow the platform architecture series in order, then explore the related guide to implementing data quality boundaries.']
+  },
   mlops: {
     title: 'Production MLOps guides and operating models',
     description: 'MLOps writing on delivery patterns, model operations, observability, governance and the engineering foundations behind production ML systems.',
@@ -100,6 +115,16 @@ const breadcrumbSchema = {
         ))}
       </div>
 
+      {topicReadingPaths[activeTopic] && (
+        <>
+          <ReadingPaths paths={topicReadingPaths[activeTopic]} posts={allPosts} />
+          <div class="button-row">
+            <a class="button button--secondary" href="/projects/">Code and workshops</a>
+            <a class="button button--secondary" href="/speaking/">Related conference sessions</a>
+          </div>
+          <h2 class="section-title section-title--compact topic-archive-title">All {activeLabel} articles</h2>
+        </>
+      )}
       <div class="post-list">
         {posts.map((post) => (
           <ArticleCard post={post} filterTokens={getPostFilterTokens(post)} layout="stack" />

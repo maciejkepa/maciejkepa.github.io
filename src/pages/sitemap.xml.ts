@@ -1,6 +1,6 @@
 import { getCollection } from 'astro:content';
 
-import { getPostFilterTokens, getTopicCards, sortPosts } from '../lib/blog';
+import { getTopicCards, sortPosts } from '../lib/blog';
 import { siteConfig } from '../lib/site';
 
 export const prerender = true;
@@ -10,7 +10,8 @@ interface SitemapEntry {
   lastmod?: string;
 }
 
-const staticLastmod = '2026-07-30T00:00:00.000Z';
+// Index pages include curated copy as well as posts. Omit lastmod until
+// their substantive edits can be tracked reliably; article dates come from frontmatter.
 const staticRoutes = ['/', '/blog/', '/topics/', '/speaking/', '/about/', '/projects/'];
 
 function escapeXml(value: string) {
@@ -28,20 +29,11 @@ export async function GET() {
 
   const entries: SitemapEntry[] = [
     ...staticRoutes.map((path) => ({
-      loc: new URL(path, siteConfig.url).href,
-      lastmod: staticLastmod
+      loc: new URL(path, siteConfig.url).href
     })),
-    ...topics.map((topic) => {
-      const topicPosts = posts.filter((post) => getPostFilterTokens(post).includes(topic.slug));
-      const latestPostDate = topicPosts
-        .map((post) => post.data.updated ?? post.data.date)
-        .sort((a, b) => b.getTime() - a.getTime())[0];
-
-      return {
-        loc: new URL(`/blog/topic/${topic.slug}/`, siteConfig.url).href,
-        lastmod: (latestPostDate ?? new Date(staticLastmod)).toISOString()
-      };
-    }),
+    ...topics.map((topic) => ({
+      loc: new URL(`/blog/topic/${topic.slug}/`, siteConfig.url).href
+    })),
     ...posts.map((post) => ({
       loc: new URL(`/blog/${post.id}/`, siteConfig.url).href,
       lastmod: (post.data.updated ?? post.data.date).toISOString()

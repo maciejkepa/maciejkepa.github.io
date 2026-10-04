@@ -1,30 +1,24 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { selectedProjects } from '../lib/projects';
 import { siteConfig } from '../lib/site';
-
-const projectLenses = [
-  {
-    title: 'Reference platform blueprints',
-    copy: 'Architecture work for Azure-native data platforms, lakehouse setups, MLOps foundations and AI delivery systems that need clear ownership and operational boundaries.',
-    outputs: ['target-state architecture', 'delivery blueprint', 'runbook and guardrails']
-  },
-  {
-    title: 'Conference and workshop demos',
-    copy: 'Small but credible repos built to support talks, workshops and technical writing without collapsing into toy examples that ignore deployment reality.',
-    outputs: ['demo repo', 'walkthrough notes', 'companion article']
-  },
-  {
-    title: 'Operational tooling',
-    copy: 'Delivery helpers, orchestration patterns, CI/CD templates, observability layers and practical automation around cloud-native ML and data systems.',
-    outputs: ['pipeline template', 'automation scripts', 'monitoring baseline']
-  }
-];
 
 const stacks = [
   {
-    label: 'Azure',
+    label: 'Microsoft Azure',
     icon: 'https://api.iconify.design/devicon/azure.svg',
     note: 'Cloud platform'
+  },
+  {
+    label: 'Microsoft Fabric',
+    icon: 'https://api.iconify.design/thesvg-color/microsoft-fabric.svg',
+    note: 'Data engineering and analytics'
+  },
+  {
+    label: 'Microsoft Foundry',
+    icon: 'https://api.iconify.design/selfhst/microsoft-foundry.svg',
+    iconCredit: 'Icon by selfh.st — https://github.com/selfhst/icons — CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/ (unmodified)',
+    note: 'AI applications and agents'
   },
   {
     label: 'Databricks',
@@ -67,36 +61,40 @@ const stacks = [
     note: 'Containers and portable runtime environments'
   }
 ];
-
 ---
 
-<BaseLayout title="Projects" description="Selected project areas, repositories and technical demos.">
+<BaseLayout seoTitle="MLOps & AI Projects - Maciej Kępa" description="Explore Maciej Kępa’s MCP server and AI/ML workshop materials: runnable examples, architecture decisions, setup instructions and practical limitations.">
   <section class="section">
-    <div class="container about-section surface">
-      <div class="about-section__intro">
-        <span class="eyebrow">Projects</span>
-        <h1 class="section-title">Projects that sit close to delivery, architecture and technical writing</h1>
-        <p class="section-copy">
-          Not a dumping ground for every experiment. This section is for work that supports talks, articles and production-minded platform design.
-        </p>
-      </div>
-
-      <div class="about-section__body project-lenses">
-        {projectLenses.map((area) => (
-          <article class="project-lens">
-            <span class="kicker">Focus area</span>
-            <h2 class="card__title">{area.title}</h2>
-            <p>{area.copy}</p>
-            <div class="project-lens__outputs">
-              {area.outputs.map((output) => (
-                <span>{output}</span>
-              ))}
-            </div>
-          </article>
-        ))}
-      </div>
+    <div class="container">
+      <span class="eyebrow">Selected work</span>
+      <h1 class="section-title">Code and workshops behind the writing</h1>
+      <p class="section-copy">Public examples you can inspect and run, with the design decisions and limits made explicit.</p>
     </div>
   </section>
+
+  {selectedProjects.map((project) => (
+    <section class="section section--tight" id={project.id}>
+      <div class="container about-section surface">
+        <div class="about-section__intro">
+          <span class="eyebrow">{project.kind}</span>
+          <h2 class="section-title section-title--compact">{project.title}</h2>
+          <p class="section-copy">{project.summary}</p>
+          <div class="button-row">
+            <a class="button" href={project.repoUrl}>View repository</a>
+            <a class="button button--secondary" href={project.startUrl}>{project.startLabel}</a>
+          </div>
+        </div>
+        <div class="about-section__body about-entry-list">
+          <div class="about-entry"><h3 class="card__title">The idea behind it</h3><p>{project.decision}</p></div>
+          <div class="about-entry"><h3 class="card__title">What you can run</h3><p>{project.start}</p></div>
+          <div class="about-entry"><h3 class="card__title">Scope and limits</h3><p>{project.limits}</p></div>
+          <nav class="resource-links" aria-label={`${project.title} materials`}>
+            {project.links.map((link) => <a href={link.href}>{link.label} →</a>)}
+          </nav>
+        </div>
+      </div>
+    </section>
+  ))}
 
   <section class="section section--tight">
     <div class="container about-section surface">
@@ -110,10 +108,10 @@ const stacks = [
         {stacks.map((stack) => (
           <article class="tech-tile">
             <span class="tech-tile__icon">
-              <img src={stack.icon} alt={`${stack.label} logo`} loading="lazy" />
+              <img src={stack.icon} alt={`${stack.label} logo`} title={stack.iconCredit} loading="lazy" />
             </span>
             <div>
-              <h2 class="card__title">{stack.label}</h2>
+              <h3 class="card__title">{stack.label}</h3>
               <p>{stack.note}</p>
             </div>
           </article>

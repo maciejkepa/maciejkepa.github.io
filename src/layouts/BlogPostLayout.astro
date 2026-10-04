@@ -1,5 +1,8 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import ArticleResources from '../components/ArticleResources.astro';
+import DataPlatformSeries from '../components/DataPlatformSeries.astro';
+import { dataPlatformSeries } from '../lib/reading-paths';
 import LinkedInIcon from '../components/LinkedInIcon.astro';
 import { formatDate } from '../lib/blog';
 
@@ -10,6 +13,7 @@ interface Heading {
 }
 
 interface Props {
+  postId: string;
   title: string;
   seoTitle?: string;
   description: string;
@@ -28,7 +32,7 @@ interface Props {
   }>;
 }
 
-const { title, seoTitle, description, date, updated, tags, type, readingTime, headings, repoUrl, coverImage, coverAlt, faqs = [] } = Astro.props;
+const { postId, title, seoTitle, description, date, updated, tags, type, readingTime, headings, repoUrl, coverImage, coverAlt, faqs = [] } = Astro.props;
 const tocHeadings = headings.filter((heading) => heading.depth >= 2 && heading.depth <= 3);
 const publishedLabel = formatDate(date);
 const updatedLabel = formatDate(updated ?? date);
@@ -210,14 +214,16 @@ const lightboxController = `
   <section>
     <div class="container article-layout">
       <article class="article-body prose">
+        {dataPlatformSeries.includes(postId) && <DataPlatformSeries postId={postId} />}
         <slot />
+        <ArticleResources tags={tags} />
         <footer class="article-author" aria-label="Author profile">
           <div>
             <span class="eyebrow">Author</span>
             <h2>Maciej Kępa</h2>
             <p>
-              Data & AI Architect and Senior Data Engineer working on production data platforms, Azure, Databricks,
-              MLOps foundations and ML observability for systems that need to be operated after the first model works.
+              Data & AI Architect at Datumo, based in Kraków, Poland. I work on MLOps and AI-ready data platforms,
+              primarily with Azure and Databricks, focusing on delivery, observability and operational ownership.
             </p>
             <div class="article-author__follow">
               <a class="button" href="https://www.linkedin.com/in/maciej-kepa/" target="_blank" rel="noreferrer" aria-label="Follow Maciej Kępa on LinkedIn">
@@ -226,7 +232,8 @@ const lightboxController = `
               </a>
             </div>
             <div class="article-author__links">
-              <a href="/about/">About</a>
+              <a href="/about/" rel="author">About Maciej</a>
+              <a href="/projects/">Projects</a>
               <a href="/speaking/">Speaking</a>
               <a href="https://sessionize.com/maciej-kepa/" target="_blank" rel="noreferrer">Sessionize</a>
             </div>

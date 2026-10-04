@@ -14,11 +14,11 @@ faqs:
   - question: "Can an existing data warehouse support AI?"
     answer: "Yes. MorrowBasket could prepare its forecasting inputs from warehouse tables and run the model in a separate job. The team would still need to preserve the right history and make the preparation repeatable. An existing warehouse may be enough until a specific workload calls for another component."
   - question: "Can data mesh and a lakehouse coexist?"
-    answer: "Yes. MorrowBasket's sales team could maintain its data products on a lakehouse shared with other domains. Following mesh principles would also require self-service tooling and shared governance, so the team can support the people using its data. The lakehouse provides storage and processing capabilities for that work."
+    answer: "Yes. MorrowBasket’s sales team could maintain its data products on a lakehouse shared with other domains. Following mesh principles would also require self-service tooling and shared governance, so the team can support the people using its data. The lakehouse provides storage and processing capabilities for that work."
   - question: "Does table time travel prevent training-data leakage?"
-    answer: "Not by itself. An older table version helps MorrowBasket recover a previous storage state, but the forecasting team must still check what was available at each prediction time. If the selected version includes Monday's correction, using it for Friday's inputs would give the model information it could not have used then."
+    answer: "Not by itself. An older table version helps MorrowBasket recover a previous storage state, but the forecasting team must still check what was available at each prediction time. If the selected version includes Monday’s correction, using it for Friday’s inputs would give the model information it could not have used then."
   - question: "Do catalog permissions automatically protect an assistant?"
-    answer: "No. MorrowBasket may record a document's access restrictions in its catalog, but the assistant's retrieval service must enforce them before returning content to the model. Copies in a search index need the same restrictions, including updates when an employee loses access."
+    answer: "No. MorrowBasket may record a document’s access restrictions in its catalog, but the assistant’s retrieval service must enforce them before returning content to the model. Copies in a search index need the same restrictions, including updates when an employee loses access."
 ---
 
 It's Monday morning at MorrowBasket Retail, our fictional retailer with shops and an online store. The sales manager opens Friday's report and notices that revenue has fallen since he last checked it. A return requested on Friday only reached the data platform this morning. The report has caught up.

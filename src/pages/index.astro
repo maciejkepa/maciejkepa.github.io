@@ -8,6 +8,7 @@ import { getPostFilterTokens, getTopicCards, sortPosts } from '../lib/blog';
 import { getResponsiveCoverSources } from '../lib/images';
 import { getReadingTime } from '../lib/reading-time';
 import { siteConfig, speakingSessions } from '../lib/site';
+import { selectedProjects } from '../lib/projects';
 
 const posts = sortPosts(await getCollection('blog', ({ data }) => !data.draft));
 const topicCards = getTopicCards(posts);
@@ -32,10 +33,10 @@ const topicPaths = [
     cta: 'Explore MLOps'
   },
   {
-    title: 'Databricks',
-    topic: topicCards.find((topic) => topic.slug === 'databricks'),
-    promise: 'Lakehouse-side MLOps, delivery patterns and production data platform decisions.',
-    cta: 'Explore Databricks'
+    title: 'AI-ready data platforms',
+    topic: topicCards.find((topic) => topic.slug === 'data-architecture'),
+    promise: 'Business definitions, data history and ownership behind reliable AI inputs.',
+    cta: 'Explore data platforms'
   },
   {
     title: 'ML Observability',
@@ -45,18 +46,18 @@ const topicPaths = [
   }
 ].filter((path): path is typeof path & { topic: NonNullable<typeof path.topic> } => path.topic !== undefined);
 const portrait = '/images/maciej-kepa-about.jpg';
-const rssHighlights = ['Full articles and guides', 'Direct feed access from day one', 'No signup flow or newsletter gate'];
+const rssHighlights = ['Article summaries and links', 'Direct feed access from day one', 'No signup flow or newsletter gate'];
 ---
 
-<BaseLayout>
+<BaseLayout seoTitle="Maciej Kępa - Data & AI Architect | Beyond the Notebook" description="Maciej Kępa writes and speaks about MLOps, AI-ready data platforms and operating data and ML systems in production. Azure and Databricks.">
   <section class="hero">
     <div class="container hero__grid">
       <div>
         <span class="eyebrow">{siteConfig.name}</span>
         <h1 class="hero__title">{siteConfig.owner}</h1>
-        <p class="hero__role">Data & AI Architect</p>
+        <p class="hero__role">{siteConfig.role}</p>
         <p class="hero__copy">
-          I write about building data and AI systems that survive production — MLOps, observability, platform engineering and architecture.
+          I design data platforms and AI systems for production. I write about delivery, observability and the decisions that keep those systems maintainable.
         </p>
 
         <div class="hero__actions">
@@ -70,7 +71,7 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
       <div class="hero-side hero-side--graphic">
         <div class="home-panel home-panel--center surface">
           <span class="eyebrow">Current focus</span>
-          <h2 class="home-panel__title">Production over demos</h2>
+          <h2 class="home-panel__title">MLOps & AI-ready data platforms</h2>
           <p class="home-panel__copy">
             Practical notes on operating AI systems under real production constraints.
           </p>
@@ -147,6 +148,23 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
       ) : (
         <p class="empty-state">No published articles available yet.</p>
       )}
+    </div>
+  </section>
+
+  <section class="section section--tight" aria-labelledby="selected-work-title">
+    <div class="container">
+      <span class="eyebrow">Selected work</span>
+      <h2 class="section-title section-title--compact" id="selected-work-title">Explore the code behind the ideas</h2>
+      <div class="selected-work-grid">
+        {selectedProjects.map((project) => (
+          <article class="card">
+            <span class="kicker">{project.kind}</span>
+            <h3 class="card__title"><a href={`/projects/#${project.id}`}>{project.title}</a></h3>
+            <p>{project.summary}</p>
+            <a href={`/projects/#${project.id}`}>Setup, decisions and limitations →</a>
+          </article>
+        ))}
+      </div>
     </div>
   </section>
 

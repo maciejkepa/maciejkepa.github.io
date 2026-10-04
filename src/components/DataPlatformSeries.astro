@@ -1,0 +1,18 @@
+---
+import { getCollection } from 'astro:content';
+import { dataPlatformSeries } from '../lib/reading-paths';
+interface Props { postId: string; }
+const { postId } = Astro.props;
+const published = await getCollection('blog', ({ data }) => !data.draft);
+const parts = dataPlatformSeries.map((id) => {
+  const post = published.find((entry) => entry.id === id);
+  if (!post) throw new Error(`Data platform series references a missing post: ${id}`);
+  return post;
+});
+---
+<nav class="series-navigation" aria-label="Data platform architecture series">
+  <p class="kicker">Series: Data platform architectures for AI</p>
+  <ol>
+    {parts.map((part) => <li><a href={`/blog/${part.id}/`} aria-current={part.id === postId ? 'page' : undefined}>{part.data.title}</a></li>)}
+  </ol>
+</nav>

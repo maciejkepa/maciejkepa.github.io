@@ -27,7 +27,7 @@ export function getPostFilterTokens(post: BlogPost) {
     tokens.add('llm');
   }
 
-  if (tokens.has('architecture') || tokens.has('production-ml')) {
+  if (tokens.has('architecture')) {
     tokens.add('ai-architecture');
   }
 

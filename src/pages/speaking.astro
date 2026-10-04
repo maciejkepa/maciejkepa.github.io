@@ -1,6 +1,16 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig, speakingSessions } from '../lib/site';
+import { recommendedSessions } from '../lib/speaker';
+
+function displayDate(value: string) {
+  return new Intl.DateTimeFormat('en', {
+    year: 'numeric',
+    month: 'long',
+    ...(value.length === 10 ? { day: 'numeric' as const } : {}),
+    timeZone: 'UTC'
+  }).format(new Date(value));
+}
 
 const formats = [
   {
@@ -21,22 +31,22 @@ const speakingPhoto = '/images/maciej-kepa-speaking.jpg';
 const orderedSpeakingSessions = [...speakingSessions].sort((a, b) => b.sortDate.localeCompare(a.sortDate));
 ---
 
-<BaseLayout title="Speaking" description="Conference talks, workshop topics and public speaking profile for Data, AI and ML engineering sessions.">
+<BaseLayout seoTitle="MLOps & Data Platform Speaker - Maciej Kępa" description="MLOps, data platform and MCP talks by Maciej Kępa. Polish and English sessions, Databricks workshops and conference history. Invite me to speak at your event.">
   <section class="section">
     <div class="container speaking-hero surface">
       <div class="speaking-hero__content">
         <span class="eyebrow">Speaking</span>
-        <h1 class="section-title">Talks for teams building real systems, not only demos</h1>
+        <h1 class="section-title">MLOps and data platform talks</h1>
         <p class="section-copy">
-          Session themes revolve around MLOps, Azure, Databricks, AI, data observability and the operational reality of shipping data and ML platforms.
+          I speak about MLOps, AI-ready data platforms and the operational reality of shipping data and ML systems. Sessions are available in Polish and English.
         </p>
         <p class="section-copy">
-          The emphasis stays practical: lessons from production systems, architectural trade-offs and sessions that help engineering teams move from abstract interest to workable delivery patterns.
+          Based in Kraków, Poland. For conference or workshop invitations, contact me with the audience, format, language and dates.
         </p>
 
         <div class="button-row">
-          <a class="button" href={siteConfig.links.sessionize} target="_blank" rel="noreferrer">Sessionize profile</a>
-          <a class="button button--secondary" href={siteConfig.links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+          <a class="button" href={siteConfig.links.sessionize} target="_blank" rel="noreferrer">Invite via Sessionize</a>
+          <a class="button button--secondary" href={siteConfig.links.linkedin} target="_blank" rel="noreferrer">Contact on LinkedIn</a>
         </div>
       </div>
 
@@ -53,23 +63,51 @@ const orderedSpeakingSessions = [...speakingSessions].sort((a, b) => b.sortDate.
     </div>
   </section>
 
+  <section class="section section--tight" aria-labelledby="recommended-sessions">
+    <div class="container">
+      <span class="eyebrow">For your event</span>
+      <h2 class="section-title section-title--compact" id="recommended-sessions">Three sessions to start with</h2>
+      <div class="reading-path-grid">
+        {recommendedSessions.map((session) => (
+          <article class="card" id={session.id}>
+            <span class="kicker">Conference session · PL / EN</span>
+            <h3 class="card__title">{session.title}</h3>
+            <p>{session.description}</p>
+            <nav class="resource-links" aria-label={`${session.title} resources`}>
+              <a href={session.sessionUrl}>Session abstract →</a>
+              <a href={session.resourceUrl}>{session.resourceLabel} →</a>
+            </nav>
+          </article>
+        ))}
+      </div>
+      <div class="button-row"><a class="button button--secondary" href="#invite">Invite me to speak</a></div>
+    </div>
+  </section>
+
   <section class="section section--tight">
     <div class="container about-section surface">
       <div class="about-section__intro">
         <span class="eyebrow">Sessions</span>
-        <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.9rem);">Sessions and conference appearances</h2>
-        <p class="section-copy">A mix of MLOps, data observability, Databricks orchestration and vector-native AI topics grounded in real delivery work.</p>
+        <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.9rem);">Conference history</h2>
+        <p class="section-copy">Selected appearances and workshop materials. Where the delivery language is unverified, the entry shows the languages available for that session.</p>
       </div>
       <div class="about-section__body about-entry-list">
         {orderedSpeakingSessions.map((talk) => (
-          <article class="about-entry">
+          <article class="about-entry" id={talk.id}>
             <span class="kicker session-meta">
               <a href={talk.eventUrl} target="_blank" rel="noreferrer">{talk.event} {talk.year}</a>
             </span>
-            <h2 class="card__title">
+            <p class="session-details"><time datetime={talk.date}>{displayDate(talk.date)}</time> · {talk.format}{talk.deliveredLanguage ? ` · Delivered in ${talk.deliveredLanguage}` : talk.languages ? ` · Available in ${talk.languages}` : ''}</p>
+            <h3 class="card__title">
               <a href={talk.sessionUrl} target="_blank" rel="noreferrer">{talk.title}</a>
-            </h2>
+            </h3>
             <p>{talk.focus}</p>
+            {(talk.archiveUrl || talk.repoUrl || talk.slidesUrl || talk.recordingUrl) && <nav class="resource-links" aria-label={`${talk.event} ${talk.year} materials`}>
+              {talk.archiveUrl && <a href={talk.archiveUrl}>Event archive →</a>}
+              {talk.repoUrl && <a href={talk.repoUrl}>Workshop repository →</a>}
+              {talk.slidesUrl && <a href={talk.slidesUrl}>Slides →</a>}
+              {talk.recordingUrl && <a href={talk.recordingUrl}>Recording →</a>}
+            </nav>}
           </article>
         ))}
       </div>
@@ -85,10 +123,24 @@ const orderedSpeakingSessions = [...speakingSessions].sort((a, b) => b.sortDate.
       <div class="about-section__body about-entry-list">
         {formats.map((item) => (
           <article class="about-entry">
-            <h2 class="card__title">{item.title}</h2>
+            <h3 class="card__title">{item.title}</h3>
             <p>{item.copy}</p>
           </article>
         ))}
+      </div>
+    </div>
+  </section>
+  <section class="section section--tight" id="invite">
+    <div class="container about-section surface">
+      <div class="about-section__intro">
+        <h2 class="section-title section-title--compact">Invite me to speak</h2>
+        <p class="section-copy">Organizing a conference? Get in touch with the topic, audience and dates.</p>
+      </div>
+      <div class="about-section__body">
+        <div class="button-row">
+          <a class="button" href={siteConfig.links.sessionize} target="_blank" rel="noreferrer">Invite via Sessionize</a>
+          <a class="button button--secondary" href={siteConfig.links.linkedin} target="_blank" rel="noreferrer">Contact on LinkedIn</a>
+        </div>
       </div>
     </div>
   </section>

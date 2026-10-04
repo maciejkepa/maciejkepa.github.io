@@ -61,8 +61,13 @@ const schemaGraph = {
       '@type': 'Person',
       '@id': `${siteConfig.url}/#person`,
       name: siteConfig.owner,
-      url: siteConfig.url,
+      alternateName: 'Maciej Kepa',
+      url: `${siteConfig.url}/about/`,
       jobTitle: siteConfig.role,
+      homeLocation: {
+        '@type': 'Place',
+        name: siteConfig.location
+      },
       worksFor: {
         '@type': 'Organization',
         name: 'Datumo',
@@ -74,9 +79,11 @@ const schemaGraph = {
         siteConfig.links.sessionize
       ],
       knowsAbout: [
-        'Azure',
+        'Microsoft Azure',
         'Databricks',
         'MLOps',
+        'Production machine learning',
+        'Data platform architecture',
         'Data Engineering',
         'ML Observability',
         'AI Architecture'
@@ -160,6 +167,7 @@ const themeController = `
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={canonical} />
+    <link rel="alternate" type="application/rss+xml" title={`${siteConfig.owner} — ${siteConfig.name}`} href={new URL(siteConfig.links.rss, Astro.site)} />
     <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml" />
     <link rel="shortcut icon" href="/favicon.svg" />
     <meta name="theme-color" content="#f1ede4" />

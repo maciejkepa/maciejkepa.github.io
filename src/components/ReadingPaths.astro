@@ -1,0 +1,30 @@
+---
+import type { BlogPost } from '../lib/blog';
+import type { ReadingPath } from '../lib/reading-paths';
+
+interface Props {
+  paths: ReadingPath[];
+  posts: BlogPost[];
+}
+const { paths, posts } = Astro.props;
+const resolvedPaths = paths.map((path) => ({
+  ...path,
+  entries: path.posts.map((id) => {
+    const post = posts.find((entry) => entry.id === id);
+    if (!post) throw new Error(`Reading path references an unpublished or missing post: ${id}`);
+    return post;
+  })
+}));
+---
+
+<nav class="reading-path-grid" aria-label="Suggested reading paths">
+  {resolvedPaths.map((path) => (
+    <section class="card">
+      <h2 class="card__title">{path.title}</h2>
+      <p>{path.description}</p>
+      <ol class="reading-path-list">
+        {path.entries.map((post) => <li><a href={`/blog/${post.id}/`}>{post.data.title}</a></li>)}
+      </ol>
+    </section>
+  ))}
+</nav>

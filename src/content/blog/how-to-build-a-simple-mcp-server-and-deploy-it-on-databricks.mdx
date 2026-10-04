@@ -12,16 +12,14 @@ coverImage: "/blog-covers/how-to-build-a-simple-mcp-server-and-deploy-it-on-data
 coverAlt: "Hand-drawn sketch of a custom MCP server on Databricks Apps connected to an agent client, GTD tools, SQLite, Delta storage and a SQL warehouse"
 repoUrl: "https://github.com/maciejkepa/gtd-mcp-server"
 faqs:
-  - question: "What is a good first custom MCP server project?"
-    answer: "A good first custom MCP server should expose a small and deterministic tool surface around a domain you can reason about easily. A GTD assistant is a strong example because the tools are concrete, side effects are visible and the model can work with structured task or project state."
-  - question: "Can you deploy an MCP server on Databricks Apps?"
-    answer: "Yes. Databricks Apps can host a FastAPI or FastMCP application and expose its streamable HTTP MCP endpoint. You can map a SQL warehouse and a Unity Catalog table into the app through Databricks App resources and let the app use Databricks-managed identity instead of hardcoded credentials."
-  - question: "What is the simplest storage pattern for a Databricks MCP server?"
-    answer: "A small document-style table with a stable record shape is often enough. In this implementation, tasks, projects and inbox items are stored as JSON payloads behind a tiny list-put-delete interface, which keeps the domain logic portable between SQLite and a Delta table."
-  - question: "How do you connect a Databricks MCP server to Playground or Codex?"
-    answer: "Databricks Playground can attach the deployed app directly through its Tools panel. For local development, Codex can point to the local streamable HTTP MCP endpoint at http://localhost:8000/mcp."
-  - question: "Do I need a full agent framework before building an MCP server?"
-    answer: "No. MCP is the protocol boundary for tools, not an agent framework. You can start with a narrow server, a few typed tools and one deployment path, then add more orchestration later if the use case justifies it."
+  - question: "Why not start with retrieval or a vector database?"
+    answer: "Because the first thing you need to learn is not retrieval quality. It is capability design. If you cannot keep a task manager tool surface clear and deterministic, adding retrieval will not save the design. It will just make failures harder to inspect."
+  - question: "Why use one shared Delta table for tasks, projects and inbox items?"
+    answer: "Because the first version benefits from a very small persistence contract. One document-style table keeps the schema simple and makes it easier to port the same domain logic between SQLite and Databricks. You can always split the storage model later if the domain grows. You do not need that complexity on day one."
+  - question: "Is Databricks Apps enough for a production MCP server?"
+    answer: "For many internal tool scenarios, yes, especially when the server needs governed access to workspace resources and the tool surface is still modest. It does not remove the need for testing, monitoring or access design. It does give you a much cleaner starting point than building separate infrastructure around a small Python service too early."
+  - question: "Should the first MCP server expose write operations?"
+    answer: "Yes, but only if those writes are narrow and easy to verify. Creating a task, moving a task to in progress or completing a task are good examples. Broad tools with hidden multi-step side effects are not."
 ---
 
 import Callout from '../../components/Callout.astro';

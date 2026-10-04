@@ -15,11 +15,11 @@ faqs:
   - question: "What is ML release management?"
     answer: "ML release management identifies, validates and promotes the complete versioned decision system: code, model, input contract, configuration, runtime, target and release evidence. MLflow tracks the experiment and model lineage; the release record captures the resolved state that operates in production."
   - question: "Are MLflow model aliases safe to use in production?"
-    answer: "Yes. Model aliases are useful mutable lifecycle pointers such as Champion and Challenger. Do not use an alias alone as the immutable identity of a past release. Record the resolved registered-model version alongside the alias, code revision and deployment evidence."
+    answer: "Yes. Aliases are useful mutable pointers for roles such as Champion and Challenger. Record the resolved registered-model version alongside the alias, code revision and deployment evidence, because an alias can intentionally point somewhere else later."
   - question: "Should Azure Databricks MLflow projects deploy code or models?"
-    answer: "Both patterns are valid. Azure Databricks generally recommends promoting code so production trains and deploys from reviewed production logic. Promoting a model artifact is appropriate for specific cases, including training that is too expensive or impractical to repeat in each environment."
+    answer: "Both patterns are valid. Azure Databricks generally recommends promoting code so production trains and deploys from reviewed production logic. Promote a model artifact for specific cases, such as training that is too expensive or impractical to repeat in each environment."
   - question: "How do you roll back an MLflow deployment?"
-    answer: "Roll back the smallest state that explains the failure. A model alias can return a workload to a previous model version, but code, configuration, runtime and input-contract failures need their own reversal. Keep an immutable release record so the correct scope is visible during an incident."
+    answer: "Roll back the smallest state that explains the failure. A model alias can return a workload to a previous model version, but code, configuration, runtime and input-contract failures need their own reversal. An immutable release record makes that scope visible during an incident."
 ---
 
 import Callout from '../../components/Callout.astro';
