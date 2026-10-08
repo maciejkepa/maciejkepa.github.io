@@ -6,7 +6,8 @@ export interface ReadingPath {
 
 export const dataPlatformSeries = [
   'data-platform-architectures-ai-ready',
-  'data-warehouse-ai-ready'
+  'data-warehouse-ai-ready',
+  'data-lake-ai-ready'
 ];
 
 export const topicReadingPaths: Record<string, ReadingPath[]> = {

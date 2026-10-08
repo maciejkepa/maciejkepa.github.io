@@ -1,0 +1,209 @@
+---
+title: "Data lake: what it takes to turn stored files into useful data"
+seoTitle: "Data Lake Architecture for Analytics and AI"
+description: "Explore data lake architecture through MorrowBasket's files, formats and processing, and learn what makes stored data useful for analytics and AI."
+date: "2026-10-07"
+tags: ["data-architecture", "data-engineering", "data-platform", "ai-architecture"]
+type: "article"
+valueType: "Architectural guide"
+featured: false
+draft: false
+coverImage: "/blog-covers/data-lake-ai-ready.png"
+coverAlt: "A data lake holds order exports, application events, policy documents and prepared data, with dataset descriptions and a separate engine that reads files and writes outputs."
+faqs:
+  - question: "What is the difference between a data lake and a data warehouse?"
+    answer: "A data lake retains files in varied formats and supports preparation for different consumers. A warehouse organizes prepared data for analytical queries. MorrowBasket can keep source exports and policy documents in its lake while publishing selected sales tables in its warehouse. Both require definitions, quality checks and access controls."
+  - question: "Is a data lake just cloud storage?"
+    answer: "Cloud storage provides a foundation. A usable data lake architecture also needs ingestion, processing, descriptions of the data and rules for publishing it. At MorrowBasket, storing three exports does not establish that they cover the right shops, use compatible fields or are ready for a report."
+  - question: "Does schema-on-read mean that a data lake has no schema?"
+    answer: "No. It means a reader applies a structure when interpreting the data. CSV still needs column definitions, and Parquet carries a schema in the file. MorrowBasket must check identifiers, types and completeness before publishing a dataset, regardless of when the source structure is interpreted."
+  - question: "Can a data lake support analytics and AI?"
+    answer: "Yes. MorrowBasket can prepare files for analytical queries, historical model inputs and document retrieval. Each path needs its own preparation and checks. Saving the source files alone does not establish training correctness, retrieval permissions or the quality of the resulting model or answer."
+  - question: "Does a plain data lake still make sense?"
+    answer: "Yes, for retained exports, documents, images and simple batch workloads with controlled publication. Shared tables with frequent or concurrent changes need more coordination. MorrowBasket can keep source files as ordinary objects while using a table format where it needs transactions and managed table versions."
+---
+
+MorrowBasket Retail, our fictional retailer with shops and an online store, has agreed on its sales definitions. Then an engineer finds a mistake in the product mapping: two source codes were assigned to the same product. The team wants to correct the mapping and rebuild the affected results. Fortunately, they kept the original order exports.
+
+Those exports sit alongside application events and return policies. The [warehouse article](/blog/data-warehouse-ai-ready/) followed the work needed to prepare consistent sales tables. Now the team needs to decide how to keep this wider collection useful as its consumers change.
+
+In this article, we'll explore data lake architecture through MorrowBasket Retail's source files, analytical datasets and policy documents, continuing our series on data platforms for analytics and AI.
+
+<figure class="article-figure article-cover-figure">
+  <img
+    src="/blog-covers/data-lake-ai-ready-1600.webp"
+    srcset="/blog-covers/data-lake-ai-ready-800.webp 800w, /blog-covers/data-lake-ai-ready-1600.webp 1600w"
+    sizes="(min-width: 64rem) 52rem, 100vw"
+    alt="A data lake holds order exports, application events, policy documents and prepared data, with dataset descriptions and a separate engine that reads files and writes outputs."
+    width="1600"
+    height="1000"
+    loading="eager"
+    decoding="async"
+  />
+  <figcaption>
+    MorrowBasket can retain source material and prepared outputs in the same lake. Processing engines read and transform the files, while dataset descriptions explain what those files represent.
+  </figcaption>
+</figure>
+
+## What is a data lake?
+
+A **data lake** stores data in varied formats so teams can retain it and prepare it for different analytical uses. It commonly uses object storage, which holds each file as an object identified by a name or path. A lake can contain original exports, event records, documents and prepared datasets.
+
+For MorrowBasket, that means keeping an order extract, a sequence of application events and a policy PDF without first forcing them into the same table structure. The team can also store cleaned, structured results alongside those sources.
+
+Storage holds the bytes. A **processing engine** reads them and performs work such as filtering records, joining orders to products or extracting text. MorrowBasket might use an engine like Apache Spark to summarize prepared files and a scheduled processing job to build them. Those tools can read the same storage while doing different jobs.
+
+[Azure Data Lake Storage](https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-introduction) illustrates the storage foundation. It adds capabilities to Azure Blob Storage, including a hierarchical namespace that organizes files into directories, and supports access controls for files and directories. These capabilities help engineers organize and protect data. The team still has to define its preparation and publication processes.
+
+A path such as `orders/store-a/2026-10-06/export.csv` helps locate a file. It cannot tell an analyst whether the export is complete, whether its amounts include returns or which product mapping was used. MorrowBasket needs to preserve those facts too.
+
+## Why does MorrowBasket keep the source files?
+
+Let's go back to the incorrect product mapping. If MorrowBasket kept only the final totals, the engineer might be unable to separate the two products again. The original export retains the source product code on each order line. With a corrected mapping, the team can rebuild the affected dataset and compare the results.
+
+Reproducing the previous result requires more than those files. Engineers need to know which export versions, mapping version and preparation logic produced it. The revised run should record the same information, so someone investigating the changed report can explain why it changed.
+
+The sources can also support work that the original report did not need. Application events may help engineers investigate failed checkouts. Detailed order records may support a new forecasting experiment. A policy document may be needed to answer a question about an older purchase. These uses need different outputs from the material MorrowBasket retained.
+
+Keeping data indefinitely would create another maintenance problem. Each collection needs an owner, a retention period and a way to handle corrections and deletions. The team should retain enough context to support its agreed uses, including the information needed to find derived copies. A replay process cannot recover a source version that has already been overwritten or removed.
+
+## How do file formats and layout affect the work?
+
+An order export might arrive as **CSV**, a text format containing rows of values separated by delimiters. MorrowBasket must know which columns contain the order identifier, product code, quantity and amount. A successful read does not prove that a value interpreted as text should remain text, or that a missing quantity means zero.
+
+Application events might arrive as **JSON**, which represents fields and values, including nested structures. One event can carry checkout details while another describes a page view. The preparation job needs to distinguish those event types and handle changes to their fields.
+
+For repeated analysis, engineers can convert selected records to **Parquet**, a file format that stores data by column and includes a schema describing its structure. A query about quantities by product can read the relevant columns instead of unrelated fields. Keeping similar values together also supports compression. Microsoft's [Data Lake Storage guidance](https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-best-practices#structure-data-sets) explains these format choices and their effect on analytical reads.
+
+MorrowBasket can keep the original CSV and publish a prepared Parquet dataset. That conversion changes how data is stored and read. Engineers must still check whether the product identifiers and quantities are correct.
+
+The arrangement of files matters too. Suppose most reports read one week of orders. Grouping prepared data into date-based directories divides it into **partitions**, subsets organized by a chosen field. A compatible engine can skip irrelevant paths when the query supplies an appropriate date filter. The team must define whether that date means purchase date or arrival date, because the two can differ.
+
+Creating a separate tiny file for every order would add overhead for listing files, opening them and checking access. A preparation job can combine small inputs into larger analytical files. The useful size depends on the engine and workload, so MorrowBasket should measure its own reads instead of treating one file size as a universal rule.
+
+You may hear this flexibility described as **schema-on-read**: the reader applies a structure when interpreting the data. It still needs column names, types and rules for unexpected values. Parquet already carries a schema, while CSV usually needs one supplied by the reader. MorrowBasket should validate the structure it publishes so every downstream team does not have to rediscover it.
+
+## When are uploaded files ready for other teams?
+
+Consider a daily store-sales dataset covering three of MorrowBasket's shops. The job expects an export from each shop for the reporting date. Store A and Store B upload their files, but Store C's export fails. A job that reads whatever is present can produce a plausible total with one shop missing.
+
+For this dataset, I would make the expected inputs explicit before processing. The run records which shops and period it covers, the selected file versions and whether each export is complete. Counting three files is insufficient: one could be a duplicate or belong to another date. A shop with no sales still needs a way to confirm that its export is complete.
+
+Once the inputs are present, the job checks the columns and types, required identifiers and duplicate records. It also checks business rules such as whether product codes can be mapped. Unexpected records need an investigation path. Silently excluding them could make the published total look valid while changing what it represents.
+
+| Retained material | Context a consumer needs | Checks before publication |
+| --- | --- | --- |
+| Order export | Source, shop, reporting period, row meaning and file version | Expected coverage, required identifiers, compatible fields and duplicates |
+| Application events | Event type, schema version and timestamp convention | Recognized fields, valid timestamps and handling of sensitive values |
+| Return policy | Document version, effective dates, product scope and permitted audience | Readable extraction, retained exceptions and access restrictions |
+
+This descriptive information is **metadata**. A **catalog** helps people discover datasets and their descriptions, including the owner and supported uses. For MorrowBasket, someone must maintain those entries as the preparation changes. A catalog entry saying “daily sales” cannot repair Store C's failed export.
+
+For the simple batch design here, the job writes candidate outputs to a separate location. It records a named release containing the exact output files. One publishing process makes that release available only after checks pass. Readers select a release once per job instead of repeatedly listing a directory that is still changing.
+
+If Store C is missing or validation fails, the previous successful release remains available with its refresh time. The owner is notified, and the new run is marked incomplete. Consumers whose freshness requirement is no longer met should stop rather than silently treat yesterday's result as today's.
+
+When the missing export arrives, the team reruns the affected dataset. It selects one accepted export version per shop and period, recognizes repeated source records and publishes a replacement release. A corrected export supersedes its earlier version. Adding both to the total would count the same sales twice.
+
+As you can see, MorrowBasket needs a rule for when a whole dataset becomes available. The [medallion architecture guide](/blog/medallion-architecture-for-engineers/) develops these preparation responsibilities further. The release process above is a proposed design the team must implement, rather than a guarantee supplied by object storage.
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/data-lake-publication-readiness.webp"
+    alt="With two of three required store exports, publication is held and the previous version remains available with its refresh time. With all three exports present, record checks precede publication of a new version."
+    width="1200"
+    height="900"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    MorrowBasket checks the expected shops and period as well as the records. Three uploaded files alone do not establish that the dataset is complete or correct.
+  </figcaption>
+</figure>
+
+## How does the lake support analytics and machine learning?
+
+The analyst can query MorrowBasket's prepared files through a processing engine, using the release and definitions the team published. Another job can read those records to calculate model inputs. A lake therefore supports analytical work without requiring every consumer to parse the original exports again.
+
+The team can also load selected outputs into its warehouse when that is how reports receive data. That transfer needs an owner and a recorded source release. The [warehouse article](/blog/data-warehouse-ai-ready/) explains the shared business definitions and historical inputs that still matter after the transfer.
+
+For a forecasting experiment, the data scientist needs a reproducible selection of records and transformations. MorrowBasket must retain when information became available to the prediction process, as well as when the business event occurred. A newly corrected file cannot automatically replace the inputs used by an earlier prediction. Keeping files in a lake does not resolve that timing question.
+
+The team can save prepared inputs for individual runs and retain the context needed to rebuild other historical datasets. Training or prediction can run in a separate job after preparation. Whether the model is useful still requires evaluation against the task it is supposed to perform.
+
+<figure class="article-figure article-figure--wide">
+  <img
+    src="/blog-inline/data-lake-preparation-paths.webp"
+    alt="Source files enter lake storage and follow separate preparation paths: checked records become published datasets for reports and machine learning, while versioned document text enters a search index and passes an employee access check before reaching an assistant."
+    width="1600"
+    height="800"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    Each path needs maintained preparation and access controls. The search index is a derived representation. Access check represents enforcement during retrieval, before content reaches the assistant.
+  </figcaption>
+</figure>
+
+## What changes when the files are documents?
+
+The support team needs a different output from its return policies. A preparation job extracts readable text from each PDF and divides it into passages suitable for retrieval. Each passage keeps the document identifier and version. Engineers should inspect the result: separating a return deadline from its exception could change the answer even when every word was copied correctly.
+
+Those passages can enter a **search index**, a representation organized for finding relevant content. The assistant's application retrieves passages and supplies them to the model as context. The applicable policy depends on the purchase date and product, not simply which file was modified most recently.
+
+Before returning a passage, retrieval must enforce the employee's access. Microsoft documents [document-level access control in Azure AI Search](https://learn.microsoft.com/en-us/azure/search/search-document-level-access-overview), including application-supplied security filters. The application must derive those filters from the authenticated caller and keep the indexed permissions current. Source-file permissions alone do not protect an independently searchable copy.
+
+Changes need a publication path too. Updating a policy, restricting an appendix or deleting a document must reach its derived passages. Microsoft's [Storage indexer guidance](https://learn.microsoft.com/en-us/azure/search/search-how-to-index-azure-blob-changed-deleted) distinguishes detecting changed files from detecting deletions. A custom job likewise needs to identify and remove obsolete indexed content.
+
+MorrowBasket should test retrieval after revoking access, before asking a model to produce an answer. For sensitive content, the application needs a way to block retrieval while permission synchronization is incomplete. Support owns the policy's meaning, while platform team maintains the path that makes the permitted version available.
+
+## When is a data lake worth the extra work?
+
+MorrowBasket now has reasons to retain several kinds of files: repairing product mappings, preparing analytical datasets and supplying policy documents. If its needs were limited to a small report over well-maintained database tables, another storage location might add little value.
+
+The cost also includes listing and reading files, running preparation, maintaining descriptions and repairing failed publications. Cheap storage alone does not establish that the whole arrangement is cheap to operate. The team should know which retained collection supports which consumer before adding more copies. The [series overview](/blog/data-platform-architectures-ai-ready/) places that decision alongside the other platform architectures.
+
+### Does a plain data lake still make sense?
+
+Yes, provided it matches the workload. By a **plain data lake**, I mean storage containing files, descriptions and preparation processes, without a layer managing table transactions and versions. It can still have access controls, quality checks and owners.
+
+MorrowBasket's source exports and policy PDFs can remain ordinary files. The same applies to images, archives and simple batch workloads. A single publishing process with versioned file sets can be enough when the team controls writes and consumers can use a known release.
+
+Shared sales tables introduce more coordination. If several jobs frequently update them while analysts read them, the team must prevent partial changes and conflicting writes, and recover after failures. Hand-building that behavior around folders of Parquet files creates work beyond reading and writing the files themselves.
+
+Parquet describes the structure of an individual file. A **table format** also records which files belong to a committed version of a table. [Delta Lake](https://docs.delta.io/) provides transactions and metadata management over lake storage. [Apache Iceberg's reliability documentation](https://iceberg.apache.org/docs/1.8.0/reliability/) describes snapshots and coordinated commits that let readers use a consistent table state while writes occur.
+
+For those shared, frequently changing tables, I would use established table-management capabilities instead of extending the simple file-release process indefinitely. The source exports can stay as they are. Adding a table format still leaves MorrowBasket responsible for business definitions, data quality and access. It also needs to maintain the chosen implementation and its retained history. The next article will examine this step through lakehouse architecture.
+
+For the next review, choose one export and trace it to a published dataset. Identify its source version, preparation run and owner. Then withhold or correct one expected file and check what consumers receive. MorrowBasket should be able to explain both the changed result and why an incomplete run never became the current release.
+
+## FAQ
+
+### What is the difference between a data lake and a data warehouse?
+
+A data lake retains files in varied formats and supports preparation for different consumers. A warehouse organizes prepared data for analytical queries. MorrowBasket can keep source exports and policy documents in its lake while publishing selected sales tables in its warehouse. Both require definitions, quality checks and access controls.
+
+### Is a data lake just cloud storage?
+
+Cloud storage provides a foundation. A usable data lake architecture also needs ingestion, processing, descriptions of the data and rules for publishing it. At MorrowBasket, storing three exports does not establish that they cover the right shops, use compatible fields or are ready for a report.
+
+### Does schema-on-read mean that a data lake has no schema?
+
+No. It means a reader applies a structure when interpreting the data. CSV still needs column definitions, and Parquet carries a schema in the file. MorrowBasket must check identifiers, types and completeness before publishing a dataset, regardless of when the source structure is interpreted.
+
+### Can a data lake support analytics and AI?
+
+Yes. MorrowBasket can prepare files for analytical queries, historical model inputs and document retrieval. Each path needs its own preparation and checks. Saving the source files alone does not establish training correctness, retrieval permissions or the quality of the resulting model or answer.
+
+### Does a plain data lake still make sense?
+
+Yes, for retained exports, documents, images and simple batch workloads with controlled publication. Shared tables with frequent or concurrent changes need more coordination. MorrowBasket can keep source files as ordinary objects while using a table format where it needs transactions and managed table versions.
+
+## Further reading
+
+- [Microsoft Learn: introduction to Azure Data Lake Storage](https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-introduction): the storage foundation and directory capabilities.
+- [Microsoft Learn: Data Lake Storage best practices](https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-best-practices): formats, file sizes and organization for analytical workloads.
+- [Microsoft Learn: document-level access in Azure AI Search](https://learn.microsoft.com/en-us/azure/search/search-document-level-access-overview): permission enforcement during retrieval.
+- [Microsoft Learn: change and delete detection](https://learn.microsoft.com/en-us/azure/search/search-how-to-index-azure-blob-changed-deleted): maintaining indexed content after source changes.
+- [Delta Lake documentation](https://docs.delta.io/): transactions and metadata management on lake storage.
+- [Apache Iceberg: reliability](https://iceberg.apache.org/docs/1.8.0/reliability/): snapshots, atomic commits and concurrent writes.

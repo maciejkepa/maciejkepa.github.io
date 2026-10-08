@@ -1,4 +1,5 @@
 const responsiveCoverImages = new Set([
+  '/blog-covers/data-lake-ai-ready.png',
   '/blog-covers/data-warehouse-ai-ready.png',
   '/blog-covers/data-platform-architectures-ai-ready.png',
   '/blog-covers/ai-generated-code-risks-fallbacks-and-mocks.png',
