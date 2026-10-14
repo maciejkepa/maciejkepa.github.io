@@ -1,0 +1,223 @@
+---
+title: "Data Lakehouse: when your data lake can replace a separate warehouse"
+seoTitle: "Data Lakehouse Architecture for Analytics and AI"
+description: "Explore how data lakehouse architecture adds reliable tables to a data lake, supports analytics and ML, and can replace a separate data warehouse."
+date: "2026-10-14"
+tags: ["data-architecture", "data-engineering", "data-platform", "ai-architecture"]
+type: "article"
+valueType: "Architectural guide"
+featured: false
+draft: false
+coverImage: "/blog-covers/data-lakehouse-ai-ready.png"
+coverAlt: "A lakehouse combines Parquet files and a transaction log into managed tables, with separate SQL and ML processing for reports and forecasts, supported by catalog and access controls."
+faqs:
+  - question: "What is the difference between a data lake and a lakehouse?"
+    answer: "A data lake retains files for different uses. A lakehouse adds table management and transactions, with engines that serve analytical and ML workloads from those tables. MorrowBasket can keep its source exports in the lake while querying prepared sales tables without loading a separate warehouse copy."
+  - question: "Is Delta Lake the same as a lakehouse?"
+    answer: "Delta Lake supplies a table format and implementation for transactions and versioned data over lake storage. A lakehouse architecture also needs processing engines, preparation, discovery and access controls. MorrowBasket could use Delta for its sales tables, but those tables alone would not provide its reporting service."
+  - question: "Can a lakehouse replace a data warehouse?"
+    answer: "Yes, if its query engines, data models, access controls and operating processes satisfy the warehouse consumers. MorrowBasket would verify report results, refresh behavior, BI compatibility and performance before removing its warehouse copy. Keeping an existing warehouse is reasonable when it still meets those needs more effectively."
+  - question: "Does time travel prevent data leakage in machine learning?"
+    answer: "No. Time travel retrieves a retained table version. MorrowBasket must still ensure that each historical training example uses only information available to the prediction path at that time. It also needs the relevant files, log, preparation logic and other inputs to reproduce a run."
+  - question: "Does a lakehouse eliminate data copies?"
+    answer: "It can eliminate the separate warehouse copy used for reporting. MorrowBasket may still maintain aggregates, caches, training datasets and backups for specific requirements. Those copies can still be useful when reports and ML jobs share the same underlying tables."
+---
+
+MorrowBasket Retail, our fictional retailer with shops and an online store, has corrected the product mapping from the [previous article on data lakes](/blog/data-lake-ai-ready/). Engineers rebuild the affected sales data in the lake. The warehouse still contains the old result until another job loads the correction. A forecasting experiment and the sales dashboard can now disagree even though both teams followed their usual process.
+
+The team starts looking at that extra loading job. Could reports query prepared tables on the lake itself, alongside the jobs that prepare model inputs? Luckily for them, a lakehouse can make this possible. Before retiring the warehouse, though, they need to check that their reports will work reliably with the new setup.
+
+In this article, we'll explore lakehouse architecture through MorrowBasket Retail's reports and forecasts, and examine when shared tables on a data lake can replace a separate warehouse.
+
+<figure class="article-figure article-cover-figure">
+  <img
+    src="/blog-covers/data-lakehouse-ai-ready-1600.webp"
+    srcset="/blog-covers/data-lakehouse-ai-ready-800.webp 800w, /blog-covers/data-lakehouse-ai-ready-1600.webp 1600w"
+    sizes="(min-width: 64rem) 52rem, 100vw"
+    alt="A lakehouse combines Parquet files and a transaction log into managed tables, with separate SQL and ML processing for reports and forecasts, supported by catalog and access controls."
+    width="1600"
+    height="1000"
+    loading="eager"
+    decoding="async"
+  />
+  <figcaption>
+    MorrowBasket's reports and ML jobs read managed tables on lake storage. The engines process the data, while the table layer keeps track of committed changes.
+  </figcaption>
+</figure>
+
+## What is a lakehouse?
+
+A **lakehouse** adds table management and transactions to a data lake, with processing engines that make those tables usable for analytics and machine learning. It can support reporting over data in lake storage without loading another copy into a separate warehouse. Engineers still need to prepare the data, describe the tables and control who can use them.
+
+Let's connect that definition to MorrowBasket. Its lake already holds source exports and prepared files. A table-management layer records which files belong to each committed table version. A SQL engine queries those tables for reports, while another processing job can read them to prepare model inputs.
+
+**Parquet** is a file format that organizes values by column. **Delta Lake** adds a transaction log and rules for reading and changing tables stored using those files. Microsoft describes that relationship in its [Delta Lake introduction](https://learn.microsoft.com/en-us/azure/databricks/delta/). Apache Spark is one processing engine that can use Delta tables.
+
+Here, “managed tables” means tables with coordinated changes and recorded versions. It does not refer specifically to a vendor's managed-table ownership setting. A catalog helps people find the tables and their definitions, while the chosen services must enforce access.
+
+The [CIDR lakehouse paper](https://www.cidrdb.org/cidr2021/papers/cidr2021_paper17.pdf) describes this approach to serving analytical and ML workloads over lake storage. MorrowBasket could use it for prepared sales tables while keeping its source PDFs and exports as ordinary files.
+
+## Why does MorrowBasket want to remove the extra copy?
+
+Let's follow the correction from the [data lake article](/blog/data-lake-ai-ready/). The forecasting job can already read the corrected sales records in the lake. The dashboard has to wait for those records to reach the warehouse.
+
+If the warehouse load fails, the mapping correction has reached only one consumer. Engineers need to find out why the load failed, rerun it safely and tell the reporting team how old its data is. Keeping both copies means maintaining that extra job and repairing it when it fails.
+
+With a lakehouse, the report's SQL engine could read the same committed sales table that supplies ML preparation. MorrowBasket would still prepare and publish the correction, but the reporting team would no longer wait for a separate warehouse load. Engineers could also maintain the shared preparation rules in one place.
+
+The team should be precise about which copy disappears. A daily summary may still make a dashboard faster. A saved training dataset may preserve the inputs to an experiment. A BI tool may cache results. Each copy has a purpose and a refresh rule. MorrowBasket wants to remove the warehouse copy once reports can use the lakehouse tables instead.
+
+Two teams can still see different values if one reads an older table version or a cached result. MorrowBasket must label refreshes and agree which published version each consumer should use.
+
+<figure class="article-figure article-figure--wide">
+  <img
+    src="/blog-inline/lakehouse-warehouse-comparison.webp"
+    alt="Two MorrowBasket designs: a lake feeds preparation and warehouse loading before reports, or prepared lakehouse tables feed a SQL engine directly. Each design also has a separate ML preparation path."
+    width="1600"
+    height="800"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    These are two possible designs for MorrowBasket. In the lakehouse design, reports use a SQL engine over shared tables, removing the separate warehouse load for those consumers.
+  </figcaption>
+</figure>
+
+## What makes files behave like a reliable table?
+
+Imagine that MorrowBasket's prepared sales table is at version 42. Some files contain records for one reporting period, others for another. The table's **transaction log** records the metadata needed to identify its committed state, including the files that belong to that state.
+
+An engineer corrects the product assignments in the affected records. In this simplified example, the writer prepares replacement Parquet files and proposes a change to the table. A **transaction** groups the change so readers observe it as a complete operation. The **commit** records its successful publication as version 43.
+
+The new version can reuse unchanged files. A table version does not require a complete physical copy of every row. Files used by older versions can remain in storage for as long as the retention policy requires.
+
+A **snapshot** is the table state selected for a read. A compatible reader uses the log to determine the relevant files and metadata. It can therefore read a defined state even when other files exist in the same location. Microsoft's [explanation of atomic commits](https://learn.microsoft.com/en-us/azure/databricks/lakehouse/acid#how-does-azure-databricks-implement-atomicity) describes how the log makes new files visible as part of a committed table version.
+
+This changes how MorrowBasket's engineers should access the data. Listing every Parquet file in the directory can include files superseded by a correction or left behind by a failed attempt. Readers and writers must use the table protocol through supported software. The files are still accessible in storage, so the team must also prevent tools and users from modifying them outside that protocol.
+
+We're using Delta Lake here, but it's one of several options. [Apache Iceberg](https://iceberg.apache.org/docs/latest/reliability/) also provides table snapshots and coordinated commits, using different metadata structures. MorrowBasket needs to check which format its query and preparation engines support.
+
+## What happens when updates fail or overlap?
+
+Suppose the correction job writes its new files and then crashes before committing. Version 42 remains the current table state. Compatible readers do not treat the uncommitted files as published sales data. Engineers investigate the failed run and rerun the intended operation.
+
+Now suppose the commit succeeds. A query already reading snapshot 42 can finish on that snapshot, while a new query selecting the latest version reads 43. The earlier query does not switch to the corrected files halfway through its calculation. The retention policy must preserve files for active readers.
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/lakehouse-commit-visibility.webp"
+    alt="A write that fails before commit leaves version 42 current. A successful commit makes version 43 available to new reads while an existing read continues on snapshot 42."
+    width="1200"
+    height="900"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    After a commit, new reads can use the updated table version. Reads already in progress keep their original snapshot. Files from an unfinished write stay outside the published table.
+  </figcaption>
+</figure>
+
+Another job may be changing the table at the same time. For example, the daily preparation process and the mapping correction might both touch the same records. With **optimistic concurrency control**, a writer prepares its work and checks for conflicting committed changes before publishing. Some operations can run together, but a write may fail if its changes conflict with another committed operation. Delta's [concurrency documentation](https://docs.delta.io/concurrency-control/) explains these checks.
+
+After a conflict, MorrowBasket should reread the current state and recompute the intended change before retrying. If conflicts keep recurring, engineers need to inspect which jobs are updating the same records and why.
+
+The team also needs stable business identifiers. A **MERGE** matches incoming records to existing ones and applies specified inserts, updates or deletes. MorrowBasket might match on source system, order identifier and order-line identifier. It must resolve duplicate incoming records and ensure an older source version cannot overwrite a newer correction. The [Delta MERGE documentation](https://docs.delta.io/delta-update/#upsert-into-a-table-using-merge) explains matching behavior and ambiguous multiple matches.
+
+A successful transaction does not prevent an application from submitting the same business event twice. The pipeline must recognize repeat inputs, including a retry after a commit succeeded but its acknowledgement was lost. Processing that input again should leave the sales result unchanged.
+
+Let's go back to the missing shop export in the [data lake article](/blog/data-lake-ai-ready/). A transaction could atomically publish sales from two shops when the report expects three. MorrowBasket still needs completeness and business checks before publication.
+
+Our example also covers only one table. If the correction changes sales, products and reporting summaries, the team must decide when those results are ready to read together. Support for transactions across tables depends on the implementation.
+
+## Can reports and models use these tables directly?
+
+Yes, provided their engines support the table format and the features used by those tables. MorrowBasket's reporting tool can submit SQL queries to a compatible engine, which reads the lakehouse tables. An ML preparation job can read selected records through its own supported engine. The model then trains or runs predictions in a separate step.
+
+The [warehouse article](/blog/data-warehouse-ai-ready/) established order-line grain, product identifiers and measures such as sales after returns. Engineers can keep that fact-and-dimension model in the lakehouse. The sales manager still needs the same agreed measures, whichever engine runs the report.
+
+For the sales manager, a monetary total by shop and week may be appropriate. The forecasting team may need quantities by product and day, with a deliberate treatment of returns. It should not automatically convert a refunded unit into negative demand. The teams share reliable records and identifiers while preparing different outputs.
+
+MorrowBasket can run ML preparation on separate compute so a large training job doesn't use the report engine's capacity. Engineers still need to measure how both workloads behave when they run at the same time.
+
+### Does time travel make training data historically correct?
+
+**Time travel** lets a compatible reader select an earlier retained table version. MorrowBasket can record the versions used by a forecasting run and query them again. It should also record preparation code, parameters and any other inputs needed to reproduce that run.
+
+Recording a version tells the forecasting team which table state it read. When building historical training examples, the team also needs to check what was available at each prediction time. A later table version may contain corrections that the live prediction path had not received. Selecting a snapshot alone does not establish the correct availability cutoff for every training row.
+
+The [warehouse article](/blog/data-warehouse-ai-ready/) explains those availability rules. To apply them again later, MorrowBasket needs to retain the relevant inputs along with the record of which versions it used.
+
+Microsoft's [table history guidance](https://learn.microsoft.com/en-us/azure/databricks/tables/history#time-travel) explains that time travel requires the relevant log and data files to remain available. Retention must match the intended reproduction window. Table history is not a long-term backup strategy. MorrowBasket may need to keep selected training inputs separately to reproduce older experiments.
+
+The returns assistant has another path. It may use purchase details from a table, but policy documents still need appropriate versions, retrieval preparation and access checks before their content reaches the model. The application team must maintain that retrieval and permission logic separately.
+
+## When can the separate warehouse go away?
+
+MorrowBasket can remove the separate warehouse once its reports and jobs work reliably on the lakehouse. The team should test the queries people use, the refreshes they expect and the permissions they rely on before moving them over.
+
+For the sales dashboard, I would compare totals after a correction, measure response times with several users, and test the BI tool's connection and calculation behavior. I would also run the normal data preparation workload during that test. An empty test environment tells the team little about competing production work.
+
+These are three possible arrangements for MorrowBasket:
+
+| Arrangement | Where consumers read prepared data | How changes reach them | Ongoing responsibility |
+| --- | --- | --- | --- |
+| Lake with file releases | A selected file set, through an engine | A controlled publisher releases a checked set | Maintain releases, completeness and compatible readers |
+| Lake plus warehouse | Warehouse tables for reports, with lake or warehouse data available for ML | Preparation and warehouse loading synchronize representations | Reconcile copies, refreshes and failures between systems |
+| Lakehouse | Compatible SQL and ML engines read managed tables on lake storage | Table commits publish changes as part of a release coordinated by the pipeline | Maintain quality, engine compatibility, access and workload performance |
+
+Products sold as warehouses and lakehouses overlap in what they can do. MorrowBasket could also prepare ML inputs in its existing warehouse. If that setup meets the team's needs and is easier to maintain, keeping it is a reasonable choice.
+
+If the team proceeds, it can start with one report. Compare its results from both systems, check permissions, and watch how normal refreshes and corrections reach it. Keep a way to switch that report back during the transition. Remove the warehouse copy only after every report and job that depends on it has moved or has another supported source.
+
+Cost belongs in the decision too. Storage, query compute, preparation jobs, retained history and engineering maintenance all count. Removing the warehouse load may save work, but the new engines cost money and need maintenance too. MorrowBasket should compare the full cost of running its reports and preparation jobs.
+
+## What does the team still have to maintain?
+
+Once the report reads the lakehouse, the team still owns the dataset. Someone must investigate missing shops, approve changed measures and communicate a delayed refresh. The [medallion guide](/blog/medallion-architecture-for-engineers/) explains how to organize preparation and publication responsibilities without relying on folder names to enforce them.
+
+Schema changes also reach consumers. If a source changes a quantity field from a number to text, engineers must decide how to interpret it before publication. Adding a column may be easy technically, while renaming one used by a report can break that report. Before accepting a schema change, engineers need to check the reports and jobs that use those columns.
+
+Enabling a table feature can change which readers or writers support it. MorrowBasket should check every consuming engine before enabling the feature, including less frequent jobs. Delta's [compatibility documentation](https://docs.delta.io/versioning/) describes protocol and table-feature requirements. A format can be open while a particular engine lacks support for one of its features.
+
+The physical layout needs attention as data accumulates. Combining small files can reduce file-opening overhead, and a suitable layout can help an engine avoid reading irrelevant data. MorrowBasket should measure its own queries before changing the layout. Combining files and deleting old versions are separate maintenance tasks.
+
+For cleanup, the team needs to decide how much history to retain. A retention-aware operation such as VACUUM can remove files no longer needed by the current table and older than the configured threshold. That can also remove the ability to query earlier versions. Engineers must account for active workloads and recovery needs before shortening retention, rather than deleting old-looking files manually.
+
+Access needs the same care. A user denied access through a query service might still read the underlying files if their storage permissions allow it. Engineers need to check both the query service's permissions and who can reach the files directly.
+
+For MorrowBasket, retiring the warehouse would remove a copy and a loading job. The team would still maintain the sales definitions, published tables and access rules introduced in the [series overview](/blog/data-platform-architectures-ai-ready/).
+
+For the next review, follow one product correction from its source to a report and a saved model input. In a test environment, interrupt the write before commit, retry it and inspect what both consumers receive. Check that the report uses a complete published result and that the forecasting team can still identify and read the inputs it originally used.
+
+## FAQ
+
+### What is the difference between a data lake and a lakehouse?
+
+A data lake retains files for different uses. A lakehouse adds table management and transactions, with engines that serve analytical and ML workloads from those tables. MorrowBasket can keep its source exports in the lake while querying prepared sales tables without loading a separate warehouse copy.
+
+### Is Delta Lake the same as a lakehouse?
+
+Delta Lake supplies a table format and implementation for transactions and versioned data over lake storage. A lakehouse architecture also needs processing engines, preparation, discovery and access controls. MorrowBasket could use Delta for its sales tables, but those tables alone would not provide its reporting service.
+
+### Can a lakehouse replace a data warehouse?
+
+Yes, if its query engines, data models, access controls and operating processes satisfy the warehouse consumers. MorrowBasket would verify report results, refresh behavior, BI compatibility and performance before removing its warehouse copy. Keeping an existing warehouse is reasonable when it still meets those needs more effectively.
+
+### Does time travel prevent data leakage in machine learning?
+
+No. Time travel retrieves a retained table version. MorrowBasket must still ensure that each historical training example uses only information available to the prediction path at that time. It also needs the relevant files, log, preparation logic and other inputs to reproduce a run.
+
+### Does a lakehouse eliminate data copies?
+
+It can eliminate the separate warehouse copy used for reporting. MorrowBasket may still maintain aggregates, caches, training datasets and backups for specific requirements. Those copies can still be useful when reports and ML jobs share the same underlying tables.
+
+## Further reading
+
+- [Lakehouse: A New Generation of Open Platforms that Unify Data Warehousing and Advanced Analytics](https://www.cidrdb.org/cidr2021/papers/cidr2021_paper17.pdf) - the architectural proposal, rather than a guarantee that every warehouse should be replaced.
+- [Microsoft Learn: What is Delta Lake in Azure Databricks?](https://learn.microsoft.com/en-us/azure/databricks/delta/) - how Delta relates to Parquet and processing engines.
+- [Microsoft Learn: ACID guarantees](https://learn.microsoft.com/en-us/azure/databricks/lakehouse/acid) - commit behavior and implementation-specific transaction boundaries.
+- [Delta Lake: Concurrency control](https://docs.delta.io/concurrency-control/) - snapshots, validation and conflicting writes.
+- [Delta Lake: Updates and merges](https://docs.delta.io/delta-update/) - matching incoming changes to existing records.
+- [Microsoft Learn: Work with table history](https://learn.microsoft.com/en-us/azure/databricks/tables/history) - historical queries and retention requirements.
+- [Delta Lake: Feature compatibility](https://docs.delta.io/versioning/) - requirements for compatible readers and writers.
+- [Apache Iceberg: Reliability](https://iceberg.apache.org/docs/latest/reliability/) - another implementation of table snapshots and commits.
