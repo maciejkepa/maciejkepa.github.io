@@ -7,7 +7,8 @@ export interface ReadingPath {
 export const dataPlatformSeries = [
   'data-platform-architectures-ai-ready',
   'data-warehouse-ai-ready',
-  'data-lake-ai-ready'
+  'data-lake-ai-ready',
+  'data-lakehouse-ai-ready'
 ];
 
 export const topicReadingPaths: Record<string, ReadingPath[]> = {
@@ -44,7 +45,7 @@ export const topicReadingPaths: Record<string, ReadingPath[]> = {
   'data-architecture': [
     {
       title: 'Data platform architectures for AI',
-      description: 'The published parts of the series, in reading order. Follow the same business example from platform choices to warehouse semantics.',
+      description: 'The published parts of the series, in reading order. Follow the same business example from platform choices to data semantics.',
       posts: dataPlatformSeries
     },
     {
