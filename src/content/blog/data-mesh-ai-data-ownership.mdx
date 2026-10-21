@@ -1,0 +1,201 @@
+---
+title: "Data mesh: organizing teams around the data they deliver"
+seoTitle: "Data Mesh: Domain Ownership and Data Products"
+description: "Explore data mesh through MorrowBasket's teams and learn how domain ownership, data products and shared governance support analytics and AI."
+date: "2026-10-21"
+tags: ["data-architecture", "data-engineering", "data-platform", "ai-architecture"]
+type: "article"
+valueType: "Architectural guide"
+featured: false
+draft: false
+coverImage: "/blog-covers/data-mesh-ai-data-ownership.png"
+coverAlt: "Sales and Inventory teams own their data products for reporting and forecasting, supported by shared rules and a common platform for publishing, access and monitoring."
+faqs:
+  - question: "Is data mesh a technology or an organizational approach?"
+    answer: "Data mesh is primarily an approach to organizing responsibility for analytical data. It combines domain ownership, data as a product, a self-service platform and federated computational governance. MorrowBasket needs teams with time, skills and decision-making authority, supported by technology that makes publishing and maintaining data practical."
+  - question: "How is data mesh different from a lakehouse?"
+    answer: "A lakehouse provides managed tables and processing over lake storage. Data mesh concerns the teams responsible for delivering that data. MorrowBasket can use both together."
+  - question: "What makes a dataset a data product?"
+    answer: "A data product is maintained for people who need it for a particular task. MorrowBasket's sales product includes prepared records, documentation, agreed quality and refresh checks, and instructions for getting access. The Sales team handles changes and faults. A catalog entry helps people find the product and its owner."
+  - question: "Does data mesh remove the central data team?"
+    answer: "No. MorrowBasket's central engineers can maintain the shared platform, while Sales and Inventory maintain their own data products. Cross-domain products still need explicit owners."
+  - question: "When does data mesh make sense for a small organization?"
+    answer: "It becomes worth considering when several domains need to deliver and change data independently, and repeated handoffs delay that work. A small MorrowBasket team may work effectively with central ownership. Clear definitions and support responsibilities are useful without adopting a complete data mesh operating model."
+---
+
+MorrowBasket Retail, our fictional retailer, has working tables and scheduled data pipelines. Its central data team still has a growing queue.
+
+Sales needs a correction to the links between returns and purchases. Inventory wants to change how stock availability is calculated. The forecasting team is waiting for both. The engineers can change the processing, but first they need answers from the people who know the business. Which purchase should this return reference? Should reserved units count as available stock? Each request means another round of conversations, followed by a place in the same delivery queue.
+
+With data mesh, Sales and Inventory would take responsibility for preparing and maintaining the data other teams need. Forecasting needs reliable history for training. An AI agent helping with returns needs the applicable policy and current purchase details. Both need someone who can explain those sources and fix them when something goes wrong.
+
+In this article, we'll explore data mesh through MorrowBasket Retail's teams, showing how domain ownership, data products and a shared platform change the way they deliver data for analytics and AI.
+
+<figure class="article-figure article-cover-figure">
+  <img
+    src="/blog-covers/data-mesh-ai-data-ownership-1600.webp"
+    srcset="/blog-covers/data-mesh-ai-data-ownership-800.webp 800w, /blog-covers/data-mesh-ai-data-ownership-1600.webp 1600w"
+    sizes="(min-width: 64rem) 52rem, 100vw"
+    alt="Sales and Inventory teams own their data products for reporting and forecasting, supported by shared rules and a common platform for publishing, access and monitoring."
+    width="1600"
+    height="1000"
+    loading="eager"
+    decoding="async"
+  />
+  <figcaption>MorrowBasket's teams maintain the data they publish. Shared platform services and rules support both teams.</figcaption>
+</figure>
+
+## What is data mesh?
+
+**Data mesh** is an approach to organizing the ownership and delivery of analytical data around business domains. A domain is an area of business knowledge and activity, such as sales or inventory management. Its team takes responsibility for preparing and supporting data that other teams use.
+
+Zhamak Dehghani describes [four data mesh principles](https://martinfowler.com/articles/data-mesh-principles.html): domain ownership, data as a product, a self-service data platform and federated computational governance. For MorrowBasket, the biggest change would be organizational. Sales would need people who can maintain its analytical data, authority to make decisions about it and time to support reporting and forecasting. Putting someone's name next to a table would leave most of that work unresolved.
+
+While data mesh is all about organizational change, technology still matters. Those people need reliable ways to test changes, publish results and control access. They could use the [lakehouse architecture from the previous article](/blog/data-lakehouse-ai-ready/), or prepared tables in a warehouse. Data mesh changes how teams work with that infrastructure. It doesn't require each domain to buy its own platform.
+
+## Why does every request reach the central data team?
+
+Let's go back to the return correction. Before the central engineers can repair the link to the wrong purchase, they need Sales to explain how the return system identifies an order line and an application developer to confirm which identifier the export contains. Meanwhile, an inventory specialist is waiting for a change to the availability measure. That means switching context again, finding out who uses the field and arranging the change with forecasting. The engineers are expected to deliver both changes, but the business decisions belong to other teams.
+
+Dehghani's [original data mesh article](https://martinfowler.com/articles/data-monolith-to-mesh.html) examines this separation between people who know the source data and people expected to prepare it for everyone else. MorrowBasket's queue illustrates the problem even when the underlying processing works reliably.
+
+Giving Sales responsibility for its analytical data would let a team familiar with orders and returns handle the correction from investigation through publication. The forecasting team would know whom to ask about those records and who would handle the fix.
+
+That requires a change in priorities too. If Sales is measured only on delivering checkout features, work for forecasting will keep slipping. Its manager must set aside engineering time for data fixes and requests from other teams, then decide how to handle competing priorities. Otherwise, MorrowBasket has moved the queue without making delivery easier.
+
+## What would the Sales team actually own?
+
+Sales would own the preparation and publication of order-line and return-line data, including its meaning, quality checks and support. This is the detailed sales history introduced in the [warehouse article](/blog/data-warehouse-ai-ready/), now with an explicit team responsible for keeping it useful.
+
+MorrowBasket could assign existing engineers to work alongside an order-system developer and a sales specialist, with a product owner deciding priorities. Sales managers would contribute business knowledge, while engineers build and run the pipelines. Returns may involve the shop application, online orders and support staff, so the team needs access to people who understand each part of that process. Copying department names into a catalog won't settle who handles a correction spanning those systems.
+
+Here is one possible division of responsibility for MorrowBasket:
+
+| Role | A decision it owns | What it does after a fault |
+| --- | --- | --- |
+| Domain team | Defines and maintains its published data and supported uses | Sales corrects a return link and republishes affected records |
+| Shared platform team | Maintains common publishing, access and monitoring mechanisms | Restores a failed shared scheduler and coordinates affected reruns |
+| Domain and platform representatives, with security and governance specialists | Agree common identification, access and change rules | Resolve a gap in the rules and arrange the required control changes |
+| Team using the data | Defines its report calculations or model inputs | Forecasting checks affected runs and rebuilds inputs where needed |
+
+Leadership must fund the ongoing work, including support when the usual engineer is unavailable. Sales also needs authority to schedule fixes and coordinate changes with the source application. Sales can't promise a fix if every repair depends on a favor from another team.
+
+## When does a dataset become a data product?
+
+A **data product** is a maintained set of data that other people can find, understand and use for a particular task. Its owner explains what the data means, keeps it up to date and helps when something goes wrong. At MorrowBasket, the Sales team could publish a product called Orders and Returns. It includes prepared records, the processing that maintains them, documentation and support.
+
+Before using it, the forecasting team needs to understand what each row represents. An order-line table has one row per purchased line. Each return line has its own identifier and points to the original purchase line. If two systems reuse the same order number, the source-system identifier tells them apart. Those details belong in a **data contract**, an agreement about the structure, meaning and delivery of the data. For Orders and Returns, it explains which orders are included, how corrections are represented and how to join the tables. A developer can then write a query without asking Sales to interpret every field.
+
+Forecasting also needs to know when the data will be ready. Suppose it needs yesterday's complete shop data before its morning run. Sales must specify which shops the data covers, how reporting dates are assigned and when the refresh should finish. A recent timestamp alone cannot prove that all expected inputs arrived. The [data lake article's missing-export example](/blog/data-lake-ai-ready/) shows why coverage needs a separate check.
+
+Sales can put these details in a catalog alongside access instructions, example queries and a support contact. In [Microsoft Purview, a data product groups related assets under a use case](https://learn.microsoft.com/purview/unified-catalog-data-products), with descriptions and ownership information. Forecasting can use that entry to find the tables and understand how to use them. Sales still has to run the preparation, investigate quality failures and keep the description accurate.
+
+### How does data mesh support an AI-ready strategy?
+
+An **AI-ready data platform** lets AI understand and safely use its data. Data mesh supports that strategy by giving domain teams responsibility for the meaning, quality and permitted uses of the data they publish. At MorrowBasket, those responsibilities become part of the teams' ongoing work.
+
+Consider the returns agent. Sales knows how to identify the purchase and interpret its status. Customer Support knows which policy applies and when its rules changed. Under a data mesh approach, these teams would publish that context with their data products and keep it current. The agent team can then include definitions in tool descriptions and provide source references and dates with retrieved content. Otherwise, every new AI application has to ask the same questions and maintain its own interpretation of the answers. A named owner helps only if that team also maintains the context its consumers need.
+
+The shared platform gives domains common ways to publish data and descriptions, manage versions and apply access controls. Through federated governance, domain and security representatives agree which uses are permitted and which checks the platform and connected applications must enforce. For MorrowBasket, permission to read a purchase would not authorize an agent to submit a return. The order system checks that operation separately, following the principle of [authorization at each tool invocation](https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/considerations/agentic-systems#client-side-and-server-side-tool-calling) described by Microsoft.
+
+Forecasting needs the same commitment from Sales for a different use. Its data contract must cover the retained versions and availability information needed to [reconstruct historical model inputs](/blog/data-platform-architectures-ai-ready/). Sales maintains that history, while Forecasting prepares the inputs and evaluates the model.
+
+These agreements have to survive changes. If Support corrects a policy, it tells the agent team which version changed. That team updates its search index and checks affected answers. If a lookup is too stale for processing a return, Sales must make that limit clear and agree an appropriate source with the application team. Data mesh gives MorrowBasket a way to organize this work. The agent team still has to test whether the resulting context and tools let the agent complete the task correctly.
+
+## What should the shared platform make easier?
+
+Sales should be able to deploy a preparation change, run its checks and publish the result without opening a separate infrastructure request each time. The platform team could provide a job template that records inputs and run status, applies standard access controls and sends failures to the owning team. Sales adds its transformation logic and business checks, such as verifying return references, and can see whether the next refresh succeeded. The [medallion architecture guide](/blog/medallion-architecture-for-engineers/) describes how those preparation responsibilities can be separated.
+
+Central engineers would maintain those templates and services, improve them with feedback from domain teams and help people use them.
+
+If every new product requires its owner to build a scheduler, monitoring service and permissions workflow, supporting the domains becomes expensive very quickly. An engineer using a template should know which checks prevent publication, where a failed run appears and how to request access for a new reader. They also need someone to turn to when the template doesn't fit their job. Without documentation or support, the team has another system to figure out before it can publish anything.
+
+Some tools provide parts of this arrangement. [Microsoft Fabric domains](https://learn.microsoft.com/fabric/governance/domains) group workspaces by business area and allow delegation of certain settings. Domain assignment itself does not change item visibility or access permissions. MorrowBasket would still configure and test the actual permissions for its readers. Microsoft Fabric is the product name here, distinct from the broader data fabric concept covered later in this series.
+
+The Sales and Inventory products can share a lakehouse, compute services and a catalog. Sales should be able to release a correction without waiting for Inventory's next release. Both teams still follow the shared publishing and access rules.
+
+## How do teams keep their data usable across domains?
+
+They need shared conventions wherever their data has to work together. Forecasting must connect a product in a sales record to the same product in an inventory record. Sales may count individual units while a supplier feed counts cases. Someone must define those identifiers and conversions before a join produces misleading quantities.
+
+MorrowBasket can bring domain and platform representatives together with security and governance specialists to agree the common rules. Domains keep responsibility for their own definitions. The group decides what must be consistent across products and how changes to those agreements are handled. This is **federated governance**. The **computational** part means implementing agreed rules in software where practical, as described in Dehghani's [federated governance principle](https://martinfowler.com/articles/data-mesh-principles.html#FederatedComputationalGovernance). Publishing checks can require ownership metadata and recognized identifier formats. Access mechanisms can enforce restrictions associated with sensitive fields. A meeting can approve a rule, but engineers must make it work on the paths people actually use.
+
+But some changes are harder to catch with automated checks.
+
+Suppose Inventory publishes an integer field called `available_units`. It initially means the physical count on hand. A shop holding 12 units therefore publishes 12. Inventory now wants it to mean the quantity available after reservations. If four units are reserved, the new value is eight. The field name and type remain unchanged. A schema check passes, yet forecasting receives a different measurement. If its preparation already subtracts reservations, it may subtract them twice.
+
+For this change, I would have Inventory publish a new version with its own identifier, document the new definition and notify its readers. If the model was trained using physical stock counts, Forecasting needs to test how using sellable quantities affects its predictions. The team can adapt its preparation and compare results before switching. The teams agree when to retire the previous version, including what happens to saved training inputs. Keeping the earlier meaning documented matters even after live jobs move on.
+
+MorrowBasket can keep both the stockroom count and the sellable quantity. The names and documentation should make clear which one a report or forecasting job is using.
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/data-mesh-semantic-change.webp"
+    alt="Both versions of available_units use an integer. Version 1 reports 12 units on hand, while version 2 subtracts four reserved units to report eight. Inventory and Forecasting must agree how readers migrate."
+    width="1200"
+    height="900"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>The type check passes in both versions. Forecasting still needs to account for the changed definition before switching.</figcaption>
+</figure>
+
+## Who fixes the data when something goes wrong?
+
+Let's return to the purchase linked incorrectly to a return. Forecasting sends the product version, affected identifiers and the run where the record appeared to the Sales team's support contact. Sales can start investigating from those details. Suppose it finds that the preparation joined on an order number without including the source system, and two purchases shared that number. The team checks which published records and periods were affected, then tells readers what it has found. If it hasn't established the full scope yet, it says so.
+
+For this product, MorrowBasket should pause publication of the affected records while Sales repairs the join. An older published result can remain accessible with its age and known limitations visible. Forecasting must stop using it if it no longer meets the agreed requirements. Otherwise, it could keep using faulty data while Sales assumes the warning has reached everyone.
+
+Sales tests the corrected relationship, reruns the affected preparation and checks that each return is counted once. It publishes the correction with a record of the affected data and tells readers when it is ready. Forecasting then identifies which runs used the faulty records. It rebuilds the necessary inputs and evaluates affected results, preserving the original availability cutoffs where required. A new publication does not automatically repair a saved training dataset or a report export.
+
+If the investigation instead finds a failed shared scheduler, the platform team repairs that service and coordinates recovery. Sales still communicates the status of its product. The people waiting for sales data should not have to track an infrastructure incident themselves to learn whether the next refresh is usable.
+
+<figure class="article-figure article-figure--wide">
+  <img
+    src="/blog-inline/data-mesh-issue-to-correction.webp"
+    alt="Forecasting reports an issue. Sales investigates, fixes and validates its data, then publishes a correction. Forecasting checks affected results. The platform team helps when shared services are at fault."
+    width="1600"
+    height="800"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>Sales takes the data issue through to a corrected publication. Forecasting checks the downstream work that used the faulty records.</figcaption>
+</figure>
+
+## When is data mesh worth the organizational work?
+
+Data mesh becomes worth considering when several domains need to deliver data independently and repeated handoffs delay changes. At MorrowBasket, engineers keep waiting for decisions from Sales and Inventory before they can finish the requests in their queue. A small team with shared business knowledge may handle the same requests effectively through one backlog. Dividing that team into domains on paper could add meetings and dependencies. Clear definitions, documented interfaces and an owner who can fix errors are useful without adopting the whole operating model.
+
+MorrowBasket could start with Orders and Returns, with the forecasting team as its first user. Leadership would set aside engineering time, give Sales authority over its published data and provide the common tooling needed to maintain it. The teams could then try a real change and a fault investigation before extending the arrangement to Inventory. I would measure the time spent waiting for decisions, how quickly readers find the right support contact and whether fixes reach affected jobs. Those observations are more useful than counting how many products appear in the catalog.
+
+Before reorganizing your own teams, follow one recent data request. Identify who understood the problem, who could decide what to change and who was responsible for the corrected result. Then check whether that team had the time and tools to finish the work.
+
+## FAQ
+
+### Is data mesh a technology or an organizational approach?
+
+Data mesh is primarily an approach to organizing responsibility for analytical data. It combines domain ownership, data as a product, a self-service platform and federated computational governance. MorrowBasket needs teams with time, skills and decision-making authority, supported by technology that makes publishing and maintaining data practical.
+
+### How is data mesh different from a lakehouse?
+
+A lakehouse provides managed tables and processing over lake storage. Data mesh concerns the teams responsible for delivering that data. MorrowBasket can use both together.
+
+### What makes a dataset a data product?
+
+A data product is maintained for people who need it for a particular task. MorrowBasket's sales product includes prepared records, documentation, agreed quality and refresh checks, and instructions for getting access. The Sales team handles changes and faults. A catalog entry helps people find the product and its owner.
+
+### Does data mesh remove the central data team?
+
+No. MorrowBasket's central engineers can maintain the shared platform, while Sales and Inventory maintain their own data products. Cross-domain products still need explicit owners.
+
+### When does data mesh make sense for a small organization?
+
+It becomes worth considering when several domains need to deliver and change data independently, and repeated handoffs delay that work. A small MorrowBasket team may work effectively with central ownership. Clear definitions and support responsibilities are useful without adopting a complete data mesh operating model.
+
+## Further reading
+
+- [Data Mesh Principles and Logical Architecture](https://martinfowler.com/articles/data-mesh-principles.html) by Zhamak Dehghani, on the four principles and their organizational and technical implications.
+- [How to Move Beyond a Monolithic Data Lake to a Distributed Data Mesh](https://martinfowler.com/articles/data-monolith-to-mesh.html) by Zhamak Dehghani, on the problems that motivated domain ownership and data products.
+- [Data products in Microsoft Purview Unified Catalog](https://learn.microsoft.com/purview/unified-catalog-data-products), on grouping assets around a use case and describing ownership.
+- [Microsoft Fabric domains](https://learn.microsoft.com/fabric/governance/domains), on organizing workspaces and delegating settings, including the distinction between domain assignment and access permissions.
+- [Considerations for multitenant agentic systems](https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/considerations/agentic-systems), on enforcing access and authorization when agents retrieve data and invoke tools.

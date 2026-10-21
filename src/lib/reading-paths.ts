@@ -8,7 +8,8 @@ export const dataPlatformSeries = [
   'data-platform-architectures-ai-ready',
   'data-warehouse-ai-ready',
   'data-lake-ai-ready',
-  'data-lakehouse-ai-ready'
+  'data-lakehouse-ai-ready',
+  'data-mesh-ai-data-ownership'
 ];
 
 export const topicReadingPaths: Record<string, ReadingPath[]> = {
