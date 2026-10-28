@@ -9,7 +9,8 @@ export const dataPlatformSeries = [
   'data-warehouse-ai-ready',
   'data-lake-ai-ready',
   'data-lakehouse-ai-ready',
-  'data-mesh-ai-data-ownership'
+  'data-mesh-ai-data-ownership',
+  'data-fabric-ai-ready'
 ];
 
 export const topicReadingPaths: Record<string, ReadingPath[]> = {

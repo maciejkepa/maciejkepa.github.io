@@ -1,0 +1,190 @@
+---
+title: "Data fabric: connecting data, context and access across systems"
+seoTitle: "Data Fabric Architecture for AI-Ready Data Platforms"
+description: "Explore data fabric architecture through MorrowBasket's reports and agents, and see how shared context and access controls support AI-ready data platforms."
+date: "2026-10-28"
+tags: ["data-architecture", "data-engineering", "data-platform", "ai-architecture"]
+type: "article"
+valueType: "Architectural guide"
+featured: false
+draft: false
+coverImage: "/blog-covers/data-fabric-ai-ready.png"
+coverAlt: "Data fabric architecture connects a warehouse, lakehouse, order system and policy documents to reports and AI agents through shared integration and access services, coordinated by catalog, context, lineage and policies."
+faqs:
+  - question: "What is data fabric?"
+    answer: "Data fabric is a centralized architectural approach that connects data integration, discovery and governance across systems, using metadata to coordinate that work. At MorrowBasket, it helps teams find and use sales tables, current purchase records and policy documents with their meaning and access requirements intact."
+  - question: "How is data fabric different from a data warehouse?"
+    answer: "A warehouse prepares and serves data for analysis. Data fabric coordinates how data is discovered, connected and governed across systems, which can include a warehouse. MorrowBasket can keep its sales report on warehouse tables while using shared metadata and access mechanisms for other sources."
+  - question: "Is data fabric the same as Microsoft Fabric?"
+    answer: "No. Microsoft Fabric is a product platform. Data fabric is an architectural concept that can involve several products and services. Microsoft Fabric's lineage and impact analysis can support parts of that design, alongside integrations with systems outside Fabric."
+  - question: "How do data fabric and data mesh work together?"
+    answer: "Data mesh gives domain teams responsibility for maintained data products, supported by a shared platform and governance. Fabric capabilities can help those teams connect metadata, integration and access across systems. MorrowBasket still needs people who can decide what the data means and repair it."
+  - question: "How does data fabric support AI-ready data platforms?"
+    answer: "An AI-ready data platform lets AI understand and safely use its data. Data fabric can help connect definitions, relationships, source versions and access rules across systems. Application teams must deliver that context to AI and enforce permissions on actual retrieval and action paths."
+---
+
+MorrowBasket Retail, our fictional retailer, starts the morning with a sales report refreshed overnight. In customer support, an employee asks the returns AI agent whether a purchase can still be returned. Another employee may have handled it a few minutes ago. The report is correct for its reporting cutoff, but its sales table cannot settle that question. The applicable policy is in a separate document system.
+
+The teams have already worked through [who owns and maintains their data products](/blog/data-mesh-ai-data-ownership/). Now they need those products and systems to work together. Developers keep asking where a field came from, which definition applies and which access checks their application needs. Answers exist, but they are scattered across teams and tools.
+
+In this article, we'll explore data fabric architecture through MorrowBasket Retail's reports and agents, showing how it works alongside a warehouse and supports an AI-ready data platform.
+
+<figure class="article-figure article-cover-figure">
+  <img
+    src="/blog-covers/data-fabric-ai-ready-1600.webp"
+    srcset="/blog-covers/data-fabric-ai-ready-800.webp 800w, /blog-covers/data-fabric-ai-ready-1600.webp 1600w"
+    sizes="(min-width: 64rem) 52rem, 100vw"
+    alt="Data fabric architecture connects a warehouse, lakehouse, order system and policy documents to reports and AI agents through shared integration and access services, coordinated by catalog, context, lineage and policies."
+    width="1600"
+    height="1000"
+    loading="eager"
+    decoding="async"
+  />
+  <figcaption>Shared fabric services coordinate integration and access across systems. Solid arrows show data delivery, while dashed connections show metadata and policy coordination. The data can remain in separate systems.</figcaption>
+</figure>
+
+## What is data fabric?
+
+**Data fabric** is a centralized architectural approach that connects data integration, discovery and governance across systems. It uses **metadata**, information about the data, to help people and applications locate sources, understand them and use them under agreed rules. Its implementation combines maintained descriptions with the services that move, process, describe and provide access to data. For MorrowBasket, that could mean connecting a sales table to its business definition, preparation history and owner, while describing the order lookup and policy collection used by the agent. The report developer and agent developer can find those descriptions without interviewing every source team again. Engineers still have to connect the systems and make the rules work when someone requests data.
+
+Definitions of data fabric vary. They cover capabilities such as automated cataloging, metadata management, data integration and access controls. Some include **data virtualization**, which lets consumers query sources without first consolidating them into one store, as discussed in [IBM's reference architecture](https://www.ibm.com/think/architectures/patterns/data-fabric). Others emphasize providing access through **APIs**, application programming interfaces that expose data and operations to other applications, as in [James Serra's explanation](https://www.jamesserra.com/archive/2021/06/data-fabric-defined/).
+
+The concept does not prescribe the storage technology underneath. MorrowBasket could use a warehouse, a lake, a lakehouse or a combination of them, alongside its operational systems. The team chooses where to store and process data according to its workloads. Fabric describes how it connects those systems and makes their data discoverable, understandable and accessible under shared rules.
+
+## How does data fabric compare with data mesh?
+
+**Data mesh** is a decentralized approach to organizing responsibility for data. Domain teams own the products they publish and make decisions about their development and support. **Data fabric**, in the centrally coordinated approach used here, is a technological architecture that brings integration, metadata and access mechanisms together across systems.
+
+For MorrowBasket, mesh means giving Sales the people, time and authority to maintain Orders and Returns, as described in the [data mesh article](/blog/data-mesh-ai-data-ownership/). Sales decides how to represent a return and handles problems reported by consumers. With fabric, MorrowBasket's platform team would build common ways to discover that data, trace its dependencies and access it through supported interfaces. The team would maintain those mechanisms across Sales, Inventory and Customer Support instead of leaving every application team to build its own connections.
+
+Centralization here concerns the technical services and how they are coordinated. The data can remain in several systems. Likewise, decentralized ownership in mesh can work on shared infrastructure, with common rules that domains agree and enforce together.
+
+| Question | Data fabric | Data mesh |
+| --- | --- | --- |
+| What is the main change? | A coordinated technical architecture for connecting and governing data | Domain teams take responsibility for delivering data as a product |
+| What is the centralization strategy? | Integration, metadata management and access mechanisms are coordinated centrally | Ownership and product decisions move to domains, within shared rules |
+| Who decides what the data means? | Business owners must still be identified and their definitions connected to the technical services | The owning domain maintains its product's meaning and agrees cross-domain definitions with others |
+| How does a new consumer get usable data? | Through common discovery, integration and access services | Through a domain's maintained product, documented contract and support |
+| What happens when a source changes? | Shared metadata and lineage help find affected consumers and coordinate technical changes | The domain manages its product change, informs consumers and fixes affected data |
+| What does the organization need to invest in? | Connectors, metadata automation, access controls and their operation | Domain skills, maintenance time and decision rights, plus a self-service platform and shared governance |
+
+The approaches can work together. Sales can own the meaning and quality of Orders and Returns while a central platform team maintains its catalog integration and access services. When the returns agent needs a new field, Sales decides what it means and whether its product can provide it. The platform team helps deliver it through the shared interface, and the agent team tests how it uses the result.
+
+## What connects MorrowBasket's report and AI agent?
+
+We will start with the purchase identifier. The report uses it to connect a return to the original sale. The agent passes it to an order lookup. If two source systems issue the same order number, both consumers need the source-system identifier as well. A familiar column name is not enough to establish that two records refer to the same purchase. Sales should describe that relationship alongside the meaning of each return status. A recorded request, an approved return and a completed refund describe different events. MorrowBasket's reporting rule uses the request, while an agent discussing the next action needs to know which steps have already happened. These definitions must be attached to the relevant fields and interfaces, with an owner who can resolve a disagreement.
+
+Then there is time. The warehouse table needs its reporting period and last successful refresh. The order lookup needs a clear statement of how current its response is. A policy needs an effective period and a stable version reference. A recent scan of a table's schema doesn't prove that its rows were refreshed recently. Those are separate observations.
+
+The relationships between purchases, returns and policies describe the business. **Data lineage** describes where data came from and how it was processed. A link from an order line to its return is a business relationship. A link from an export through a preparation job to a warehouse table is lineage. Both help the team, but they answer different questions. Some implementations use a **knowledge graph**, a representation of entities and their relationships, to connect business concepts with assets. MorrowBasket could represent which policy version applies to a product and purchase period. The team still has to establish that relationship correctly. A graph is one implementation choice, not a requirement for every useful integration.
+
+Descriptions must also lead to a working access path. The report developer needs a supported SQL view or semantic model. The agent team needs a documented lookup and a document retrieval service. A catalog can point to these interfaces and explain their limits. It doesn't execute every query itself or make a source available when that source is down.
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/data-fabric-report-agent-reads.webp"
+    alt="A report reads a prepared reporting period with a known refresh time. An agent combines a current purchase and the applicable policy through access checks. Both rely on shared definitions."
+    width="1200"
+    height="900"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>The reporting cutoff and the age of an operational lookup serve different needs. Agent guidance requires authorized purchase details and the applicable policy.</figcaption>
+</figure>
+
+## What makes metadata active?
+
+Suppose Sales plans a change to the return data. The warehouse engineer can update the preparation, but first the team needs to find the reports and applications that depend on it. A description written when the table was created may no longer tell the whole story. **Active metadata** means using updated information about assets, processing and usage to drive work. A change can prompt a dependency check, an owner notification or a publication control. The team needs a maintained connection between the metadata and that response. A catalog entry that nobody updates or acts on offers little help during the change.
+
+### Follow a report through Microsoft Fabric
+
+As an example, MorrowBasket could keep prepared sales data in a Microsoft Fabric Warehouse. A Power BI **semantic model** defines relationships and calculations used by the sales report. The dependency path is warehouse, semantic model, report. These are separate items whose connections matter when the underlying data changes. [Fabric's lineage view](https://learn.microsoft.com/fabric/governance/lineage) shows item relationships within a workspace and upstream connections one level outside it. A **workspace** groups items that a team manages. The engineer can inspect the report's connections to understand which model supplies it. Downstream items in other workspaces aren't shown in that view, so an apparently short graph is not proof that no other reports depend on the data.
+
+For that next question, [impact analysis](https://learn.microsoft.com/fabric/governance/impact-analysis) identifies potentially affected downstream items and workspaces. It also provides a way to notify workspace contacts. Access affects what the engineer can see, and data-source impact analysis shows direct children rather than every downstream dependency. MorrowBasket uses this information to arrange checks with report owners before making the change.
+
+The report owners still need Sales to explain the new status before they can judge its effect on their calculations.
+
+### Connect the inventory to a wider catalog
+
+[Microsoft Purview can scan Fabric items](https://learn.microsoft.com/purview/data-map-lineage-fabric) and bring supported metadata and lineage into its catalog. The team first registers and scans the Fabric tenant. Coverage depends on the item and connection. For example, the documented integration has limits for non-Power BI cross-workspace lineage. Discovering an item does not mean that every internal transformation and external dependency has been captured. For MorrowBasket's external order API and agent search index, engineers must add a supported integration or maintain the dependency records themselves. They should record how each relationship was obtained and when it was last checked. That lets an investigator distinguish an observed connection from an incomplete or outdated entry.
+
+A team could use those dependencies to notify owners when an interface changes, then require their checks before releasing it. Classification and relationship suggestions can also be automated, but someone must verify business meaning. The team should test the response to a change, including who is notified and which checks run. Using AI to suggest metadata does not establish that an agent can interpret the underlying data correctly.
+
+<figure class="article-figure article-figure--wide">
+  <img
+    src="/blog-inline/data-fabric-follow-the-change.webp"
+    alt="A source change leads to updated metadata and a coverage check. Fabric lineage identifies reporting dependencies, while team-recorded links identify external agent dependencies. Teams update and test both consumers."
+    width="1600"
+    height="800"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>Recorded dependencies help find consumers to check. The teams still review the change and repair their report or agent integration.</figcaption>
+</figure>
+
+## How does data fabric support an AI-ready strategy?
+
+An **AI-ready data platform** lets AI understand and safely use its data. Fabric contributes by connecting the meaning, provenance and usage rules that an application needs across sources, together with mechanisms for delivering the data. For MorrowBasket, the value is being able to supply the agent with a purchase and policy it can interpret correctly, under the employee's permitted access.
+
+The definitions cannot stay in a catalog that only developers read. The agent team includes relevant descriptions in its tools and returns source references, versions and timestamps with retrieved information. The model can then distinguish an open request from a completed refund, or a policy effective for the purchase from one that applies only to newer orders. The team must test that interpretation with real examples of the task. Fabric capabilities help maintain those connections as more applications use the same sources. When Sales clarifies a status, its approved definition can be reused in report documentation and agent tool descriptions. Each application still needs to adopt and test the change. One shared definition is useful only if its consumers receive the right version.
+
+Safe use also needs enforcement. Before returning purchase details or policy text to the model, the application must establish the caller's identity and check the relevant permissions. Knowing that a document is marked confidential doesn't perform that check. Access to metadata in a catalog is a separate permission from access to the source's contents.
+
+Suppose the agent can also submit a return. The order system must authorize that operation separately and validate the request against the current purchase state. Reading an order earlier in the conversation is not permission to change it. Microsoft's [guidance for agentic systems](https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/considerations/agentic-systems) describes authorization at each tool invocation and enforcing boundaries in application logic rather than relying on model instructions. MorrowBasket must make those controls work through every exposed tool.
+
+The report uses the same business definitions while serving a different purpose. It can remain valid for its stated cutoff even when a live order has changed. The agent must use a source fresh enough for its current task. Fabric helps describe and coordinate those choices. It cannot make an overnight copy current by attaching a better label.
+
+Forecasting has another requirement. As the [series introduction explains](/blog/data-platform-architectures-ai-ready/), historical inputs must respect what was available at each prediction time. Lineage can identify a preparation job, but it cannot recover record versions or availability information that the team never retained.
+
+## What happens when the shared context is wrong or outdated?
+
+Let's follow a change that a schema check might miss. Suppose the returns system originally uses `accepted` to mean that it recorded a customer's request. After a release, the same value means that staff approved the return following inspection. The field still contains text. Its business meaning has changed. The warehouse preparation previously treated `accepted` as a recorded request and deducted it under MorrowBasket's reporting rule. Using only the new approved records would omit requests awaiting inspection and change the reported sales figure. Meanwhile, an agent using the new definition to interpret an old record could tell an employee that inspection had already happened.
+
+Sales must establish which source versions and periods use each meaning. It can then provide an explicit mapping to the request event required by reporting and document the status returned by the current lookup. Report owners update the preparation and validate affected periods. The agent team updates its tool description and tests purchases on both sides of the change. Where the necessary historical distinction wasn't retained, the team must investigate rather than invent a mapping.
+
+Lineage and maintained dependency records help find those consumers. They won't detect an undocumented change in meaning just because a scan succeeded. The source team must communicate that change too.
+
+Now consider access. An employee loses permission to read an internal policy, but its catalog entry and search-index copy still exist. The retrieval path must enforce the changed permission before returning content to the model. Depending on the implementation, that requires updating index access metadata or checking authorization against a current source of permissions. The [data lake article](/blog/data-lake-ai-ready/) follows why derived document representations need their own update and removal processes.
+
+The team should repeat the employee's request after revocation and inspect the retrieved fragments. Restricted content must stay out of the model's context.
+
+Failures need clear meanings as well. If the purchase lookup times out, the agent has no confirmed current state. It should report that it cannot verify the purchase or hand the task to an employee. Treating a failed lookup as “no return found” could lead it to submit another request. The same discipline applies to reporting: a failed refresh leaves an older result, whose age must remain visible.
+
+## Where should MorrowBasket start?
+
+I would start with this report, this agent and the sources they already need. Record the definitions, owners, access paths and dependencies, then connect the metadata collection and checks that save the teams repeated work. There is no need to catalog every system before finding out whether the arrangement helps these two consumers. Try a source change and a revoked permission. Can the team find the affected report and agent integration? Can it tell which dependencies were captured automatically and which need confirmation? Does the denied document stay out of the model's context? These checks give MorrowBasket evidence about the working platform.
+
+The maintenance cost includes connectors, credentials, scan schedules, descriptions and gaps in dependency coverage. A small team with a few sources may handle these through simple interfaces and documented checks. As sources and consumers multiply, shared services can reduce repeated integration work. Fabric is worth considering when that coordination has become a recurring problem, not because the team has reached the next step after a lakehouse.
+
+To assess your own platform, trace one report number and one agent answer back to their sources. Check which definitions they used, how current the inputs were and where access was enforced. Then follow one correction through to both consumers.
+
+## FAQ
+
+### What is data fabric?
+
+Data fabric is a centralized architectural approach that connects data integration, discovery and governance across systems, using metadata to coordinate that work. At MorrowBasket, it helps teams find and use sales tables, current purchase records and policy documents with their meaning and access requirements intact.
+
+### How is data fabric different from a data warehouse?
+
+A warehouse prepares and serves data for analysis. Data fabric coordinates how data is discovered, connected and governed across systems, which can include a warehouse. MorrowBasket can keep its sales report on warehouse tables while using shared metadata and access mechanisms for other sources.
+
+### Is data fabric the same as Microsoft Fabric?
+
+No. Microsoft Fabric is a product platform. Data fabric is an architectural concept that can involve several products and services. Microsoft Fabric's lineage and impact analysis can support parts of that design, alongside integrations with systems outside Fabric.
+
+### How do data fabric and data mesh work together?
+
+Data mesh gives domain teams responsibility for maintained data products, supported by a shared platform and governance. Fabric capabilities can help those teams connect metadata, integration and access across systems. MorrowBasket still needs people who can decide what the data means and repair it.
+
+### How does data fabric support AI-ready data platforms?
+
+An AI-ready data platform lets AI understand and safely use its data. Data fabric can help connect definitions, relationships, source versions and access rules across systems. Application teams must deliver that context to AI and enforce permissions on actual retrieval and action paths.
+
+## Further reading
+
+- [Data Fabric defined](https://www.jamesserra.com/archive/2021/06/data-fabric-defined/), James Serra's interpretation and discussion of differing definitions.
+- [An IBM Architecture Guide to Data Fabric](https://www.ibm.com/think/architectures/patterns/data-fabric), on metadata, integration and consumption across systems.
+- [Lineage in Microsoft Fabric](https://learn.microsoft.com/fabric/governance/lineage), on workspace relationships and view boundaries.
+- [Impact analysis in Microsoft Fabric](https://learn.microsoft.com/fabric/governance/impact-analysis), on affected items, workspaces and notifications.
+- [Fabric lineage in Microsoft Purview](https://learn.microsoft.com/purview/data-map-lineage-fabric), on scanning and supported relationships.
+- [Considerations for multitenant agentic systems](https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/considerations/agentic-systems), on enforcing identity and authorization across tool calls.
