@@ -190,11 +190,11 @@ const lightboxController = `
 >
   <section class="article-hero">
     <div class="container narrow">
-      <span class="eyebrow">{type}</span>
       <h1 class="section-title">{title}</h1>
       <p class="section-copy">{description}</p>
 
       <div class="article-hero__meta">
+        <span>{type}</span>
         <span>Published: {publishedLabel}</span>
         <span>Updated: {updatedLabel}</span>
         <span>{readingTime} min read</span>
@@ -219,7 +219,6 @@ const lightboxController = `
         <ArticleResources tags={tags} />
         <footer class="article-author" aria-label="Author profile">
           <div>
-            <span class="eyebrow">Author</span>
             <h2>Maciej Kępa</h2>
             <p>
               Data & AI Architect at Datumo, based in Kraków, Poland. I work on MLOps and AI-ready data platforms,

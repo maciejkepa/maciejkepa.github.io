@@ -99,7 +99,7 @@ const themeBootstrap = `
   const darkThemeColor = '#171511';
   const lightThemeColor = '#f1ede4';
   const stored = localStorage.getItem(storageKey);
-  const theme = stored === 'light' || stored === 'dark' ? stored : 'light';
+  const theme = stored === 'light' || stored === 'dark' ? stored : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   document.documentElement.dataset.theme = theme;
   if (themeMeta) {
     themeMeta.setAttribute('content', theme === 'light' ? lightThemeColor : darkThemeColor);
@@ -134,7 +134,7 @@ const themeController = `
       return stored;
     }
 
-    return 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   };
 
   syncUi(getResolvedTheme());

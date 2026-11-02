@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 
 import ArticleCard from '../components/ArticleCard.astro';
 import LinkedInIcon from '../components/LinkedInIcon.astro';
+import SystemMap from '../components/SystemMap.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getPostFilterTokens, getTopicCards, sortPosts } from '../lib/blog';
 import { getResponsiveCoverSources } from '../lib/images';
@@ -51,9 +52,8 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
 
 <BaseLayout seoTitle="Maciej Kępa - Data & AI Architect | Beyond the Notebook" description="Maciej Kępa writes and speaks about MLOps, AI-ready data platforms and operating data and ML systems in production. Azure and Databricks.">
   <section class="hero">
-    <div class="container hero__grid">
+    <div class="container hero__grid hero__grid--map">
       <div>
-        <span class="eyebrow">{siteConfig.name}</span>
         <h1 class="hero__title">{siteConfig.owner}</h1>
         <p class="hero__role">{siteConfig.role}</p>
         <p class="hero__copy">
@@ -63,51 +63,17 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
         <div class="hero__actions">
           <a class="button" href="/blog/">Read the blog</a>
           <a class="button button--secondary" href="/speaking/">Speaking</a>
-          <a class="button button--secondary" href={siteConfig.links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
-          <a class="button button--secondary" href={siteConfig.links.github} target="_blank" rel="noreferrer">GitHub</a>
+          <a class="text-link" href={siteConfig.links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+          <a class="text-link" href={siteConfig.links.github} target="_blank" rel="noreferrer">GitHub</a>
         </div>
       </div>
 
-      <div class="hero-side hero-side--graphic">
-        <div class="home-panel home-panel--center surface">
-          <span class="eyebrow">Current focus</span>
-          <h2 class="home-panel__title">MLOps & AI-ready data platforms</h2>
-          <p class="home-panel__copy">
-            Practical notes on operating AI systems under real production constraints.
-          </p>
-        </div>
-
-        <div class="metric-row">
-          <div class="metric surface">
-            <div class="metric__label">Platforms</div>
-            <div class="metric__value">
-              <span>Azure</span>
-              <span>Databricks</span>
-            </div>
-          </div>
-          <div class="metric surface">
-            <div class="metric__label">Topics</div>
-            <div class="metric__value">
-              <span>AI</span>
-              <span>Data</span>
-              <span>MLOps</span>
-            </div>
-          </div>
-          <div class="metric surface">
-            <div class="metric__label">Public work</div>
-            <div class="metric__value">
-              <span>Articles</span>
-              <span>Conference talks</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <SystemMap />
     </div>
   </section>
 
   <section class="section section--tight">
     <div class="container">
-      <span class="eyebrow">Featured writing</span>
       <h2 class="section-title">Long-form notes for engineers who have to ship</h2>
       <p class="section-copy">
         Architecture essays, delivery guides and operational lessons from the part of AI work that starts after the first promising notebook.
@@ -153,15 +119,14 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
 
   <section class="section section--tight" aria-labelledby="selected-work-title">
     <div class="container">
-      <span class="eyebrow">Selected work</span>
       <h2 class="section-title section-title--compact" id="selected-work-title">Explore the code behind the ideas</h2>
       <div class="selected-work-grid">
         {selectedProjects.map((project) => (
           <article class="card">
-            <span class="kicker">{project.kind}</span>
             <h3 class="card__title"><a href={`/projects/#${project.id}`}>{project.title}</a></h3>
+            <span class="kicker">{project.kind}</span>
             <p>{project.summary}</p>
-            <a href={`/projects/#${project.id}`}>Setup, decisions and limitations →</a>
+            <a class="text-link" href={`/projects/#${project.id}`}>Setup, decisions and limitations</a>
           </article>
         ))}
       </div>
@@ -170,7 +135,6 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
 
   <section class="section">
     <div class="container">
-      <span class="eyebrow">Topics</span>
       <h2 class="section-title">Choose a production AI reading path</h2>
       <div class="topic-grid" style="margin-top: 2rem;">
         {topicPaths.map((path) => (
@@ -178,7 +142,7 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
             <span class="topic-card__count">{path.topic.count} {path.topic.count === 1 ? 'post' : 'posts'}</span>
             <h3 class="topic-card__title">{path.title}</h3>
             <p class="topic-card__description">{path.promise}</p>
-            <span class="topic-card__link">{path.cta} →</span>
+            <span class="topic-card__link">{path.cta}</span>
           </a>
         ))}
       </div>
@@ -188,7 +152,6 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
   <section class="section section--tight">
       <div class="container home-speaking">
         <div class="card surface">
-          <span class="eyebrow">Speaking</span>
           <h2 class="section-title" style="font-size: clamp(2.2rem, 5vw, 3.2rem);">Selected talks</h2>
           <p class="section-copy">
           Conference sessions on production AI, MLOps, observability and data platform architecture.
@@ -201,12 +164,12 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
       <div class="detail-grid">
         {featuredSpeakingSessions.map((talk) => (
           <article class="detail-card">
-            <span class="kicker session-meta">
-              <a href={talk.eventUrl} target="_blank" rel="noreferrer">{talk.event} {talk.year}</a>
-            </span>
             <h3 class="card__title">
               <a href={talk.sessionUrl} target="_blank" rel="noreferrer">{talk.title}</a>
             </h3>
+            <span class="kicker session-meta">
+              <a href={talk.eventUrl} target="_blank" rel="noreferrer">{talk.event} {talk.year}</a>
+            </span>
             <p>{talk.focus}</p>
           </article>
         ))}
@@ -228,7 +191,6 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
           </picture>
         </figure>
         <div class="about-inline-content">
-          <span class="eyebrow">About me</span>
           <h2 class="section-title about-inline-title">Architecture, delivery and AI systems that have to hold up in production</h2>
           <p class="section-copy">
             I am a Data & AI Architect working on production data platforms, MLOps and cloud-native AI systems. My work focuses on the engineering decisions that make these systems operable, observable and maintainable.
@@ -244,7 +206,6 @@ const rssHighlights = ['Full articles and guides', 'Direct feed access from day 
       </article>
 
       <aside class="home-feature home-feature--compact surface">
-        <span class="eyebrow">RSS</span>
         <h2 class="section-title" style="font-size: clamp(1.55rem, 3.2vw, 2.05rem);">RSS feed for full posts and guides</h2>
         <p class="section-copy">
           Use the feed if you want the writing directly, without signup flow, newsletter formatting or social noise.

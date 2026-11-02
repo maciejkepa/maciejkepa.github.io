@@ -35,7 +35,7 @@ const valueType = post.data.valueType;
 
   <div class="post-card__header">
     <span class="kicker">{valueType}</span>
-    <span class="post-card__meta">{formatDate(post.data.date)} · {readingTime} min read</span>
+    <span class="post-card__meta"><time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time><span>{readingTime} min read</span></span>
   </div>
 
   <div>

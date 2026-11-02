@@ -1,0 +1,252 @@
+---
+import { siteConfig } from '../lib/site';
+
+const nodes = [
+  { title: 'Writing', note: 'articles', href: '/blog/', x: 172 },
+  { title: 'Code', note: 'repositories', href: '/projects/', x: 322 },
+  { title: 'Talks', note: 'sessions', href: '/speaking/', x: 472 }
+];
+const outputs = [
+  { title: 'RSS', note: '/rss.xml', href: siteConfig.links.rss, y: 80 },
+  { title: 'About', note: siteConfig.location, href: '/about/', y: 176 }
+];
+const paths = [
+  { title: 'Production MLOps', lines: ['Production', 'MLOps'], href: '/blog/topic/mlops/', x: 237 },
+  { title: 'AI-ready data platforms', lines: ['AI-ready', 'data platforms'], href: '/blog/topic/data-architecture/', x: 387 },
+  { title: 'ML Observability', lines: ['ML', 'Observability'], href: '/blog/topic/observability/', x: 537 }
+];
+---
+
+<figure class="system-map">
+  <svg
+    class="system-map__svg diagram"
+    viewBox="0 0 800 390"
+    role="group"
+    aria-label="Diagram of the site: writing, code and talks inside Beyond the Notebook, fed by three reading paths, published to RSS and About"
+  >
+    <defs>
+      <marker id="system-map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="system-map__head" d="M0 0 10 5 0 10z" />
+      </marker>
+    </defs>
+
+    <rect class="system-map__node system-map__node--quiet" x="4" y="122" width="104" height="56" rx="4" />
+    <text class="system-map__mono" x="56" y="155" text-anchor="middle">notebook</text>
+    <path class="system-map__edge" d="M108 150 H148" marker-end="url(#system-map-arrow)" />
+
+    <rect class="system-map__boundary" x="152" y="24" width="470" height="252" rx="6" />
+    <text class="system-map__mono system-map__mono--label" x="387" y="50" text-anchor="middle">beyond the notebook</text>
+
+    {nodes.map((node, index) => (
+      <>
+        <a href={node.href} aria-label={`${node.title}, ${node.note}`}>
+          <rect class="system-map__node" x={node.x} y="70" width="130" height="178" rx="4" />
+          <text class="system-map__title" x={node.x + 65} y="152" text-anchor="middle">{node.title}</text>
+          <text class="system-map__mono" x={node.x + 65} y="178" text-anchor="middle">{node.note}</text>
+        </a>
+        {index < nodes.length - 1 && (
+          <path class="system-map__edge" d={`M${node.x + 130} 159 H${node.x + 148}`} marker-end="url(#system-map-arrow)" />
+        )}
+      </>
+    ))}
+
+    <path class="system-map__edge" d="M622 110 H658" marker-end="url(#system-map-arrow)" />
+    <path class="system-map__edge" d="M622 206 H658" marker-end="url(#system-map-arrow)" />
+
+    {outputs.map((output) => (
+      <a href={output.href} aria-label={`${output.title}, ${output.note}`}>
+        <rect class="system-map__node" x="660" y={output.y} width="136" height="60" rx="4" />
+        <text class="system-map__title system-map__title--s" x="728" y={output.y + 26} text-anchor="middle">{output.title}</text>
+        <text class="system-map__mono" x="728" y={output.y + 47} text-anchor="middle">{output.note}</text>
+      </a>
+    ))}
+
+    {paths.map((path) => (
+      <a href={path.href} aria-label={`Reading path: ${path.title}`}>
+        <path class="system-map__edge system-map__edge--dashed" d={`M${path.x} 330 V282`} marker-end="url(#system-map-arrow)" />
+        <text class="system-map__path" x={path.x} y="350" text-anchor="middle">
+          <tspan x={path.x}>{path.lines[0]}</tspan>
+          <tspan x={path.x} dy="19">{path.lines[1]}</tspan>
+        </text>
+        <path class="system-map__underline" d={`M${path.x - 60} 382 H${path.x + 60}`} />
+      </a>
+    ))}
+  </svg>
+
+  <ul class="system-map__list" aria-label="Sections of the site">
+    {[...nodes, ...outputs].map((item) => (
+      <li>
+        <a href={item.href}>
+          <span>{item.title}</span>
+          <span class="system-map__fact">{item.note}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</figure>
+
+<style>
+  .system-map {
+    --map-display: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+    --map-mono: "IBM Plex Mono", monospace;
+    margin: 0;
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+    align-self: center;
+  }
+
+  .system-map__svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .system-map__boundary {
+    fill: none;
+    stroke: var(--steel);
+    stroke-width: 1.25;
+    stroke-dasharray: 7 6;
+  }
+
+  .system-map__node {
+    fill: var(--panel-strong);
+    stroke: var(--text);
+    stroke-width: 1.25;
+    transition: stroke 160ms ease, fill 160ms ease;
+  }
+
+  .system-map__node--quiet {
+    fill: none;
+    stroke: var(--steel);
+    stroke-dasharray: 3 4;
+  }
+
+  .system-map__edge {
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 1.25;
+  }
+
+  .system-map__edge--dashed {
+    stroke-dasharray: 4 5;
+  }
+
+  .system-map__head {
+    fill: var(--muted);
+  }
+
+  .system-map__underline {
+    stroke: var(--text);
+    stroke-width: 1.25;
+  }
+
+  .system-map__title {
+    font-family: var(--map-display);
+    font-size: 26px;
+    font-weight: 700;
+    fill: var(--text);
+  }
+
+  .system-map__title--s {
+    font-size: 20px;
+  }
+
+  .system-map__mono {
+    font-family: var(--map-mono);
+    font-size: 14px;
+    fill: var(--muted);
+  }
+
+  .system-map__mono--label {
+    font-size: 14px;
+    fill: var(--steel);
+  }
+
+  .system-map__path {
+    font-size: 15px;
+    font-weight: 600;
+    fill: var(--text);
+  }
+
+  .system-map__svg a:hover .system-map__node {
+    stroke: var(--accent);
+  }
+
+  .system-map__svg a:hover .system-map__title,
+  .system-map__svg a:hover .system-map__path {
+    fill: var(--accent-strong);
+  }
+
+  .system-map__svg a:focus-visible {
+    outline: 2px solid var(--accent-strong);
+    outline-offset: 4px;
+  }
+
+  .system-map__list {
+    display: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .system-map__list a {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    min-height: 3.5rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--map-display);
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  .system-map__list a:focus-visible {
+    outline: 2px solid var(--accent-strong);
+    outline-offset: 2px;
+  }
+
+  .system-map__fact {
+    color: var(--muted);
+    font-family: var(--map-mono);
+    font-size: 0.85rem;
+    font-weight: 400;
+  }
+
+  @media (min-width: 48rem) {
+    :global(.hero__grid.hero__grid--map) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (min-width: 64rem) {
+    :global(.hero__grid.hero__grid--map) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+      gap: 2rem;
+    }
+
+    :global(.hero__grid.hero__grid--map .hero__title) {
+      font-size: clamp(3.4rem, 6vw, 5.5rem);
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .system-map__svg {
+      display: none;
+    }
+
+    .system-map__list {
+      display: block;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .system-map__node {
+      transition: none;
+    }
+  }
+</style>

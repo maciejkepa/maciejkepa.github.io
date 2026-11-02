@@ -35,7 +35,6 @@ const orderedSpeakingSessions = [...speakingSessions].sort((a, b) => b.sortDate.
   <section class="section">
     <div class="container speaking-hero surface">
       <div class="speaking-hero__content">
-        <span class="eyebrow">Speaking</span>
         <h1 class="section-title">MLOps and data platform talks</h1>
         <p class="section-copy">
           I speak about MLOps, AI-ready data platforms and the operational reality of shipping data and ML systems. Sessions are available in Polish and English.
@@ -65,17 +64,16 @@ const orderedSpeakingSessions = [...speakingSessions].sort((a, b) => b.sortDate.
 
   <section class="section section--tight" aria-labelledby="recommended-sessions">
     <div class="container">
-      <span class="eyebrow">For your event</span>
       <h2 class="section-title section-title--compact" id="recommended-sessions">Three sessions to start with</h2>
       <div class="reading-path-grid">
         {recommendedSessions.map((session) => (
           <article class="card" id={session.id}>
-            <span class="kicker">Conference session · PL / EN</span>
             <h3 class="card__title">{session.title}</h3>
+            <span class="kicker"><span>Conference session</span><span>PL / EN</span></span>
             <p>{session.description}</p>
             <nav class="resource-links" aria-label={`${session.title} resources`}>
-              <a href={session.sessionUrl}>Session abstract →</a>
-              <a href={session.resourceUrl}>{session.resourceLabel} →</a>
+              <a href={session.sessionUrl}>Session abstract</a>
+              <a href={session.resourceUrl}>{session.resourceLabel}</a>
             </nav>
           </article>
         ))}
@@ -87,7 +85,6 @@ const orderedSpeakingSessions = [...speakingSessions].sort((a, b) => b.sortDate.
   <section class="section section--tight">
     <div class="container about-section surface">
       <div class="about-section__intro">
-        <span class="eyebrow">Sessions</span>
         <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.9rem);">Conference history</h2>
         <p class="section-copy">Selected appearances and workshop materials. Where the delivery language is unverified, the entry shows the languages available for that session.</p>
       </div>
@@ -97,16 +94,16 @@ const orderedSpeakingSessions = [...speakingSessions].sort((a, b) => b.sortDate.
             <span class="kicker session-meta">
               <a href={talk.eventUrl} target="_blank" rel="noreferrer">{talk.event} {talk.year}</a>
             </span>
-            <p class="session-details"><time datetime={talk.date}>{displayDate(talk.date)}</time> · {talk.format}{talk.deliveredLanguage ? ` · Delivered in ${talk.deliveredLanguage}` : talk.languages ? ` · Available in ${talk.languages}` : ''}</p>
+            <p class="session-details"><time datetime={talk.date}>{displayDate(talk.date)}</time><span>{talk.format}</span>{talk.deliveredLanguage ? <span>Delivered in {talk.deliveredLanguage}</span> : talk.languages ? <span>Available in {talk.languages}</span> : null}</p>
             <h3 class="card__title">
               <a href={talk.sessionUrl} target="_blank" rel="noreferrer">{talk.title}</a>
             </h3>
             <p>{talk.focus}</p>
             {(talk.archiveUrl || talk.repoUrl || talk.slidesUrl || talk.recordingUrl) && <nav class="resource-links" aria-label={`${talk.event} ${talk.year} materials`}>
-              {talk.archiveUrl && <a href={talk.archiveUrl}>Event archive →</a>}
-              {talk.repoUrl && <a href={talk.repoUrl}>Workshop repository →</a>}
-              {talk.slidesUrl && <a href={talk.slidesUrl}>Slides →</a>}
-              {talk.recordingUrl && <a href={talk.recordingUrl}>Recording →</a>}
+              {talk.archiveUrl && <a href={talk.archiveUrl}>Event archive</a>}
+              {talk.repoUrl && <a href={talk.repoUrl}>Workshop repository</a>}
+              {talk.slidesUrl && <a href={talk.slidesUrl}>Slides</a>}
+              {talk.recordingUrl && <a href={talk.recordingUrl}>Recording</a>}
             </nav>}
           </article>
         ))}
@@ -117,7 +114,6 @@ const orderedSpeakingSessions = [...speakingSessions].sort((a, b) => b.sortDate.
   <section class="section section--tight">
     <div class="container about-section surface">
       <div class="about-section__intro">
-        <span class="eyebrow">Formats</span>
         <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.9rem);">Ways of working with engineering teams</h2>
       </div>
       <div class="about-section__body about-entry-list">

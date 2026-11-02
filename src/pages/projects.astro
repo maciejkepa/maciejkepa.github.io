@@ -66,7 +66,6 @@ const stacks = [
 <BaseLayout seoTitle="MLOps & AI Projects - Maciej Kępa" description="Explore Maciej Kępa’s MCP server and AI/ML workshop materials: runnable examples, architecture decisions, setup instructions and practical limitations.">
   <section class="section">
     <div class="container">
-      <span class="eyebrow">Selected work</span>
       <h1 class="section-title">Code and workshops behind the writing</h1>
       <p class="section-copy">Public examples you can inspect and run, with the design decisions and limits made explicit.</p>
     </div>
@@ -76,8 +75,8 @@ const stacks = [
     <section class="section section--tight" id={project.id}>
       <div class="container about-section surface">
         <div class="about-section__intro">
-          <span class="eyebrow">{project.kind}</span>
           <h2 class="section-title section-title--compact">{project.title}</h2>
+          <p class="project-kind">{project.kind}</p>
           <p class="section-copy">{project.summary}</p>
           <div class="button-row">
             <a class="button" href={project.repoUrl}>View repository</a>
@@ -89,7 +88,7 @@ const stacks = [
           <div class="about-entry"><h3 class="card__title">What you can run</h3><p>{project.start}</p></div>
           <div class="about-entry"><h3 class="card__title">Scope and limits</h3><p>{project.limits}</p></div>
           <nav class="resource-links" aria-label={`${project.title} materials`}>
-            {project.links.map((link) => <a href={link.href}>{link.label} →</a>)}
+            {project.links.map((link) => <a href={link.href}>{link.label}</a>)}
           </nav>
         </div>
       </div>
@@ -99,7 +98,6 @@ const stacks = [
   <section class="section section--tight">
     <div class="container about-section surface">
       <div class="about-section__intro">
-        <span class="eyebrow">Working stack</span>
         <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.9rem);">Core technologies behind the work</h2>
         <p class="section-copy">The stack is deliberately practical: cloud platform, lakehouse, orchestration, automation and writing tools that support repeatable delivery.</p>
       </div>
@@ -122,7 +120,6 @@ const stacks = [
 
   <section class="section section--tight">
     <div class="container home-feature surface">
-      <span class="eyebrow">GitHub</span>
       <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 2.8rem);">All projects live on GitHub</h2>
       <p class="section-copy">
         Repositories, experiments, demos and supporting code are all available on GitHub.
