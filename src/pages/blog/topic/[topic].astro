@@ -125,8 +125,8 @@ const breadcrumbSchema = {
         </>
       )}
       <div class="post-list">
-        {posts.map((post) => (
-          <ArticleCard post={post} filterTokens={getPostFilterTokens(post)} layout="stack" />
+        {posts.map((post, index) => (
+          <ArticleCard post={post} filterTokens={getPostFilterTokens(post)} layout="stack" priority={index === 0} />
         ))}
       </div>
 

@@ -4,7 +4,7 @@ import ArticleResources from '../components/ArticleResources.astro';
 import DataPlatformSeries from '../components/DataPlatformSeries.astro';
 import { dataPlatformSeries } from '../lib/reading-paths';
 import LinkedInIcon from '../components/LinkedInIcon.astro';
-import { formatDate } from '../lib/blog';
+import { formatDate, getTagLabel } from '../lib/blog';
 
 interface Heading {
   depth: number;
@@ -36,6 +36,8 @@ const { postId, title, seoTitle, description, date, updated, tags, type, reading
 const tocHeadings = headings.filter((heading) => heading.depth >= 2 && heading.depth <= 3);
 const publishedLabel = formatDate(date);
 const updatedLabel = formatDate(updated ?? date);
+const isUpdated = updatedLabel !== publishedLabel;
+const typeLabel = type === 'guide' ? 'Technical guide' : 'Article';
 const articleSchema = {
   '@type': 'BlogPosting',
   '@id': `${Astro.url.href}#article`,
@@ -189,14 +191,14 @@ const lightboxController = `
   structuredData={faqSchema ? [articleSchema, breadcrumbSchema, faqSchema] : [articleSchema, breadcrumbSchema]}
 >
   <section class="article-hero">
-    <div class="container narrow">
+    <div class="container article-hero__inner">
       <h1 class="section-title">{title}</h1>
       <p class="section-copy">{description}</p>
 
       <div class="article-hero__meta">
-        <span>{type}</span>
+        <span>{typeLabel}</span>
         <span>Published: {publishedLabel}</span>
-        <span>Updated: {updatedLabel}</span>
+        {isUpdated && <span>Updated: {updatedLabel}</span>}
         <span>{readingTime} min read</span>
         {repoUrl && (
           <a href={repoUrl} target="_blank" rel="noreferrer">Companion repository</a>
@@ -205,7 +207,7 @@ const lightboxController = `
 
       <div class="pill-row" aria-label="Article tags">
         {tags.map((tag) => (
-          <span class="pill">{tag}</span>
+          <span class="pill">{getTagLabel(tag)}</span>
         ))}
       </div>
     </div>
@@ -252,24 +254,28 @@ const lightboxController = `
               <dt>Published</dt>
               <dd>{publishedLabel}</dd>
             </div>
-            <div>
-              <dt>Updated</dt>
-              <dd>{updatedLabel}</dd>
-            </div>
+            {isUpdated && (
+              <div>
+                <dt>Updated</dt>
+                <dd>{updatedLabel}</dd>
+              </div>
+            )}
           </dl>
         </footer>
       </article>
 
       {tocHeadings.length > 0 && (
         <aside class="toc" aria-label="Table of contents">
-          <h2>Contents</h2>
-          <ul>
-            {tocHeadings.map((heading) => (
-              <li>
-                <a href={`#${heading.slug}`}>{heading.text}</a>
-              </li>
-            ))}
-          </ul>
+          <details class="toc__details" open data-toc>
+            <summary class="toc__summary">Contents</summary>
+            <ul>
+              {tocHeadings.map((heading) => (
+                <li>
+                  <a href={`#${heading.slug}`}>{heading.text}</a>
+                </li>
+              ))}
+            </ul>
+          </details>
         </aside>
       )}
     </div>
@@ -289,4 +295,13 @@ const lightboxController = `
   </div>
 
   <script is:inline set:html={lightboxController} />
+  <script is:inline>
+    (() => {
+      const toc = document.querySelector('[data-toc]');
+
+      if (toc instanceof HTMLDetailsElement && window.matchMedia('(max-width: 63.99rem)').matches) {
+        toc.open = false;
+      }
+    })();
+  </script>
 </BaseLayout>

@@ -1,7 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 
-import { formatDate } from '../lib/blog';
+import { formatDate, getTagLabel } from '../lib/blog';
 import { getResponsiveCoverSources } from '../lib/images';
 import { getReadingTime } from '../lib/reading-time';
 
@@ -10,9 +10,10 @@ interface Props {
   filterTokens?: string[];
   layout?: 'grid' | 'stack';
   showTags?: boolean;
+  priority?: boolean;
 }
 
-const { post, filterTokens = [], layout = 'grid', showTags = true } = Astro.props;
+const { post, filterTokens = [], layout = 'grid', showTags = true, priority = false } = Astro.props;
 const readingTime = getReadingTime(post.body);
 const coverImage = post.data.coverImage ?? '/blog-covers/default.svg';
 const coverAlt = post.data.coverAlt ?? `${post.data.title} cover`;
@@ -28,7 +29,7 @@ const valueType = post.data.valueType;
         {responsiveCoverSources && (
           <source type="image/webp" srcset={responsiveCoverSources.srcSet} sizes="(min-width: 48rem) 21rem, 100vw" />
         )}
-        <img src={coverImage} alt={coverAlt} loading="lazy" decoding="async" />
+        <img src={coverImage} alt={coverAlt} loading={priority ? 'eager' : 'lazy'} fetchpriority={priority ? 'high' : undefined} decoding="async" />
       </picture>
     </a>
   )}
@@ -48,7 +49,7 @@ const valueType = post.data.valueType;
   {showTags && (
     <div class="pill-row" aria-label="Tags">
       {visibleTags.map((tag) => (
-        <span class="pill">{tag}</span>
+        <span class="pill">{getTagLabel(tag)}</span>
       ))}
     </div>
   )}

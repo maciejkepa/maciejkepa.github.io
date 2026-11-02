@@ -51,6 +51,17 @@ export function getTopicCards(posts: BlogPost[], options?: { includeEmpty?: bool
   return cards.filter((topic) => topic.count > 0);
 }
 
+export function getTagLabel(tag: string) {
+  const topic = topicDefinitions.find((definition) => definition.slug === normalizeTag(tag));
+
+  if (topic) {
+    return topic.label;
+  }
+
+  const words = normalizeTag(tag).split('-');
+  return [words[0].charAt(0).toUpperCase() + words[0].slice(1), ...words.slice(1)].join(' ');
+}
+
 function normalizeTag(value: string) {
   return value.trim().toLowerCase();
 }
