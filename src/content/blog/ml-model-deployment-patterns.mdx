@@ -13,9 +13,9 @@ coverImage: "/blog-covers/ml-model-deployment-patterns.png"
 coverAlt: "Hand-drawn technical diagram of one MLflow model package connected independently to a batch job, serverless function, container API and managed endpoint"
 faqs:
   - question: "What are the main ML model deployment patterns?"
-    answer: "The main ML model deployment patterns are batch jobs, serverless functions, container APIs and managed endpoints. Batch fits reproducible data windows; functions fit light, sporadic calls; containers provide runtime control; managed endpoints provide a platform-operated serving boundary."
+    answer: "The main ML model deployment patterns are batch jobs, serverless functions, container APIs and managed endpoints. Batch fits reproducible data windows, while functions fit light, sporadic calls. Containers provide runtime control. Managed endpoints provide a platform-operated serving boundary."
   - question: "Can you deploy an MLflow model to Azure Functions?"
-    answer: "Yes. An Azure Function can load an MLflow pyfunc model once when its worker starts and call predict() from an HTTP or event handler. It works best for small models, short executions and irregular traffic; large dependencies, slow initialization, tight latency targets or GPU inference usually need a container or managed endpoint."
+    answer: "Yes. An Azure Function can load an MLflow pyfunc model once when its worker starts and call predict() from an HTTP or event handler. It works best for small models, short executions and irregular traffic. Large dependencies, slow initialization, tight latency targets or GPU inference usually need a container or managed endpoint."
   - question: "Should inference run as a batch job or online endpoint?"
     answer: "Use a batch job when the consumer accepts delayed results and recovery means rerunning a known, idempotent input window. Use an online endpoint when a caller needs a synchronous answer within a deadline and recovery happens per request."
   - question: "When is a serverless function a good ML runtime?"
@@ -68,7 +68,7 @@ The runtime decision gets easier once the consumer is concrete. In reviews, I us
 | Serve a custom synchronous API with runtime control | Container API | One request plus a deployment revision | Versioned API response |
 | Operate online or batch serving through an ML platform | Managed endpoint | Request, batch invocation or routed deployment | Managed response or batch output |
 
-The table compares operating contracts rather than products. A team can run a batch job in Azure Machine Learning, Databricks, Kubernetes, a cloud batch service or an existing orchestrator. It can run a container API in Azure Container Apps, App Service, AKS or another container platform. The pattern describes the operating contract; the product implements it.
+The table compares operating contracts rather than products. A team can run a batch job in Azure Machine Learning, Databricks, Kubernetes, a cloud batch service or an existing orchestrator. It can run a container API in Azure Container Apps, App Service, AKS or another container platform. The pattern describes the operating contract. The product implements it.
 
 ## Pattern 1: a batch job scores a reproducible input window
 
@@ -254,7 +254,7 @@ A container API is often a better home than a function for a medium-sized CPU mo
 
 I reach for a managed model endpoint when the platform should own provisioning, endpoint health, traffic routing, autoscaling and deployment lifecycle. The team still owns the payload contract, model quality, capacity assumptions and client behavior.
 
-[Azure Machine Learning can deploy MLflow models](https://learn.microsoft.com/azure/machine-learning/how-to-deploy-mlflow-models?view=azureml-api-2) to managed online or batch endpoints. For supported MLflow models, it can derive the scoring environment and scoring server from the model package, so the team does not need to provide a scoring script for the basic case. Online endpoints expose synchronous inference; batch endpoints run long-running, asynchronous inference over data inputs.
+[Azure Machine Learning can deploy MLflow models](https://learn.microsoft.com/azure/machine-learning/how-to-deploy-mlflow-models?view=azureml-api-2) to managed online or batch endpoints. For supported MLflow models, it can derive the scoring environment and scoring server from the model package, so the team does not need to provide a scoring script for the basic case. Online endpoints expose synchronous inference. Batch endpoints run long-running, asynchronous inference over data inputs.
 
 [Databricks Model Serving](https://learn.microsoft.com/azure/databricks/machine-learning/model-serving/) is another managed endpoint implementation. It exposes registered models through a managed REST API and adds platform-specific routing, autoscaling, permissions and telemetry. It makes sense when the model lifecycle and governed data already live in that platform. It is one example of the pattern, not the definition of it.
 
@@ -283,7 +283,7 @@ The same MLflow model can run in every pattern. What changes completely is the u
 | Input identity | Snapshot, partition, source version or stream offset | Request ID and payload contract |
 | Success | Complete validated output is published | A valid response arrives within the deadline |
 | Retry | Rerun an idempotent window or resume from a checkpoint | Retry transient failures with a small bounded budget |
-| Permanent failure | Block publication, quarantine or mark the failed window | Return an explicit `4xx` or `5xx`; do not invent a prediction |
+| Permanent failure | Block publication, quarantine or mark the failed window | Return an explicit `4xx` or `5xx`. Do not invent a prediction. |
 | Release identity | Model version, code revision, input window and `release_id` | Model version, deployment revision, request ID and `release_id` |
 | Core signals | Freshness, row counts, run duration, invalid records and output reconciliation | Availability, latency percentiles, concurrency, queue depth and error rate |
 
@@ -297,12 +297,12 @@ The runtime definition belongs in version control beside the scoring adapter. Fo
 
 I would make CI/CD test the contract that consumers will use:
 
-- run the scoring core against a fixed model version and representative records;
-- verify that invalid columns fail before inference rather than receiving defaults;
-- deploy the runtime to a non-production target and wait for readiness;
-- run a batch reconciliation or send a schema-valid smoke request;
-- test the concurrency and payload sizes expected in production;
-- record the resolved model version, runtime revision and `release_id` after deployment.
+- Run the scoring core against a fixed model version and representative records.
+- Verify that invalid columns fail before inference rather than receiving defaults.
+- Deploy the runtime to a non-production target and wait for readiness.
+- Run a batch reconciliation or send a schema-valid smoke request.
+- Test the concurrency and payload sizes expected in production.
+- Record the resolved model version, runtime revision and `release_id` after deployment.
 
 [ML delivery patterns with MLflow, Azure ML and Databricks](/blog/ml-delivery-patterns-with-mlflow-azure-ml-and-databricks/) covers the wider platform choice. If Databricks is the target, [Databricks MLOps delivery with GitHub Actions](/blog/databricks-mlops-delivery-patterns-with-github-actions/) shows how workload definitions and validation gates fit around that release. In either case, an accepted deployment request is not evidence that inference is ready.
 
@@ -327,11 +327,11 @@ If those answers are vague, moving from a function to a managed endpoint only ch
 
 ### What are the main ML model deployment patterns?
 
-The main ML model deployment patterns are batch jobs, serverless functions, container APIs and managed endpoints. Batch fits reproducible data windows; functions fit light, sporadic calls; containers provide runtime control; managed endpoints provide a platform-operated serving boundary.
+The main ML model deployment patterns are batch jobs, serverless functions, container APIs and managed endpoints. Batch fits reproducible data windows, while functions fit light, sporadic calls. Containers provide runtime control. Managed endpoints provide a platform-operated serving boundary.
 
 ### Can you deploy an MLflow model to Azure Functions?
 
-Yes. An Azure Function can load an MLflow pyfunc model once when its worker starts and call `predict()` from an HTTP or event handler. It works best for small models, short executions and irregular traffic; large dependencies, slow initialization, tight latency targets or GPU inference usually need a container or managed endpoint.
+Yes. An Azure Function can load an MLflow pyfunc model once when its worker starts and call `predict()` from an HTTP or event handler. It works best for small models, short executions and irregular traffic. Large dependencies, slow initialization, tight latency targets or GPU inference usually need a container or managed endpoint.
 
 ### Should inference run as a batch job or online endpoint?
 

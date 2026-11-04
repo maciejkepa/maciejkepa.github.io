@@ -65,7 +65,7 @@ The fastest way to dilute an MLOps Stack is to fill it with examples, optional j
 
 For a batch model, that might be training from trusted data, evaluating a candidate, registering the result and running a scheduled inference job. For a serving use case, it may be training, evaluation, deployment to an endpoint and a controlled smoke test. The exact path changes, but it should be recognizable in the repository and easy to run in a development target.
 
-This is also the right point to make the code boundary explicit. Keep exploration in notebooks where it is useful. Move transformations, feature logic, evaluation and inference behavior that matter in production into importable, testable modules. A notebook can remain a useful entry point; it should not be the only place where the system's business logic exists.
+This is also the right point to make the code boundary explicit. Keep exploration in notebooks where it is useful. Move transformations, feature logic, evaluation and inference behavior that matter in production into importable, testable modules. A notebook can remain a useful entry point. Keep the system's business logic in modules that other entry points can use too.
 
 <figure class="article-figure article-figure--wide">
   <img
@@ -97,7 +97,7 @@ This does not stop a Bundle from referring to a catalog, schema or permission it
 
 ### Make data dependencies and release evidence visible
 
-Production ML depends on data products with an explicit grain, schema, freshness expectation and owner. A model project may read `commerce.trusted.fact_orders` and `commerce.trusted.dim_customer`; it should document those dependencies and decide what happens when a contract is not met. It should not quietly absorb responsibility for the source system or the data product's recovery process.
+Production ML depends on data products with an explicit grain, schema, freshness expectation and owner. A model project may read `commerce.trusted.fact_orders` and `commerce.trusted.dim_customer`. It should document those dependencies and decide what happens when a contract is not met. It should not quietly absorb responsibility for the source system or the data product's recovery process.
 
 The same applies to a model candidate. MLflow tracking and registration preserve useful evidence about an artifact, but a release needs criteria for the workload: baseline metrics, relevant slices, input checks and a runtime verification. [Databricks' MLOps workflow guidance](https://learn.microsoft.com/azure/databricks/machine-learning/mlops/mlops-workflow) frames code, data and model assets as separate concerns that move through controlled environments. That is a far more useful model than treating a successful deployment command as the whole release decision.
 
@@ -113,7 +113,7 @@ For the data side of the boundary, [medallion architecture for engineers](/blog/
     decoding="async"
   />
   <figcaption>
-    Bundle validation and deployment establish the delivery path; schema, freshness, smoke tests, metrics and approval make the production release decision explicit.
+    Bundle validation and deployment establish the delivery path. Schema, freshness, smoke tests, metrics and approval make the production release decision explicit.
   </figcaption>
 </figure>
 

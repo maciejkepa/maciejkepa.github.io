@@ -13,7 +13,7 @@ coverImage: "/blog-covers/production-ml-release-management-what-goes-to-producti
 coverAlt: "Hand-drawn technical sketch of an MLflow release manifest connecting code, model, data, configuration and runtime to a validated Azure Databricks deployment"
 faqs:
   - question: "What is ML release management?"
-    answer: "ML release management identifies, validates and promotes the complete versioned decision system: code, model, input contract, configuration, runtime, target and release evidence. MLflow tracks the experiment and model lineage; the release record captures the resolved state that operates in production."
+    answer: "ML release management identifies, validates and promotes the complete versioned decision system: code, model, input contract, configuration, runtime, target and release evidence. MLflow tracks the experiment and model lineage. The release record captures the resolved state that operates in production."
   - question: "Are MLflow model aliases safe to use in production?"
     answer: "Yes. Aliases are useful mutable pointers for roles such as Champion and Challenger. Record the resolved registered-model version alongside the alias, code revision and deployment evidence, because an alias can intentionally point somewhere else later."
   - question: "Should Azure Databricks MLflow projects deploy code or models?"
@@ -153,7 +153,7 @@ Azure Databricks' [MLOps workflow](https://learn.microsoft.com/azure/databricks/
 Release validation has two moments:
 
 1. **Before promotion**, validate the resolved code or model artifact, input contract, runtime, configuration and approval evidence.
-2. **After deployment**, validate target behavior: an online smoke request or controlled traffic path; a batch sample run with output schema, partition counts and reconciliation checks.
+2. **After deployment**, validate target behavior. For online serving, use a smoke request or controlled traffic path. For batch scoring, run a sample and check the output schema, partition counts and reconciliation results.
 
 Put the release ID, model version, code revision and input contract into job runs, deployment logs and decision records. [ML observability](/blog/ml-observability/) explains why these records need to be joinable before an incident, not assembled afterwards.
 
@@ -203,7 +203,7 @@ If those answers are scattered across MLflow, a pull request, a job UI and chat 
 
 ### What is ML release management?
 
-ML release management identifies, validates and promotes the complete versioned decision system: code, model, input contract, configuration, runtime, target and release evidence. MLflow tracks the experiment and model lineage; the release record captures the resolved state that operates in production.
+ML release management identifies, validates and promotes the complete versioned decision system: code, model, input contract, configuration, runtime, target and release evidence. MLflow tracks the experiment and model lineage. The release record captures the resolved state that operates in production.
 
 ### Are MLflow model aliases safe to use in production?
 

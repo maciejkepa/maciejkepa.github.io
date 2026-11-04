@@ -66,11 +66,11 @@ That is the first framing I would standardize with any team:
 
 There is one decision worth making explicit before discussing YAML or runners: are you promoting a model artifact, or the code that produces and operates it?
 
-For most Databricks ML systems, the better default is [**deploy code**](https://learn.microsoft.com/azure/databricks/machine-learning/mlops/deployment-patterns). The versioned training, validation, inference and monitoring code moves through environments as one delivery contract. Staging runs that code against representative data and integrations; production runs the approved code against production data. This keeps retraining inside the controlled production boundary and makes the result reproducible.
+For most Databricks ML systems, the better default is [**deploy code**](https://learn.microsoft.com/azure/databricks/machine-learning/mlops/deployment-patterns). The versioned training, validation, inference and monitoring code moves through environments as one delivery contract. Staging runs that code against representative data and integrations. Production runs the approved code against production data. This keeps retraining inside the controlled production boundary and makes the result reproducible.
 
 That does not mean model artifacts are unimportant. Models have their own lifecycle in [MLflow and Unity Catalog](https://learn.microsoft.com/azure/databricks/machine-learning/manage-model-lifecycle), and a new model version can be evaluated, compared and selected independently of a code change. But that model gate should sit inside a deploy-code delivery pattern rather than replace it.
 
-`Deploy model` is a useful choice for specific use cases: for example, when training is extremely expensive, difficult to reproduce, or deliberately separated from the delivery environment. It is not the default I would start with for a general production ML platform. In the rest of this article, a promotion means promoting the versioned bundle and code; model promotion remains a separate, explicit release decision.
+`Deploy model` is a useful choice for specific use cases: for example, when training is extremely expensive, difficult to reproduce, or deliberately separated from the delivery environment. It is not the default I would start with for a general production ML platform. In the rest of this article, a promotion means promoting the versioned bundle and code. Model promotion remains a separate, explicit release decision.
 
 <figure class="article-figure">
   <img
@@ -108,7 +108,7 @@ If your team cannot answer “what exactly is the deployable unit of this ML sys
 
 ## What GitHub Actions should control, and what it should not
 
-GitHub Actions is useful here when it is your chosen CI/CD runner, but only if you keep its role disciplined. The runner is replaceable; the delivery boundaries are not.
+GitHub Actions is useful here when it is your chosen CI/CD runner, but only if you keep its role disciplined. You can replace the runner while keeping the same delivery boundaries.
 
 According to the official [Databricks GitHub Actions page](https://learn.microsoft.com/azure/databricks/dev-tools/ci-cd/github), GitHub Actions can validate, deploy and run bundle-defined jobs. The high-level [Databricks CI/CD flow](https://learn.microsoft.com/azure/databricks/dev-tools/ci-cd/#high-level-flow) also frames it correctly: version, code, build, deploy, test, run, monitor.
 
