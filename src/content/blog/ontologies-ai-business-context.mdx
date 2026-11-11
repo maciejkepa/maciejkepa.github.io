@@ -1,0 +1,179 @@
+---
+title: "What is an Ontology? Connecting business meaning with AI agents"
+seoTitle: "What is an Ontology? Connecting business meaning with AI agents"
+description: "Learn when an ontology helps AI connect business concepts across systems, how it complements semantic models, and where its limits remain."
+date: "2026-11-11"
+tags: ["data-architecture", "data-engineering", "data-platform", "ai-architecture"]
+type: "article"
+valueType: "Architectural guide"
+featured: false
+draft: false
+coverImage: "/blog-covers/ontologies-ai-business-context.png"
+coverAlt: "A simplified shared model connects equipment, process runs and batches to telemetry, MES and batch history. An agent uses definitions and authorized queries to retrieve context."
+faqs:
+  - question: "What is an ontology?"
+    answer: "An ontology defines concepts and their relationships in a domain. A business ontology might describe equipment classes, physical devices, production lines and batches. Applications need mappings to the source records that identify those objects and their relationships."
+  - question: "How is an ontology different from a semantic layer?"
+    answer: "Their scope can overlap. A semantic layer commonly supports analytical queries and calculations. An ontology can share definitions across systems and applications. Both can describe relationships and metrics, so the decision depends on what consumers need."
+  - question: "How is an ontology different from a knowledge graph?"
+    answer: "An ontology defines meaning. A knowledge graph represents connected facts, potentially using those definitions. An ontology can also include facts about individual objects. Neither term specifies every part of the query architecture."
+  - question: "How do ontologies help AI agents?"
+    answer: "Ontologies for AI can give agents shared meanings and relationships for finding and interpreting records. Applications must supply that context and use authorized query paths. Incorrect mappings, missing history and unsupported conclusions still require checks."
+---
+
+In a manufacturing IoT project I worked on, contextualising the data was a substantial part of the work. We needed to connect measurements to the equipment they came from and the batch being produced at the time. Matching readings to batches was the main source of business value, but also a recurring difficulty. Different systems held different parts of the context, and the same class of equipment could appear under different names.
+
+The factory internal structure was important too. A reading came from equipment on a particular production line, within an area of a plant. That location helped explain where exactly in the process the measurement belonged.
+
+This production context can be modelled in many different ways, depending on the use-case, specific requirements and available data. For a data agent, an ontology can be the right approach. In this article I will use a simplified example from that experience to explain how ontologies work with AI agents to connect business meaning with the records an application needs.
+
+<figure class="article-figure article-cover-figure">
+  <img
+    src="/blog-covers/ontologies-ai-business-context-1600.webp"
+    srcset="/blog-covers/ontologies-ai-business-context-800.webp 800w, /blog-covers/ontologies-ai-business-context-1600.webp 1600w"
+    sizes="(min-width: 64rem) 52rem, 100vw"
+    alt="A simplified shared model connects equipment, process runs and batches to telemetry, MES and batch history. An agent uses definitions and authorized queries to retrieve context."
+    width="1600" height="1000" loading="eager" decoding="async"
+  />
+  <figcaption>A simplified view of shared definitions, source mappings and an agent query path.</figcaption>
+</figure>
+
+## What is an ontology?
+
+An **ontology** defines concepts and their relationships in a domain. A business ontology for this problem could describe what equipment is, what are the production lines, batches and what it means for a measurement to come from a particular device. It gives a shared vocabulary for applications to find and interpret records. The ontology itself doesn't store the records, but it can include facts about individual objects.
+
+Consider a simplified example. A factory has two mixers, E-01 and E-02. Both are the same kind of equipment, but they are separate physical devices installed on different production lines. The ontology defines what a mixer and a production line mean, and how equipment is connected to a line. The source records tell us that E-01 is installed on Line 1, while E-02 is installed on Line 2. To use this information, an application needs mappings that identify which records in each system refer to each device.
+
+We can extend this example by connecting E-01 to a production run that processed batch B-104. A **knowledge graph** represents these objects and their connections as facts we can query. Starting from B-104, an application could follow the links to the run, the mixer and its production line. The ontology defines what those types of objects and relationships mean, while the graph records which particular objects are connected.
+
+The same information could live in relational tables. An equipment table might contain E-01 and a key pointing to Line 1, while a production-run table connects that device to B-104. A relational schema defines the tables, columns and relationships used to store those records. Queries can follow the connections through joins.
+
+These approaches can work together. An application can use ontology definitions to interpret records in relational tables, and a knowledge graph can make their connections available for traversal. An ontology may also contain facts about individual objects. Using one therefore doesn't automatically require moving all the data into a graph database.
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/ontology-concepts-and-relations.webp"
+    alt="An ontology model connects five concepts. Equipment belongs to a production line. A production run uses equipment and processes a batch. A measurement comes from equipment and is recorded during a production run."
+    width="1200" height="900" loading="lazy" decoding="async"
+  />
+  <figcaption>The boxes describe types of objects, and the arrows name their relationships. Linking actual measurements to runs requires device mappings and production-time evidence.</figcaption>
+</figure>
+
+The concept also differs from its formalism or product implementation. **OWL**, the Web Ontology Language, expresses classes, relationships and axioms, or formal statements about a domain. Suitable reasoners can derive conclusions from them. OWL isn't required for every ontology, and its axioms aren't database validation checks or executable operating procedures. The [W3C OWL 2 Primer](https://www.w3.org/TR/owl2-primer/) explains these distinctions.
+
+## Model the questions before modelling the whole business
+
+For the telemetry problem, we could start with three simple questions:
+
+1. Which physical device produced this measurement, and where does it sit in the factory?
+2. Which production run used that device when the measurement was taken?
+3. Which batch was being processed in that run?
+
+The first question gives us a factory hierarchy. In this simplified model, a plant contains areas, each area contains production lines, and equipment belongs to a line. E-01 sits on Line 1 in Area A. Another device, E-02, sits on Line 2 in Area B. Both are mixers.
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/ontology-production-model.webp"
+    alt="A simplified plant contains Area A with Line 1 and equipment E-01, and Area B with Line 2 and equipment E-02. Both devices are instances of the Mixer class but remain separate physical objects."
+    width="1200" height="900" loading="lazy" decoding="async"
+  />
+  <figcaption>Location and equipment class describe different relationships. Two mixers on different lines remain two devices.</figcaption>
+</figure>
+
+This is where the naming problem from the project is important. Different names may or may not refer to the same equipment class, until someone familiar with the process confirms their meaning. Agreeing on that vocabulary helps applications find the right type of equipment. It doesn't make E-01 and E-02 interchangeable or justify merging their records.
+
+It's important to remember that even a shared class doesn't make measurements comparable without checking units, process stages and operating conditions.
+
+The next two questions need time dimension. Suppose each run in our example processes one batch on one device, while a batch may pass through several runs. We need evidence connecting the device, run and batch at the measurement's timestamp. The batch on E-01 now may differ from the one being produced yesterday. If equipment moves between lines, its historical location also needs a valid time range.
+
+Telemetry supplies readings. A manufacturing execution system (MES) or batch historian may hold production activity and batch records. Their identifiers need explicit mappings, including the source and plant where an identifier is unique. A plant-wide time window alone cannot establish which batch a reading belongs to.
+
+## Where the semantic model still belongs
+
+The [semantic layers article](/blog/semantic-layers-ai-agents/) covered agreeing on what a measure means and how consumers request it. That work still applies. A report can keep its existing calculation while shared definitions connect the result to equipment, lines and production runs.
+
+Both semantic models and ontologies can describe concepts, relationships and metrics. In our factory example, a semantic model could let a report group measurements by production line and batch. An ontology could give the report, a data agent and other applications a shared definition of what those lines and batches are, and how they connect to equipment and production runs.
+
+That doesn't mean we always need both. If the existing semantic model already provides those definitions to every application that needs them, it may be enough. A separate ontology becomes useful when teams need to maintain that shared meaning across systems that otherwise describe the same factory differently.
+
+Publishing signals under a shared naming hierarchy can help teams find them. It doesn't, by itself, establish device identity or associate a historical reading with a batch. Those mappings still need maintained logic and evidence from the source systems.
+
+## How an agent uses the model
+
+The data agent follow the ontology work. To explain how that context can be used, take the example question: “Which temperature readings belong to batch B-104?” The identifiers and query steps here are simplified.
+
+The agent's tool needs definitions for batches, runs, equipment and measurements, including the meaning of their relationships. It resolves B-104 within the requested plant, finds its production runs and identifies the devices and intervals involved. A query or contextualisation pipeline then maps telemetry tags to those devices and selects readings for the relevant intervals and process stages.
+
+That work executes in the connected services or processing engine. The language model receives the definitions through tool descriptions or a model interface, and the returned records include source references and time scope. Access to raw tables alone doesn't ensure that the application uses these relationships.
+
+| Available information | What it supports | What remains unresolved |
+| --- | --- | --- |
+| An agreed equipment class | Finding the intended kind of device | Which physical device produced a reading |
+| A device mapped to a plant, area and line | Locating the measurement in the process | Which batch was active at that time |
+| A run linked to a batch, device and interval | Selecting candidate readings for that production activity | Whether the source records are complete and the process scope matches |
+| Missing or overlapping run records | Reporting an uncertain assignment | Which batch the reading belongs to |
+
+If two run records make different batch assignments for the same device and interval, the application shouldn't quietly choose one. It should show the conflicting records or ask for the missing scope. This is one of the cases I would definitely include when checking how an agent uses the model.
+
+<figure class="article-figure article-figure--wide">
+  <img
+    src="/blog-inline/ontology-investigation-evidence.webp"
+    alt="An example agent tool resolves batch B-104 in its plant, finds devices and run intervals, and matches readings using device identity and time. Missing or overlapping run records lead to an uncertain assignment rather than a guessed batch."
+    width="1600" height="800" loading="lazy" decoding="async"
+  />
+  <figcaption>The application needs both device identity and production time. Incomplete run records leave the assignment uncertain.</figcaption>
+</figure>
+
+An AI-ready data platform lets AI understand and safely use its data. Here, the agent needs the meaning of a reading and its production context, while the query path enforces access. Permission to inspect telemetry doesn't authorize changing equipment settings.
+
+I would want to verify the selected devices, run intervals and evidence in the answer. A plausible sentence can still describe readings from the wrong line.
+
+## An ontology example in Microsoft Fabric IQ
+
+Microsoft Fabric IQ offers one of the ontology implementations. It stores definitions and bindings to sources. Consumers use that context and execute against the appropriate sources. When definitions come from a Power BI semantic model, that model retains ownership of its DAX measures. See Microsoft's [ontology overview](https://learn.microsoft.com/en-us/fabric/iq/ontology/overview).
+
+A graph is an optional execution path for exploring relationships. Teams explicitly select eligible entities and relationships to [materialize into a graph](https://learn.microsoft.com/en-us/fabric/iq/ontology/how-to-use-ontology-graph). Creating an ontology doesn't automatically copy every source record into it.
+
+This also matters for [business rules](https://learn.microsoft.com/en-us/fabric/iq/ontology/how-to-use-rules). Rules written in natural language provide context. Ontology itself doesn't run those rules against data or trigger actions. An application must implement any required check or operation separately.
+
+The [import feature](https://learn.microsoft.com/en-us/fabric/iq/ontology/how-to-import-export) supports a subset of RDF, RDFS, OWL and SKOS constructs, so a successful import doesn't prove that the full meaning of the original model survived.
+
+## What does an ontology leave unresolved?
+
+An ontology cannot reconstruct batch history that was never recorded. Incorrect tag mappings can attach readings to the wrong device. An incomplete factory hierarchy can leave equipment outside a line-level query. Applications need to expose those gaps instead of presenting an apparently complete answer.
+
+Someone must own the definitions and mappings as the factory changes. Moving equipment, renaming a class or changing what counts as a production run can affect existing consumers. The model owner needs to coordinate those changes with the people maintaining source records and processing.
+
+Formal inference and an LLM's explanation also need different treatment. A reasoner derives conclusions under specified axioms and semantics. A generated explanation isn't evidence that such a derivation occurred. Associating a temperature reading with a batch doesn't prove that temperature caused a production issue.
+
+## Start with one investigation
+
+The telemetry project is why I would begin with one reading and ask whether we can explain where it came from and what was being produced. Trace it through the device, plant structure, run and batch. Agree on who maintains each definition and mapping before expanding the model.
+
+Moving from reporting to a decision also requires an objective, the cost of a wrong action and operating constraints. That's the next subject. First, check whether the application can distinguish a supported batch assignment from a guess.
+
+## FAQ
+
+### What is an ontology?
+
+An ontology defines concepts and their relationships in a domain. A business ontology might describe equipment classes, physical devices, production lines and batches. Applications need mappings to the source records that identify those objects and their relationships.
+
+### How is an ontology different from a semantic layer?
+
+Their scope can overlap. A semantic layer commonly supports analytical queries and calculations. An ontology can share definitions across systems and applications. Both can describe relationships and metrics, so the decision depends on what consumers need.
+
+### How is an ontology different from a knowledge graph?
+
+An ontology defines meaning. A knowledge graph represents connected facts, potentially using those definitions. An ontology can also include facts about individual objects. Neither term specifies every part of the query architecture.
+
+### How do ontologies help AI agents?
+
+Ontologies for AI can give agents shared meanings and relationships for finding and interpreting records. Applications must supply that context and use authorized query paths. Incorrect mappings, missing history and unsupported conclusions still require checks.
+
+## Further reading
+
+- [W3C: OWL 2 Primer](https://www.w3.org/TR/owl2-primer/)
+- [Microsoft: Ontology overview](https://learn.microsoft.com/en-us/fabric/iq/ontology/overview)
+- [Microsoft: Graph materialization](https://learn.microsoft.com/en-us/fabric/iq/ontology/how-to-use-ontology-graph)
+- [Microsoft: Business rules](https://learn.microsoft.com/en-us/fabric/iq/ontology/how-to-use-rules)
+- [Microsoft: Import and export](https://learn.microsoft.com/en-us/fabric/iq/ontology/how-to-import-export)
