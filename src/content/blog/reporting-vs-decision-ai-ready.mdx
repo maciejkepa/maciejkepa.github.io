@@ -1,0 +1,176 @@
+---
+title: "Your data is ready for reporting. Is it ready for a decision?"
+seoTitle: "Reporting vs Decision-Making: Data for AI Agents"
+description: "Explore why an AI agent needs more than an overdue-invoice report to choose its next step, and how business context and access controls support that decision."
+date: "2026-11-16"
+updated: "2026-11-18"
+tags: ["data-architecture", "data-engineering", "data-platform", "ai-architecture"]
+type: "article"
+valueType: "Architectural guide"
+featured: false
+draft: false
+coverImage: "/blog-covers/reporting-vs-decision-ai-ready.png"
+coverAlt: "An overdue-invoice report feeds prioritisation using payment history, exceptions and team capacity. The resulting work queue separates human review, agent handling and scheduled reassessment."
+faqs:
+  - question: "How is decision-ready data different from reporting data?"
+    answer: "Reporting data describes a situation for a defined scope and time. Decision-ready data also supplies the context needed to choose between actions for a particular goal. For invoice prioritisation, that can include payment habits, previous contacts, exceptions and the team's capacity. The same dataset can support both uses when it contains that context."
+  - question: "Can an agent decide what to do from an overdue-invoice report?"
+    answer: "A report may be enough if it contains the context required by the agreed process and is current enough for the task. An overdue flag alone doesn't establish whether contact is appropriate. The agent may also need payment history, previous contacts, agreements and exceptions, with a defined route for anything it cannot resolve."
+  - question: "What data does an agent handling invoices need?"
+    answer: "It depends on the task. Alongside balances and due dates, an agent may need pending payments, overpayment allocations, agreed extensions and customer history. Identifiers must connect those records to the right invoice and customer. Staff knowledge needs an accessible source, and missing information should remain distinguishable from a confirmed absence of activity."
+  - question: "Can an AI agent handle lower-priority cases automatically?"
+    answer: "An agent can handle agreed tasks when the application enforces permissions, current-state checks and process rules. A lower priority doesn't authorize every action or prove that a reminder is needed. Unclear cases need a defined route to review, and retries must not repeat an operation that already succeeded."
+---
+
+In a project involving overdue invoices, the team had very limited time to follow up on every one of them. They needed to decide which invoices deserved the most attention and which could be handled later. Days overdue or the invoice amount might be the first idea for prioritisation, but neither was enough.
+
+Some invoices might already have been paid, with the payment not yet recorded against them. Others could have an agreed extension to the payment deadline. A previous overpayment might cover another invoice, so the customer wouldn't necessarily send a new payment. And even after checking the records, there was still the team's knowledge of customers who regularly paid late but did pay.
+
+Give an agent that report and it may confidently identify the invoices marked overdue. Deciding what should happen to each case requires more. A familiar delay, an unrecorded payment and an unresolved dispute might all appear under the same status, while calling for different responses.
+
+In this article, we'll explore reporting vs decision-making through invoice handling, looking at the business context an AI agent needs to choose and carry out an appropriate next step.
+
+<figure class="article-figure article-cover-figure">
+  <img
+    src="/blog-covers/reporting-vs-decision-ai-ready-1600.webp"
+    srcset="/blog-covers/reporting-vs-decision-ai-ready-800.webp 800w, /blog-covers/reporting-vs-decision-ai-ready-1600.webp 1600w"
+    sizes="(min-width: 64rem) 52rem, 100vw"
+    alt="An overdue-invoice report feeds prioritisation using payment history, exceptions and team capacity. The resulting work queue separates human review, agent handling and scheduled reassessment."
+    width="1600" height="1000" loading="eager" decoding="async"
+  />
+  <figcaption>A possible work queue uses context and team capacity alongside the reported state. Its routes need agreed rules.</figcaption>
+</figure>
+
+## What does the report tell us?
+
+A report can tell the team which invoices are recorded as overdue, their outstanding balances and the dates used to calculate the delay. Those answers describe the records available when it was prepared. A payment still waiting to be matched to an invoice can leave that invoice open in the report.
+
+But even a correct list can still leave the employee with the same practical question: which case should I work on next?
+
+Before sorting that list, we need to check whether its balances and deadlines still apply. If the customer has an agreed extension that hasn't reached the reporting table, the agent could be counting overdue days from the wrong date. A current report may already contain that agreement. The team needs to establish which record governs the next step.
+
+Suppose we ask an agent to work through routine cases so employees can spend their time on cases that need judgement. It needs to know what counts as routine, when to wait and when to hand a case over. If the report supplies the required context and is current enough, we may be able to use it directly.
+
+We may want to check that before adding another dataset or service. The requirement comes from what the agent is expected to do with the data.
+
+## Which invoice deserves attention today?
+
+Let's think about the customer who usually pays late. If the current delay resembles their previous payments, that history gives the team a reason to examine the case differently from an unexpected delay. It's important to remember that past behavior doesn't guarantee another payment and it doesn't mean the invoice can be forgotten.
+
+Here are four simplified example invoices with different reasons to wait, investigate or act:
+
+| State visible in the report | Additional context | Possible next step |
+| --- | --- | --- |
+| Invoice A is overdue | The delay resembles the customer's previous payment pattern | Check the history and set a reassessment point |
+| Invoice B is overdue | The customer usually pays on time, so this delay is unusual | Consider a review by an employee |
+| Invoice C has a smaller overdue balance | A previous overpayment may cover it, but the allocation is unresolved | Ask the responsible team to confirm what remains due before follow-up |
+| Invoice D is overdue | An unresolved dispute concerns the invoice | Route it for clarification before ordinary follow-up |
+
+As an example, Invoice C may need someone to confirm whether the overpayment can be applied to this invoice and whether that has happened. The agent shouldn't infer that it is settled just because the customer has a credit balance. For invoice D, it needs to recognize the dispute and find the person or process that can resolve it. Sending an ordinary reminder could repeat a conversation already in progress.
+
+<figure class="article-figure">
+  <img
+    src="/blog-inline/invoice-delay-payment-context.webp"
+    alt="Two overdue invoices have different payment histories. A familiar delay prompts a history check and reassessment, while an unusual delay is a candidate for human review. Past behaviour does not guarantee the next payment."
+    width="1200" height="900" loading="lazy" decoding="async"
+  />
+  <figcaption>Payment history changes how we interpret an overdue invoice. It cannot promise what the customer will do next.</figcaption>
+</figure>
+
+The decision to wait has consequences. If the agent makes it without proper justification, a case assigned a low priority can remain at the bottom of the queue indefinitely.
+
+Waiting should have a reason and a point at which the team checks again.
+
+## What are we asking the agent to achieve?
+
+Limited team time is the thing that makes prioritisation necessary. For our agent, I would turn that into a specific task before deciding which tools to expose. Helping an employee review a case and handling it without an employee are different assignments.
+
+Suppose the agent is allowed to prepare routine cases and pass exceptions to the team. It needs rules for recognizing those exceptions and enough information to explain the handoff. An employee receiving the case should be able to see what the agent found, what it already did and why it stopped. Otherwise, the person has to repeat the investigation.
+
+Specialized decision models can help with individual steps in that flow. [Microsoft-Decision-1.1](https://learn.microsoft.com/azure/foundry/foundry-models/how-to/use-foundry-models-microsoft-decision), the successor to Microsoft-Decision-1, can select from supplied options and return a probability for each. In our example, we could use it to classify a customer's message as a reported payment, a dispute, a request for more time or an unclear case. The application would still need to check the payment records or obtain approval for an extension. A classification score doesn't establish that an invoice is settled or authorize a change to its terms.
+
+The goal also affects what we consider a useful action. A customer who usually pays late may pay again without contact. That history doesn't tell us whether a reminder would help. [Prediction Policy Problems](https://www.cs.cornell.edu/home/kleinber/aer15-prediction.pdf) discusses this distinction between predicting an outcome and estimating the effect of intervening.
+
+AI agent can apply an agreed follow-up rule, and we can check whether it followed that rule correctly. Claiming that the contact caused a payment needs other evidence. A payment recorded after a reminder is not enough on its own.
+
+An unnecessary contact uses time and may repeat work. Leaving an unusual case unattended can delay discovering a problem. The person responsible for the process needs to decide how those consequences affect the agent's instructions and when an employee should take over.
+
+## What context must reach the agent?
+
+The invoice is the item being prioritised, but much of its context belongs to the customer. One customer may have several open invoices, a payment awaiting allocation and an agreement covering more than one balance. The agent needs the links between them to understand what remains unresolved.
+
+The records need identifiers that connect the right invoice, customer, payment and case. They also need agreed meanings. A status such as open might describe an unpaid balance, an unresolved support case or a task still awaiting review. The [semantic layers article](/blog/semantic-layers-ai-agents/) explains why those definitions need to reach the consuming application. The [ontology article](/blog/ontologies-ai-business-context/) extends that discussion to objects and relationships across systems.
+
+Some of the context may live only in the team's experience. A colleague might know that a customer usually pays late, while the invoice table contains no explanation. I would ask that colleague what supports the observation and when it should be reconsidered. If we want the agent to use it, we need an accessible record of that context, its source and who maintains it. It should remain distinguishable from an agreed extension to the due date.
+
+An empty contact history could mean nobody contacted the customer, or that another team's records haven't arrived. If the tool returns both as no previous contact, the agent loses a distinction the employee would want to know. The response needs to preserve whether the history is known to be empty or unavailable.
+
+An invoice may also have been paid before the agent opens it. Reading the invoice table again won't necessarily resolve this if the payment still hasn't been posted or matched. The application needs the available payment and allocation status, including anything still pending.
+
+If those records are unavailable or disagree, the agent needs to wait or refer the case according to the agreed process. It should show what remains uncertain instead of treating the earlier overdue flag as confirmation that another payment is needed.
+
+## What happens when the agent takes the next step?
+
+Now suppose a routine case reaches the agent's queue. The flow below follows the checks between opening that case and recording what happened.
+
+The application retrieves the current status and relevant history, then checks which steps are permitted. A pending payment allocation could send the case to the team responsible for matching payments. Once the required checks pass, the agent might prepare a case summary, schedule another review or use an authorized tool to perform an agreed operation.
+
+<figure class="article-figure article-figure--wide">
+  <img
+    src="/blog-inline/invoice-agent-controlled-handling.webp"
+    alt="A case from the queue passes through a current-state check and process rules. A permitted operation or human review follows, with the outcome recorded. Unknown state pauses handling, and a retry checks the prior result."
+    width="1600" height="800" loading="lazy" decoding="async"
+  />
+  <figcaption>Reaching the agent's queue does not authorize an action. Current state, process rules and access checks determine what may happen next.</figcaption>
+</figure>
+
+A lower business priority doesn't make every action low risk. Reading a balance, contacting a customer and changing an agreement are different operations. Each needs its own permission and process conditions. Microsoft's [guidance for agentic systems](https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/considerations/agentic-systems) explains why authorization and tool constraints need deterministic enforcement rather than relying on prompts.
+
+The tool also needs to handle uncertainty after execution. Suppose a request times out after an operation succeeds. Retrying blindly could repeat the operation. A stable operation identifier and a check of the previous result can help the application continue without doing the same work twice. Record what happened and return that status to the agent, including an unresolved outcome when it cannot yet be confirmed.
+
+## What makes this an AI-ready data platform?
+
+An AI-ready data platform lets AI understand and safely use its data.
+
+For invoice C, the agent needs to distinguish the invoice's open balance from a payment or credit awaiting allocation. For invoice D, it needs to connect the dispute to the right invoice and customer. Definitions in a catalog help only when the application supplies them through the agent's tools or other context and uses them when retrieving records.
+
+Then the application has to enforce what the agent may do. Permission to inspect a credit balance doesn't authorize allocating it to an invoice. The agent might be allowed to summarize a dispute for an employee while being unable to change the payment agreement. Unresolved payment or contact history should remain visible in the proposed next step.
+
+Much of this information may already exist in billing, customer-management and workflow systems. Preparing the platform for the agent means connecting those records, preserving their meaning and making the permitted operations available through controlled interfaces. The people responsible for invoice handling still need to define the rules and maintain them as the process changes.
+
+[Microsoft IQ](https://azure.microsoft.com/en-us/blog/introducing-the-new-microsoft-iq-putting-your-organizations-intelligence-to-work-in-every-agent/) is an example of a platform built around sharing that context. Its business plugins package business knowledge, source connections, skills and tools for reuse across agents. For our invoice example, that could mean giving agents access to the same definitions of payment status, follow-up instructions and approved tools. The team would still need to turn its knowledge of customer habits into maintained context and connect the agent to payment records. A shared plugin cannot resolve an allocation that the responsible system hasn't confirmed.
+
+## Start with one working queue
+
+It would be useful to begin with one queue the team already uses and a few cases the employees know well. Ask what they would allow an agent to do with each one, what information it would need and where they would expect it to stop.
+
+Then follow those cases through the proposed flow. Include a payment awaiting allocation, an extended deadline missing from the report and a customer habit known only to an employee. Check whether the agent finds that context, preserves uncertainty and chooses a permitted step. Keep enough of the input state and handling result to investigate a wrong choice later.
+
+I would also want to ask the employees to review the handoffs. If they have to start every case from scratch, the agent may be moving work around rather than saving their time. Use that feedback to adjust the task and the information the platform supplies before giving the agent more responsibility.
+
+## FAQ
+
+### How is decision-ready data different from reporting data?
+
+Reporting data describes a situation for a defined scope and time. Decision-ready data also supplies the context needed to choose between actions for a particular goal. For invoice prioritisation, that can include payment habits, previous contacts, exceptions and the team's capacity. The same dataset can support both uses when it contains that context.
+
+### Can an agent decide what to do from an overdue-invoice report?
+
+A report may be enough if it contains the context required by the agreed process and is current enough for the task. An overdue flag alone doesn't establish whether contact is appropriate. The agent may also need payment history, previous contacts, agreements and exceptions, with a defined route for anything it cannot resolve.
+
+### What data does an agent handling invoices need?
+
+It depends on the task. Alongside balances and due dates, an agent may need pending payments, overpayment allocations, agreed extensions and customer history. Identifiers must connect those records to the right invoice and customer. Staff knowledge needs an accessible source, and missing information should remain distinguishable from a confirmed absence of activity.
+
+### Can an AI agent handle lower-priority cases automatically?
+
+An agent can handle agreed tasks when the application enforces permissions, current-state checks and process rules. A lower priority doesn't authorize every action or prove that a reminder is needed. Unclear cases need a defined route to review, and retries must not repeat an operation that already succeeded.
+
+## Further reading
+
+- [Microsoft: Introducing Microsoft IQ](https://azure.microsoft.com/en-us/blog/introducing-the-new-microsoft-iq-putting-your-organizations-intelligence-to-work-in-every-agent/)
+- [Microsoft Learn: Deploy and use Microsoft-Decision-1.1](https://learn.microsoft.com/azure/foundry/foundry-models/how-to/use-foundry-models-microsoft-decision)
+- [Kleinberg, Ludwig, Mullainathan and Obermeyer: Prediction Policy Problems](https://www.cs.cornell.edu/home/kleinber/aer15-prediction.pdf)
+- [Microsoft: Considerations for agentic systems](https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/considerations/agentic-systems)
+- [Semantic layers: giving AI agents business context](/blog/semantic-layers-ai-agents/)
+- [What is an Ontology? Connecting business meaning with AI agents](/blog/ontologies-ai-business-context/)

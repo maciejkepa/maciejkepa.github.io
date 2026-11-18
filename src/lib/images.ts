@@ -1,4 +1,5 @@
 const responsiveCoverImages = new Set([
+  '/blog-covers/reporting-vs-decision-ai-ready.png',
   '/blog-covers/ontologies-ai-business-context.png',
   '/blog-covers/semantic-layers-ai-agents.png',
   '/blog-covers/data-fabric-ai-ready.png',
