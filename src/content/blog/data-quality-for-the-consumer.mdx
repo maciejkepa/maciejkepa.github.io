@@ -1,0 +1,140 @@
+---
+title: "What does good data mean to the consumer?"
+seoTitle: "Data Quality Requirements for Reports, ML and AI Agents"
+description: "Follow one late telemetry reading through a report, a forecast and an agent's API to see how each consumer defines and checks its data quality requirements."
+date: "2026-11-25"
+tags: ["data-architecture", "data-engineering", "data-platform", "ai-architecture"]
+type: "article"
+valueType: "Architectural guide"
+featured: false
+draft: false
+coverImage: "/blog-covers/data-quality-for-the-consumer.png"
+coverAlt: "A reading measured at 10:00 arrives at 10:20. The report revises its interval total, the 10:05 forecast was skipped, and the API holds the action."
+faqs:
+  - question: "How do you define data quality for a consumer?"
+    answer: "Start with the task, the data it requires and the moment the consumer needs it. Agree on a measurable condition and what the consumer should do if it fails. A report comparing periods may accept a correction hours later, while a forecast due earlier has already missed its input."
+  - question: "How do freshness and completeness differ?"
+    answer: "Freshness measures age against an agreed timestamp. Completeness measures how many expected observations are present for the devices and period in scope. A report can contain every expected interval from yesterday while its newest reading is too old for an operational action today."
+  - question: "How should a forecast handle a reading that arrives late?"
+    answer: "Apply the input policy agreed for the run. In this example the job skips the forecast and records why. When evaluating it later, reconstruct what the pipeline could access at the original cutoff and include skipped runs when measuring forecast availability."
+  - question: "What belongs in a data quality contract for an API?"
+    answer: "Specify what each value measures, how callers can tell its age, which tasks may use an older reading and who investigates a gap. Agree on the response when time or quality is unknown and where the application enforces the conditions for an action."
+---
+
+While reviewing requirements for a telemetry platform, I came across two uses for the same measurements. Analysts wanted to know whether an applied optimisation had worked. The developers needed an API that their applications could use to retrieve readings after the platform had validated them. Think of a screen showing the last reading from a meter. Before displaying it, the app needs to know which meter sent the value and when it was measured.
+
+Imagine the factory team has changed a setting on a machine to save energy. The analyst opens the morning report and consumption is down. Sounds like a good news, right? Before we judge it, let's ask a different question: did the machine use less energy, or are we missing a meter reading?
+
+Keep that question in mind as we will use it throughout this article. Let's also give the meter in this example a twenty-minute delay and follow the reading through the morning report, the forecast and the API. What counts as good data depends on who's waiting for it and what they need to do next.
+
+<figure class="article-figure article-cover-figure">
+  <img src="/blog-covers/data-quality-for-the-consumer-1600.webp" srcset="/blog-covers/data-quality-for-the-consumer-800.webp 800w, /blog-covers/data-quality-for-the-consumer-1600.webp 1600w" sizes="(min-width: 64rem) 52rem, 100vw" width="1600" height="1000" loading="eager" decoding="async" alt="A reading measured at 10:00 arrives at 10:20. The report revises its interval total, the 10:05 forecast was skipped, and the API holds the action." />
+  <figcaption>A late reading can correct the report after the forecast has missed its deadline. By then the reading is too old for the action.</figcaption>
+</figure>
+
+## One late reading, three different consequences
+
+Assume our meter records how many kilowatt-hours the machine used from 09:45 to 10:00. When the connection drops, it stores the reading locally. When the analyst opens the report at 10:05, the total looks lower. The report could already tell them something useful if it showed which fifteen minutes are missing. Filling the gap with zero would make it look as though the machine used no energy during that interval.
+
+At the same time, someone is waiting for a forecast of the next hour energy use. In our example the forecast needs the interval ending at 10:00. The team has agreed to skip the 10:05 run if that reading is missing. The job records the meter and interval it was waiting for, so anyone opening the forecast screen can see why that hour is blank.
+
+Not, at 10:20 the meter reconnects and sends the buffered reading. The analyst can now include it in the morning total and check whether the machine ran for as long as it did during the comparison period. A shorter shift could explain a lower total too.
+
+The on-call engineer sees the reading arrive and asks the agent if it's time to close the ticket for the silent meter. The API says the latest measurement ended at 10:00. The team wants one from the last five minutes before it closes a ticket. So the analyst gets a revised figure immediately, the 10:05 forecast stays blank, and the engineer keeps the ticket open until there's evidence the meter is reporting recent readings again.
+
+<figure class="article-figure article-figure--wide">
+  <img src="/blog-inline/telemetry-reading-timeline.webp" width="1600" height="800" loading="lazy" decoding="async" alt="The meter buffers the 10:00 reading on the device. The forecast skips at 10:05. The platform makes the reading available at 10:20." />
+  <figcaption>The reading belongs to the interval ending at 10:00. By the time consumers can retrieve it, the forecast cutoff has passed.</figcaption>
+</figure>
+
+| Consumer | What the task requires | What happens when the reading is late |
+| --- | --- | --- |
+| Analyst comparing periods | Comparable coverage of devices and operating intervals | Mark the gap, then revise the period total when the reading arrives |
+| Forecast scheduled for 10:05 | Required inputs available when the run was due | Skip the run and retain its reason when evaluating the service |
+| Agent calling the operational API | Measurement time and a maximum age for the requested action | Display the last known reading with its age. Hold the action until a fresh reading is available |
+
+## Which reading was missing at 10:05?
+
+Suppose the analyst expects readings from four meters for the hour ending at 10:00. Each meter owes four readings, one for each 15 minute interval. Sixteen messages arrive before the analyst opens the report. But what if one meter sent the same interval twice and second one is delayed? A row count says the hour is complete. The analyst needs to catch that and to understand which meter and interval are missing before comparing energy totals.
+
+If the team prepares its readings in a Fabric Lakehouse, a [rule on a materialized lake view](https://learn.microsoft.com/en-us/fabric/data-engineering/materialized-lake-views/data-quality) can catch a reading with an empty meter ID during refresh. Now consider the silent meter. Every message that came in could have a valid ID. To spot the gap, we need the list of meters that *should* have reported.
+
+If we choose Microsoft Fabric Eventhouse, we could make that comparison using Kusto Query Language (KQL). On the left is the operating schedule, with one row per meter and expected interval. On the right are the validated readings the analyst could see by 10:05. The [`leftanti` join](https://learn.microsoft.com/en-us/kusto/query/join-leftanti?view=microsoft-fabric) gives us the entries on the schedule that we still can't tick off. Both tables use UTC.
+
+```kusto
+ExpectedIntervals
+| where IntervalEnd > datetime(2026-11-25 09:00)
+    and IntervalEnd <= datetime(2026-11-25 10:00)
+| join kind=leftanti (
+    PublishedReadings
+    | where AvailableAt <= datetime(2026-11-25 10:05)
+    | project MeterId, IntervalEnd
+) on MeterId, IntervalEnd
+```
+
+At 10:05 the query returns one row for the delayed meter and its interval ending at 10:00. The report can name the gap and show coverage of 15 out of 16. Move the cutoff to 10:20 and the same query will return no gaps. The duplicate never covered the missing pair. It's important to remember that when calculating the energy total, the reporting job must also count the retransmitted reading only once.
+
+It matters where `AvailableAt` comes from. Kusto [`ingestion_time()` function](https://learn.microsoft.com/en-us/kusto/query/ingestion-time-function?view=microsoft-fabric) gives an approximate time when a row reached a table and became queryable there. If the table holds incoming messages and validation runs later, a message can already be in storage while the analyst is still waiting for it. Its better to keep the meter interval end on the record and capture availability when the validated version becomes visible to the consumer. That lets the team reproduce what the analyst saw at 10:05.
+
+The on-call engineer shouldn't have to keep running that query by hand. For a live alert, we can replace the fixed times above with a moving window of intervals already due, allowing the delivery delay the team agreed to. Fabric Activator can [run that query on a schedule](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/data-activator/activator-alert-queryset) and send the meter ID and the missing interval to Teams. That gives the engineer somewhere to start looking while the analyst can still see which part of the report is provisional.
+
+One important detail - with the default alert, a gap that shows up on three successive checks can send the engineer three messages. To alert once when a meter starts missing readings, we would need to have the query return a missing-interval count for each scheduled meter, including zero for healthy ones. With [stateful alerting](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/data-activator/ingestion/ingestion-kql-querysets) in Activator, we can group by meter and notify the engineer when its count goes from zero to above zero.
+
+## When can the engineer close the ticket?
+
+Back to the engineer looking at the API at 10:20. The arrival time tells them the meter managed to send something a moment ago. To decide whether the meter has produced a recent reading, they need the time the measurement ended. Both times belong in the API response alongside the meter identifier, interval start, value and unit.
+
+The tool or agent that closes the ticket checks the interval end against its own clock. A reading up to five minutes old passes. If the timestamp is missing or unreliable, the ticket stays open for the telemetry team to investigate.
+
+<figure class="article-figure">
+  <img src="/blog-inline/telemetry-freshness-at-execution.webp" width="1200" height="900" loading="lazy" decoding="async" alt="At 10:20 the application displays the last known reading from 10:00 with its age. The action tool compares twenty minutes with the five-minute limit and holds the action." />
+  <figcaption>The API can show the employee the last known reading. The action tool checks its age again when the agent asks to proceed.</figcaption>
+</figure>
+
+That five-minute rule needs to be taken back to the engineer with the meter's schedule in hand. Even on a good day, this meter only sends a reading every fifteen minutes. If it reports at 10:30 and the engineer finishes investigating at 10:37, they're already waiting for the next one. Is that wait acceptable? If the ticket needs closing sooner, it might be worth asking the device for a reading on demand.
+
+The producer and consumer can write those decisions into a data contract. For this particular case, they could record the timestamp the tool must check, the five-minute limit and who handles a delivery gap. They could also use the Open Data Contract Standard, which lets teams [document these constraints for agents](https://bitol.io/data-contracts-data-products-for-ai/). The action tool will still have to check the reading when someone asks it to proceed.
+
+## What did each consumer actually receive?
+
+A month later, someone reviewing the forecasts might wonder why the job skipped 10:05. The corrected table has a reading right there under 10:00. To explain what happened, we could pull up the skipped run and the version of the data it could see. That reading first appeared at 10:20. Keep the skipped runs in the review too. An accuracy score calculated only on the forecasts we issued tells us little about how often someone opened an empty forecast screen.
+
+The same question comes up when two people open the morning report and see different totals. A publication record with the input version and coverage count lets the analyst explain the revision. For the agent, a record which reading the API returned and when the tool checked its age may also be useful. A cached response can still show an old value after a newer one reaches storage.
+
+OpenLineage can help with the processing part of that investigation. Its events can identify a job, a particular run and the datasets used or produced. Teams can attach further metadata through [facets](https://openlineage.io/docs/spec/facets/). For this report we can connect the publication to its input version and coverage result. For an agent - carry the publication identifier into the application trace alongside the response and the tool outcome. That link is a design choice the two teams have to implement.
+
+## What does the agent need to know about a reading?
+
+An AI-ready data platform lets AI understand and safely use its data. Here, understanding starts with the unit and the interval. An agent that describes our meter reading as the machine's current power draw has changed its meaning. Kilowatt-hours describe energy used over a period. An employee asking what happened between 09:45 and 10:00 can use that value, including the fact that it arrived late.
+
+Suppose a fresh reading does arrive and the employee asks the agent to close the ticket. A few minutes can pass while someone approves the request. The tool needs to check the age again when it closes the ticket and verify that the caller has permission to close it. This is the same distinction we saw when moving from [an overdue-invoice report to an agent handling a case](/blog/reporting-vs-decision-ai-ready/).
+
+If I were reviewing those requirements again, I would bring a mock-up of the 10:05 report, then ask the analyst whether they would share that total, and what they would want printed beside it if they did. The same gap should be presented to the person on call. Most probably their answers would give us two quite different things to build.
+
+## FAQ
+
+### How do you define data quality for a consumer?
+
+Start with the task, the data it requires and the moment the consumer needs it. Agree on a measurable condition and what the consumer should do if it fails. A report comparing periods may accept a correction hours later, while a forecast due earlier has already missed its input.
+
+### How do freshness and completeness differ?
+
+Freshness measures age against an agreed timestamp. Completeness measures how many expected observations are present for the devices and period in scope. A report can contain every expected interval from yesterday while its newest reading is too old for an operational action today.
+
+### How should a forecast handle a reading that arrives late?
+
+Apply the input policy agreed for the run. In this example the job skips the forecast and records why. When evaluating it later, reconstruct what the pipeline could access at the original cutoff and include skipped runs when measuring forecast availability.
+
+### What belongs in a data quality contract for an API?
+
+Specify what each value measures, how callers can tell its age, which tasks may use an older reading and who investigates a gap. Agree on the response when time or quality is unknown and where the application enforces the conditions for an action.
+
+## Further reading
+
+- [Microsoft Learn: Data quality in materialized lake views](https://learn.microsoft.com/en-us/fabric/data-engineering/materialized-lake-views/data-quality)
+- [Microsoft Learn: leftanti join](https://learn.microsoft.com/en-us/kusto/query/join-leftanti?view=microsoft-fabric)
+- [Microsoft Learn: ingestion_time()](https://learn.microsoft.com/en-us/kusto/query/ingestion-time-function?view=microsoft-fabric)
+- [Microsoft Learn: Create Activator alerts from a KQL Queryset](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/data-activator/activator-alert-queryset)
+- [Microsoft Learn: Ingestion from KQL Querysets](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/data-activator/ingestion/ingestion-kql-querysets)
+- [Bitol: Data Contracts & Data Products for AI](https://bitol.io/data-contracts-data-products-for-ai/)
+- [OpenLineage: Facets & Extensibility](https://openlineage.io/docs/spec/facets/)
